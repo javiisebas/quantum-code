@@ -3,9 +3,8 @@
 
 import { useGame } from '@/contexts/GameContext';
 import { GameStatusEnum } from '@/enum/game-status.enum';
-import { NoTeamEnum } from '@/enum/no-team.enum';
-import { TeamEnum } from '@/enum/team.enum';
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
+import { getCardColor } from '@/services/get-card-color';
 import { FC, useEffect, useState } from 'react';
 
 interface CardProps {
@@ -31,21 +30,6 @@ export const GameBoardCard: FC<CardProps> = ({ index }) => {
         }
     };
 
-    const getCardColor = (): string => {
-        switch (role) {
-            case TeamEnum.BLUE:
-                return 'bg-cyan-400/80 text-gray-800 shadow-lg shadow-cyan-600/30 border-cyan-500/40';
-            case TeamEnum.RED:
-                return 'bg-rose-400/80 text-gray-800 shadow-lg shadow-rose-600/30 border-rose-500/40';
-            case NoTeamEnum.BLACK:
-                return 'bg-black text-white shadow-lg shadow-black-600/30 border-black-500/40';
-            case NoTeamEnum.NEUTRAL:
-                return 'bg-orange-300/80 text-gray-800 shadow-lg shadow-orange-600/30 border-orange-500/40';
-            default:
-                return 'bg-gray-300 text-gray-800';
-        }
-    };
-
     const sharedClasses =
         'w-full h-full flex items-center justify-center font-medium rounded-md p-4 md:text-md lg:text-lg xl:text-xl';
 
@@ -65,7 +49,7 @@ export const GameBoardCard: FC<CardProps> = ({ index }) => {
                     className={ClassnameHelper.join(
                         'flip-card-back border-2',
                         sharedClasses,
-                        getCardColor(),
+                        getCardColor(role),
                     )}
                 >
                     <span className="text-center uppercase tracking-wide">{word}</span>

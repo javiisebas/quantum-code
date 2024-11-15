@@ -3,7 +3,8 @@ import './globals.css';
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
 import type { Metadata } from 'next';
 import { Montserrat } from 'next/font/google';
-import { Providers } from './providers';
+import ModalComponent from './components/ui/Modal';
+import { RootProviders } from './providers';
 
 const montserrat = Montserrat({
     subsets: ['latin'],
@@ -23,7 +24,10 @@ export default function RootLayout({
     return (
         <html lang="en" className={ClassnameHelper.join('dark', montserrat.variable)}>
             <body className="antialiased">
-                <Providers>{children}</Providers>
+                <RootProviders>
+                    {children}
+                    <ModalComponent />
+                </RootProviders>
             </body>
         </html>
     );

@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from '@/app/components/ui/Icon';
 import { useModal } from '@/contexts/ModalContext';
 import { IconEnum } from '@/enum/icon.enum';
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
@@ -8,7 +9,6 @@ import { FC } from 'react';
 import { ModalCodeGameContent } from './ModalCodeGameContent';
 import { ModalResetGameContent } from './ModalResetGameContent';
 import { ModalRevealCardsGameContent } from './ModalRevelCardsGameContent';
-import { Icon } from './ui/Icon';
 
 export const GameBoardMenu: FC = () => {
     const { openModal } = useModal();
