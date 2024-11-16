@@ -61,8 +61,6 @@ export class FileService {
     }
 
     static getPath(code: number): string {
-        console.log(__dirname);
-
         return join(`src/app/api/roles/database/${code}.json`);
     }
 }

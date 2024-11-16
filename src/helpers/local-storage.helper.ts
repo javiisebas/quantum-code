@@ -35,10 +35,8 @@ export class LocalStorageHelper {
             const { value } = JSON.parse(stringValue);
             return value;
         } catch {
-            console.warn(`Unable to get localStorage<${key}>`);
+            return setValue;
         }
-
-        return setValue;
     }
 
     static removeLocalStorageItem(key: string): void {

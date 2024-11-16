@@ -70,7 +70,6 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
 
             try {
                 const fetchedRoles = await ManageRolesService.getOrCreateRoles(code);
-                console.log('fetchedRoles:', fetchedRoles);
 
                 setRoles(fetchedRoles);
                 setLoading(false);
