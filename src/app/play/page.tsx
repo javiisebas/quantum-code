@@ -1,8 +1,8 @@
 import { GameBoard } from './components/GameBoard';
 
-export default function Home() {
+export default function PlayPage() {
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="flex items-center justify-center">
             <GameBoard />
         </div>
     );

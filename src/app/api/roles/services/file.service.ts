@@ -47,7 +47,22 @@ export class FileService {
         return existingRoles;
     }
 
+    static async deleteRoles(code: number): Promise<boolean> {
+        const path = FileService.getPath(code);
+        try {
+            await fs.unlink(path);
+            return true;
+        } catch (err) {
+            if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+                return false;
+            }
+            throw err;
+        }
+    }
+
     static getPath(code: number): string {
-        return join(__dirname, '../roles', `${code}.json`);
+        console.log(__dirname);
+
+        return join(`src/app/api/roles/database/${code}.json`);
     }
 }

@@ -1,12 +1,14 @@
 'use client';
 
-import { useGame } from '@/contexts/GameContext';
 import { useModal } from '@/contexts/ModalContext';
-import { Button, Code, ModalBody, ModalFooter, ModalHeader } from '@nextui-org/react';
+import { ModalBody, ModalHeader, Snippet } from '@nextui-org/react';
 import { FC } from 'react';
 
-export const ModalCodeGameContent: FC = () => {
-    const { code } = useGame();
+interface ModalCodeGameContentProps {
+    code: number;
+}
+
+export const ModalCodeGameContent: FC<ModalCodeGameContentProps> = ({ code }) => {
     const { closeModal } = useModal();
 
     const strCode = String(code);
@@ -16,23 +18,11 @@ export const ModalCodeGameContent: FC = () => {
     return (
         <div>
             <ModalHeader className="flex flex-col gap-1">Game Code</ModalHeader>
-            <ModalBody>
-                <Code size="lg" className="py-3">
-                    <p className="text-4xl text-center">
-                        <span>{strCodeHead}</span>
-                        <span className="text-gray-500/30">·</span>
-                        <span>{strCodeTail}</span>
-                    </p>
-                </Code>
+            <ModalBody className="pb-10">
+                <Snippet symbol="" variant="bordered" className="text-4xl text-center gap-2">
+                    {code}
+                </Snippet>
             </ModalBody>
-            <ModalFooter>
-                <Button color="danger" variant="light" onPress={() => closeModal()}>
-                    Cancel
-                </Button>
-                <Button color="primary" onPress={() => closeModal()}>
-                    Confirm
-                </Button>
-            </ModalFooter>
         </div>
     );
 };

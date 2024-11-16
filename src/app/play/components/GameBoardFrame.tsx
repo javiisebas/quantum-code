@@ -5,11 +5,12 @@ import { GameStatusEnum } from '@/enum/game-status.enum';
 import { TeamEnum } from '@/enum/team.enum';
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
 import { ChildrenProps } from '@/types/children.type';
+import { Spinner } from '@nextui-org/react';
 import { FC } from 'react';
 import Confetti from 'react-confetti';
 
 export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
-    const { gameStatus, showConfetti, hasTeamWon } = useGame();
+    const { gameStatus, showConfetti, hasTeamWon, loading } = useGame();
 
     const backgroundClass: Partial<Record<GameStatusEnum, string>> = {
         [GameStatusEnum.LOST]: 'bg-black text-white',
@@ -26,6 +27,14 @@ export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
         hasTeamWon === TeamEnum.BLUE
             ? ['#3b82f6', '#60a5fa', '#93c5fd']
             : ['#ef4444', '#f87171', '#fca5a5'];
+
+    if (loading) {
+        return (
+            <div className="h-screen w-screen flex items-center justify-center">
+                <Spinner size="lg" />
+            </div>
+        );
+    }
 
     return (
         <div

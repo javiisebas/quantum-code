@@ -1,6 +1,6 @@
 'use client';
 
-import { FileService } from '@/database/services/file.service';
+import { ManageRolesService } from '@/app/api/roles/services/manage-roles.service';
 import { GameLocalStorageKeyEnum } from '@/enum/game-local-storage-key.enum';
 import { GameStatusEnum } from '@/enum/game-status.enum';
 import { NoTeamEnum } from '@/enum/no-team.enum';
@@ -11,13 +11,13 @@ import { checkHasTeamWon } from '@/services/checkhas-team-won';
 import { getFilledWordsArray } from '@/services/get-filled-words-array';
 import { getRandomCode } from '@/services/get-random-code';
 import { getRandomWords } from '@/services/get-random-words';
-import { shuffleRoles } from '@/services/shuffle-roles';
 import { createContext, FC, useContext, useEffect, useState } from 'react';
 
 interface GameContextType {
-    code: number | null;
+    code: number;
     gameStatus: GameStatusEnum;
     hasTeamWon: TeamEnum | null;
+    loading: boolean;
     revealedRoles: boolean[];
     roles: RoleEnum[];
     showConfetti: boolean;
@@ -32,63 +32,62 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [code, setCode] = useState<number | null>(null);
-    const [gameStatus, setGameStatus] = useState<GameStatusEnum>(GameStatusEnum.PLAYING);
-    const [hasTeamWon, setHasTeamWon] = useState<TeamEnum | null>(null);
-    const [revealedRoles, setRevealedRoles] = useState<boolean[]>([]);
     const [roles, setRoles] = useState<RoleEnum[]>([]);
     const [showConfetti, setShowConfetti] = useState(false);
-    const [words, setWords] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const [code, setCode] = useState<number>(
+        LocalStorageHelper.getOrSetLocalStorageItem(
+            GameLocalStorageKeyEnum.GAME_CODE,
+            getRandomCode(),
+        ),
+    );
+    const [gameStatus, setGameStatus] = useState<GameStatusEnum>(
+        LocalStorageHelper.getOrSetLocalStorageItem(
+            GameLocalStorageKeyEnum.GAME_STATUS,
+            GameStatusEnum.PLAYING,
+        ),
+    );
+    const [hasTeamWon, setHasTeamWon] = useState<TeamEnum | null>(
+        LocalStorageHelper.getOrSetLocalStorageItem(GameLocalStorageKeyEnum.GAME_TEAM_WON, null),
+    );
+    const [revealedRoles, setRevealedRoles] = useState<boolean[]>(
+        LocalStorageHelper.getOrSetLocalStorageItem(
+            GameLocalStorageKeyEnum.GAME_REVEALED_ROLES,
+            getFilledWordsArray(false),
+        ),
+    );
+    const [words, setWords] = useState<string[]>(
+        LocalStorageHelper.getOrSetLocalStorageItem(
+            GameLocalStorageKeyEnum.GAME_WORDS,
+            getRandomWords(),
+        ),
+    );
 
     useEffect(() => {
         const initializeGame = async () => {
-            const newCode = LocalStorageHelper.getOrSetLocalStorageItem(
-                GameLocalStorageKeyEnum.GAME_CODE,
-                getRandomCode(),
-            );
-            setCode(newCode);
+            if (!code) return;
 
-            const roles = await FileService.readOrWriteRoles(newCode, shuffleRoles());
-            setRoles(roles);
+            try {
+                const fetchedRoles = await ManageRolesService.getOrCreateRoles(code);
+                console.log('fetchedRoles:', fetchedRoles);
 
-            setRevealedRoles(
-                LocalStorageHelper.getOrSetLocalStorageItem(
-                    GameLocalStorageKeyEnum.GAME_REVEALED_ROLES,
-                    getFilledWordsArray(false),
-                ),
-            );
-
-            setWords(
-                LocalStorageHelper.getOrSetLocalStorageItem(
-                    GameLocalStorageKeyEnum.GAME_WORDS,
-                    getRandomWords(),
-                ),
-            );
-
-            setGameStatus(
-                LocalStorageHelper.getOrSetLocalStorageItem(
-                    GameLocalStorageKeyEnum.GAME_STATUS,
-                    GameStatusEnum.PLAYING,
-                ),
-            );
-
-            setHasTeamWon(
-                LocalStorageHelper.getOrSetLocalStorageItem(
-                    GameLocalStorageKeyEnum.GAME_TEAM_WON,
-                    null,
-                ),
-            );
+                setRoles(fetchedRoles);
+                setLoading(false);
+            } catch (error) {
+                console.error('Error initializing game:', error);
+            }
         };
 
-        initializeGame().catch((err) => {
-            console.error('Error initializing game:', err);
-        });
-    }, []);
+        initializeGame();
+    }, [code]);
 
     useEffect(() => {
         if (gameStatus === GameStatusEnum.WON) setShowConfetti(true);
         else setShowConfetti(false);
-    }, [gameStatus]);
+
+        if (gameStatus !== GameStatusEnum.PLAYING) ManageRolesService.deleteRoles(code);
+    }, [gameStatus, code]);
 
     const handleCardClick = (index: number) => {
         if (gameStatus !== GameStatusEnum.PLAYING || revealedRoles[index]) return;
@@ -117,22 +116,25 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
     };
 
     const resetGame = () => {
-        const newCode = getRandomCode();
+        setLoading(true);
 
-        handleSetCode(newCode);
+        if (gameStatus === GameStatusEnum.PLAYING) ManageRolesService.deleteRoles(code);
+
+        handleSetCode(getRandomCode());
         handleSetRevealedRoles(getFilledWordsArray(false));
-        handleSetRoles(newCode, shuffleRoles());
         handleSetWords(getRandomWords());
         handleSetGameStatus(GameStatusEnum.PLAYING);
         handleSetHasTeamWon(null);
     };
 
     const revealAll = () => {
+        LocalStorageHelper.removeLocalStorageItem(GameLocalStorageKeyEnum.GAME_CODE);
+
         handleSetRevealedRoles(getFilledWordsArray(true));
         handleSetGameStatus(GameStatusEnum.RESOLVED);
     };
 
-    const handleSetCode = (code: number | null) => {
+    const handleSetCode = (code: number) => {
         setCode(code);
         LocalStorageHelper.setLocalStorageItem(GameLocalStorageKeyEnum.GAME_CODE, code);
     };
@@ -143,11 +145,6 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
             GameLocalStorageKeyEnum.GAME_REVEALED_ROLES,
             revealedRoles,
         );
-    };
-
-    const handleSetRoles = async (newCode: number, roles: RoleEnum[]) => {
-        setRoles(roles);
-        await FileService.writeRoles(newCode, shuffleRoles());
     };
 
     const handleSetWords = (words: string[]) => {
@@ -171,6 +168,7 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
                 code,
                 gameStatus,
                 hasTeamWon,
+                loading,
                 revealedRoles,
                 roles,
                 showConfetti,

@@ -1,10 +1,12 @@
-import { useGame } from '@/contexts/GameContext';
 import { useModal } from '@/contexts/ModalContext';
 import { Button, ModalBody, ModalFooter, ModalHeader } from '@nextui-org/react';
 import { FC } from 'react';
 
-export const ModalResetGameContent: FC = () => {
-    const { resetGame } = useGame();
+interface ModalResetGameContentProps {
+    resetGame: () => void;
+}
+
+export const ModalResetGameContent: FC<ModalResetGameContentProps> = ({ resetGame }) => {
     const { closeModal } = useModal();
 
     return (

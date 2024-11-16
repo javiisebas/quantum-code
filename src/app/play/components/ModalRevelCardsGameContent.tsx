@@ -1,10 +1,14 @@
-import { useGame } from '@/contexts/GameContext';
 import { useModal } from '@/contexts/ModalContext';
 import { Button, ModalBody, ModalFooter, ModalHeader } from '@nextui-org/react';
 import { FC } from 'react';
 
-export const ModalRevealCardsGameContent: FC = () => {
-    const { revealAll } = useGame();
+interface ModalRevealCardsGameContentProps {
+    revealAll: () => void;
+}
+
+export const ModalRevealCardsGameContent: FC<ModalRevealCardsGameContentProps> = ({
+    revealAll,
+}) => {
     const { closeModal } = useModal();
 
     return (

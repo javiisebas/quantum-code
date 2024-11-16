@@ -23,7 +23,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" className={ClassnameHelper.join('dark', montserrat.variable)}>
-            <body className="antialiased">
+            <body className="antialiased min-h-screen bg-gray-100">
                 <RootProviders>
                     {children}
                     <ModalComponent />

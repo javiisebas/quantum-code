@@ -43,9 +43,14 @@ export class LocalStorageHelper {
 
     static removeLocalStorageItem(key: string): void {
         try {
-            localStorage.remove(key);
-        } catch {
-            console.warn(`Unable to remove localStorage<${key}>`);
+            if (!localStorage.getItem(key)) {
+                console.warn(`Key "${key}" does not exist in localStorage.`);
+                return;
+            }
+
+            localStorage.removeItem(key);
+        } catch (error) {
+            console.warn(`Unable to remove localStorage<${key}>. Error:`, error);
         }
     }
 }
