@@ -1,7 +1,6 @@
 'use client';
 
 import { useGame } from '@/contexts/GameContext';
-import { GameStatusEnum } from '@/enum/game-status.enum';
 import { TeamEnum } from '@/enum/team.enum';
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
 import { ChildrenProps } from '@/types/children.type';
@@ -10,18 +9,7 @@ import { FC } from 'react';
 import Confetti from 'react-confetti';
 
 export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
-    const { gameStatus, showConfetti, hasTeamWon, loading } = useGame();
-
-    const backgroundClass: Partial<Record<GameStatusEnum, string>> = {
-        [GameStatusEnum.LOST]: 'bg-black text-white',
-        [GameStatusEnum.PLAYING]: 'bg-white',
-        [GameStatusEnum.RESOLVED]: 'bg-gray-100',
-    };
-
-    const backgroundByTeamWon: Record<TeamEnum, string> = {
-        [TeamEnum.BLUE]: 'bg-cyan-200',
-        [TeamEnum.RED]: 'bg-rose-200',
-    };
+    const { showConfetti, hasTeamWon, loading } = useGame();
 
     const confettiColors =
         hasTeamWon === TeamEnum.BLUE
@@ -40,7 +28,6 @@ export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
         <div
             className={ClassnameHelper.join(
                 'h-screen w-screen relative flex items-center justify-center isolate',
-                backgroundClass[gameStatus] || backgroundByTeamWon[hasTeamWon!],
             )}
         >
             {showConfetti && <Confetti colors={confettiColors} />}

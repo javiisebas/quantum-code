@@ -22,10 +22,10 @@ const config: Config = {
 
     safelist: [
         'bg-black',
-        'bg-cyan-400/80',
+        'bg-cyan-400',
         'bg-gray-300',
-        'bg-orange-300/80',
-        'bg-rose-400/80',
+        'bg-orange-300',
+        'bg-rose-400',
         'border-black-500/40',
         'border-cyan-500/40',
         'border-orange-500/40',
@@ -37,6 +37,7 @@ const config: Config = {
         'shadow-rose-600/30',
         'text-gray-800',
         'text-white',
+        'border-gray-300/80',
     ],
 };
 export default config;

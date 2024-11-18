@@ -1,4 +1,3 @@
-// GameBoardCard.tsx
 'use client';
 
 import { useGame } from '@/contexts/GameContext';
@@ -38,7 +37,7 @@ export const GameBoardCard: FC<CardProps> = ({ index }) => {
             <div className={ClassnameHelper.join('flip-card-inner', revealed ? 'flipped' : '')}>
                 <div
                     className={ClassnameHelper.join(
-                        'flip-card-front bg-gray-300 text-gray-900 cursor-pointer hover:bg-gray-400/60 hover:scale-[1.02] transition-transform duration-300',
+                        'flip-card-front bg-gray-300 text-gray-900 cursor-pointer hover:bg-gray-300/80 hover:scale-[1.02] transition-transform duration-300',
                         sharedClasses,
                     )}
                 >

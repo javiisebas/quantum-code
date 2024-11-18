@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     try {
         const roles = await FileService.readRoles(code);
         if (!roles) {
-            return NextResponse.json({ error: 'Roles not found' }, { status: 404 });
+            return NextResponse.json(null);
         }
         return NextResponse.json(roles);
     } catch (error: unknown) {

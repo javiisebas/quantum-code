@@ -1,6 +1,7 @@
 'use client';
 
 import { ManageRolesService } from '@/app/api/roles/services/manage-roles.service';
+import { ModalCodeGameContent } from '@/app/play/components/ModalCodeGameContent';
 import { GameLocalStorageKeyEnum } from '@/enum/game-local-storage-key.enum';
 import { GameStatusEnum } from '@/enum/game-status.enum';
 import { NoTeamEnum } from '@/enum/no-team.enum';
@@ -12,6 +13,7 @@ import { getFilledWordsArray } from '@/services/get-filled-words-array';
 import { getRandomCode } from '@/services/get-random-code';
 import { getRandomWords } from '@/services/get-random-words';
 import { createContext, FC, useContext, useEffect, useState } from 'react';
+import { useModal } from './ModalContext';
 
 interface GameContextType {
     code: number;
@@ -32,9 +34,11 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [loading, setLoading] = useState(true);
     const [roles, setRoles] = useState<RoleEnum[]>([]);
     const [showConfetti, setShowConfetti] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const { openModal } = useModal();
+    const [isRolesDeleted, setIsRolesDeleted] = useState<boolean>(false);
 
     const [code, setCode] = useState<number>(
         LocalStorageHelper.getOrSetLocalStorageItem(
@@ -70,8 +74,11 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
 
             try {
                 const fetchedRoles = await ManageRolesService.getOrCreateRoles(code);
-
                 setRoles(fetchedRoles);
+
+                if (gameStatus === GameStatusEnum.PLAYING) {
+                    openModal(<ModalCodeGameContent code={code} />);
+                }
                 setLoading(false);
             } catch (error) {
                 console.error('Error initializing game:', error);
@@ -80,13 +87,6 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
 
         initializeGame();
     }, [code]);
-
-    useEffect(() => {
-        if (gameStatus === GameStatusEnum.WON) setShowConfetti(true);
-        else setShowConfetti(false);
-
-        if (gameStatus !== GameStatusEnum.PLAYING) ManageRolesService.deleteRoles(code);
-    }, [gameStatus, code]);
 
     const handleCardClick = (index: number) => {
         if (gameStatus !== GameStatusEnum.PLAYING || revealedRoles[index]) return;
@@ -104,12 +104,17 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
                 revealed ? roles[i] : null,
             );
 
+            let teamWon = null;
             if (checkHasTeamWon(revealedRolesArray, TeamEnum.BLUE)) {
-                handleSetGameStatus(GameStatusEnum.WON);
-                handleSetHasTeamWon(TeamEnum.BLUE);
+                teamWon = TeamEnum.BLUE;
             } else if (checkHasTeamWon(revealedRolesArray, TeamEnum.RED)) {
+                teamWon = TeamEnum.RED;
+            }
+
+            if (teamWon) {
                 handleSetGameStatus(GameStatusEnum.WON);
-                setHasTeamWon(TeamEnum.RED);
+                handleSetHasTeamWon(teamWon);
+                setShowConfetti(true);
             }
         }
     };
@@ -117,20 +122,31 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
     const resetGame = () => {
         setLoading(true);
 
-        if (gameStatus === GameStatusEnum.PLAYING) ManageRolesService.deleteRoles(code);
+        if (gameStatus === GameStatusEnum.PLAYING) handleDeleteRoles();
 
         handleSetCode(getRandomCode());
-        handleSetRevealedRoles(getFilledWordsArray(false));
-        handleSetWords(getRandomWords());
+
         handleSetGameStatus(GameStatusEnum.PLAYING);
         handleSetHasTeamWon(null);
+        handleSetRevealedRoles(getFilledWordsArray(false));
+        handleSetWords(getRandomWords());
+        setIsRolesDeleted(false);
+        setShowConfetti(false);
     };
 
     const revealAll = () => {
         LocalStorageHelper.removeLocalStorageItem(GameLocalStorageKeyEnum.GAME_CODE);
 
-        handleSetRevealedRoles(getFilledWordsArray(true));
         handleSetGameStatus(GameStatusEnum.RESOLVED);
+        handleSetRevealedRoles(getFilledWordsArray(true));
+        setShowConfetti(false);
+    };
+
+    const handleDeleteRoles = () => {
+        if (!isRolesDeleted) {
+            ManageRolesService.deleteRoles(code);
+            setIsRolesDeleted(true);
+        }
     };
 
     const handleSetCode = (code: number) => {
