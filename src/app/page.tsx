@@ -41,18 +41,11 @@ export default function HomePage() {
     };
 
     return (
-        <div className="m-auto max-w-7xl flex justify-stretch items-center lg:gap-x-8 lg:px-8 min-h-screen">
-            <div className="w-1/2 h-full relative lg:-ml-8 bg-black hidden md:block">
-                <img
-                    alt=""
-                    src="https:///photo-1487017159836-4e23ece2e4cf?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2102&q=80"
-                    className="aspect-[3/2] w-full bg-gray-50 object-cover lg:inset-0 lg:aspect-auto lg:h-full"
-                />
-            </div>
-            <div className="w-full md:w-1/2 h-full flex items-center justify-center px-6 lg:px-8 ">
-                <div className="max-w-lg w-full">
+        <div className="m-auto max-w-7xl flex justify-center items-center lg:gap-x-8 lg:px-8 min-h-screen">
+            <div className="w-full h-full flex items-center justify-center px-6 lg:px-8 ">
+                <div className="max-w-lg w-full flex items-center justify-center flex-col">
                     {existingCode && (
-                        <button className="mb-10 lg:mb-16 w-full" onClick={handleResumeGame}>
+                        <button className="mb-10 lg:mb-16 w-fit" onClick={handleResumeGame}>
                             <div className="relative w-full flex flex-col md:flex-row gap-1 md:gap-2 rounded-full px-4 py-2 text-sm text-gray-200 bg-gray-800 ring-1 ring-gray-100/20 hover:ring-gray-100/30">
                                 <p className="hidden md:block">You already have an active game!</p>
                                 <p className="whitespace-nowrap font-semibold text-indigo-400 hover:text-indigo-500 transition">
@@ -64,7 +57,7 @@ export default function HomePage() {
                     <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">
                         Quantum Code
                     </h1>
-                    <p className="mt-8 text-lg font-medium text-gray-300 sm:text-xl">
+                    <p className="mt-8 text-lg font-medium text-gray-300 sm:text-xl text-center">
                         Embark on a journey of secrets and strategy. Retake your position as a
                         master spy or join a game to test your wits!
                     </p>

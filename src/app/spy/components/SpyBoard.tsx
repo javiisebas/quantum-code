@@ -13,8 +13,8 @@ interface SpyBoardProps {
 export const SpyBoard: FC<SpyBoardProps> = ({ roles }) => {
     return (
         <div className="max-w-xl aspect-square w-[90%] h-[90%] rounded-xl bg-gray-400/50 p-2 ring-1 ring-inset ring-gray-900/10 lg:-m-4 lg:rounded-2xl lg:p-4 shadow-2xl shadow-gray-200/10">
-            <div className="bg-gray-700 w-full h-full p-1 rounded-lg">
-                <div className="grid grid-cols-5 grid-rows-5 gap-1 mx-auto w-full h-full">
+            <div className="bg-gray-900 w-full h-full p-2 rounded-lg">
+                <div className="grid grid-cols-5 grid-rows-5 gap-2 mx-auto w-full h-full">
                     {roles.map((role, index) => (
                         <motion.div
                             key={index}
