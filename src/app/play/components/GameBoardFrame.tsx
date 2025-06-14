@@ -22,7 +22,7 @@ export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
     if (loading) {
         return (
             <div className="h-screen w-screen flex items-center justify-center">
-                <Spinner size="lg" />
+                <Spinner size="lg" color="default" />
             </div>
         );
     }
