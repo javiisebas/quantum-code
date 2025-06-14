@@ -1,10 +1,8 @@
-import { SpyBoardMenu } from './components/SpyBoardMenu';
+import { ChildrenProps } from '@/types/children.type';
+import { FC } from 'react';
+import { SpyBoardMenu } from './SpyBoardMenu';
 
-export default function PlayLayout({
-    children,
-}: Readonly<{
-    children: React.ReactNode;
-}>) {
+export const SpyBoardFrame: FC<ChildrenProps> = ({ children }) => {
     return (
         <div className="relative overflow-hidden min-h-screen flex items-center justify-center">
             {children}
@@ -14,4 +12,4 @@ export default function PlayLayout({
             </div>
         </div>
     );
-}
+};

@@ -48,32 +48,34 @@ export default function RootLayout({
                     />
                 </svg>
 
-                <svg
-                    viewBox="0 0 1024 1024"
-                    aria-hidden="true"
-                    className="absolute left-1/2 top-1/2 -z-10 size-[300rem] -translate-x-1/2"
-                >
-                    <circle
-                        r={512}
-                        cx={512}
-                        cy={512}
-                        fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fillOpacity="0.7"
-                    />
-                    <defs>
-                        <radialGradient
-                            r={1}
-                            cx={0}
-                            cy={0}
-                            id="759c1415-0410-454c-8f7c-9a820de03641"
-                            gradientUnits="userSpaceOnUse"
-                            gradientTransform="translate(512 512) rotate(90) scale(512)"
-                        >
-                            <stop stopColor="#C27AFF" />
-                            <stop offset={1} stopColor="#C27AFF" stopOpacity={0} />
-                        </radialGradient>
-                    </defs>
-                </svg>
+                <div className="absolute inset-0 -z-10 overflow-hidden">
+                    <svg
+                        viewBox="0 0 1024 1024"
+                        aria-hidden="true"
+                        className="absolute left-1/2 top-1/2 -z-10 size-[300rem] -translate-x-1/2"
+                    >
+                        <circle
+                            r={512}
+                            cx={512}
+                            cy={512}
+                            fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                            fillOpacity="0.7"
+                        />
+                        <defs>
+                            <radialGradient
+                                r={1}
+                                cx={0}
+                                cy={0}
+                                id="759c1415-0410-454c-8f7c-9a820de03641"
+                                gradientUnits="userSpaceOnUse"
+                                gradientTransform="translate(512 512) rotate(90) scale(512)"
+                            >
+                                <stop stopColor="#C27AFF" />
+                                <stop offset={1} stopColor="#C27AFF" stopOpacity={0} />
+                            </radialGradient>
+                        </defs>
+                    </svg>
+                </div>
 
                 <RootProviders>
                     {children}

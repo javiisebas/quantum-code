@@ -9,7 +9,7 @@ import { ManageRolesService } from './api/roles/services/manage-roles.service';
 
 export default function HomePage() {
     const [existingCode, setExistingCode] = useState<number | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -18,6 +18,7 @@ export default function HomePage() {
         );
 
         if (savedCode) setExistingCode(savedCode);
+
         setLoading(false);
     }, []);
 
@@ -41,8 +42,6 @@ export default function HomePage() {
     };
 
     const handleJoinAsSpy = () => {
-        setLoading(true);
-
         router.push('/spy');
     };
 
@@ -67,7 +66,7 @@ export default function HomePage() {
                         Embark on a journey of secrets and strategy. Retake your position as a
                         master spy or join a game to test your wits!
                     </p>
-                    <div className="mt-10 flex flex-col md:flex-row items-center gap-y-4 gap-x-6">
+                    <div className="mt-10 w-full flex flex-col md:flex-row items-center justify-center gap-y-4 gap-x-6">
                         <Button
                             size="lg"
                             onClick={handleNewGame}
