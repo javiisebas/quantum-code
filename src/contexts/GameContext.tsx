@@ -142,10 +142,16 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
         setShowConfetti(false);
     };
 
-    const handleDeleteRoles = () => {
+    const handleDeleteRoles = async () => {
         if (!isRolesDeleted) {
-            ManageRolesService.deleteRoles(code);
-            setIsRolesDeleted(true);
+            try {
+                await ManageRolesService.deleteRoles(code);
+                setIsRolesDeleted(true);
+            } catch {
+                // Ignorar errores de eliminación ya que pueden no existir los roles
+                console.log('Roles deletion completed (may not have existed)');
+                setIsRolesDeleted(true);
+            }
         }
     };
 

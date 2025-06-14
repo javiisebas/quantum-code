@@ -9,6 +9,7 @@ import { ManageRolesService } from './api/roles/services/manage-roles.service';
 
 export default function HomePage() {
     const [existingCode, setExistingCode] = useState<number | null>(null);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
@@ -16,6 +17,7 @@ export default function HomePage() {
             GameLocalStorageKeyEnum.GAME_CODE,
         );
         if (savedCode) setExistingCode(savedCode);
+        setLoading(false);
     }, []);
 
     const handleResumeGame = () => {
@@ -23,6 +25,8 @@ export default function HomePage() {
     };
 
     const handleNewGame = () => {
+        setLoading(true);
+
         for (const key of Object.keys(GameLocalStorageKeyEnum)) {
             const value = GameLocalStorageKeyEnum[key as keyof typeof GameLocalStorageKeyEnum];
             LocalStorageHelper.removeLocalStorageItem(value);
@@ -31,12 +35,13 @@ export default function HomePage() {
         if (existingCode) {
             ManageRolesService.deleteRoles(existingCode);
         }
-        console.log('New game started');
 
         router.push(`/play`);
     };
 
     const handleJoinAsSpy = () => {
+        setLoading(true);
+
         router.push('/spy');
     };
 
@@ -65,6 +70,7 @@ export default function HomePage() {
                         <Button
                             size="lg"
                             onClick={handleNewGame}
+                            isLoading={loading}
                             className="w-full md:w-fit bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
                         >
                             New Game

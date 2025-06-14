@@ -29,10 +29,11 @@ export class HttpRoleService {
             method: 'DELETE',
         });
 
+        if (response.status === 404) {
+            return;
+        }
+
         if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error(`Roles not found for code: ${code}`);
-            }
             throw new Error(`Failed to delete roles: ${response.statusText}`);
         }
     }
