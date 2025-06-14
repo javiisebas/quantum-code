@@ -30,14 +30,16 @@ export const GameBoardCard: FC<CardProps> = ({ index }) => {
     };
 
     const sharedClasses =
-        'w-full h-full flex items-center justify-center font-medium rounded-md p-4 md:text-md lg:text-lg xl:text-xl';
+        'w-full h-full flex items-center justify-center font-medium rounded-lg p-4 md:text-md lg:text-lg xl:text-xl shadow-md';
 
     return (
         <div className="perspective" onClick={handleClick}>
             <div className={ClassnameHelper.join('flip-card-inner', revealed ? 'flipped' : '')}>
                 <div
                     className={ClassnameHelper.join(
-                        'flip-card-front bg-gray-300 text-gray-900 cursor-pointer hover:bg-gray-300/80 hover:scale-[1.02] transition-transform duration-300',
+                        'flip-card-front bg-gray-300 text-purple-900 transition-transform duration-300',
+                        gameStatus === GameStatusEnum.PLAYING &&
+                            'cursor-pointer hover:bg-gray-300/80 hover:scale-[1.02]',
                         sharedClasses,
                     )}
                 >

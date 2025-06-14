@@ -69,8 +69,8 @@ export default function RootLayout({
                             gradientUnits="userSpaceOnUse"
                             gradientTransform="translate(512 512) rotate(90) scale(512)"
                         >
-                            <stop stopColor="#fb923c" />
-                            <stop offset={1} stopColor="#fb923c" stopOpacity={0} />
+                            <stop stopColor="#C27AFF" />
+                            <stop offset={1} stopColor="#C27AFF" stopOpacity={0} />
                         </radialGradient>
                     </defs>
                 </svg>

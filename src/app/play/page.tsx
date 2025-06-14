@@ -2,7 +2,7 @@ import { GameBoard } from './components/GameBoard';
 
 export default function PlayPage() {
     return (
-        <div className="flex items-center justify-center">
+        <div className="relative flex items-center justify-center w-full h-screen overflow-hidden">
             <GameBoard />
         </div>
     );

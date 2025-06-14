@@ -2,7 +2,6 @@
 
 import { Icon } from '@/app/components/ui/Icon';
 import { IconEnum } from '@/enum/icon.enum';
-import { ClassnameHelper } from '@/helpers/clean-classname.helper';
 import { Button } from '@nextui-org/react';
 import { useRouter } from 'next/navigation';
 import { FC } from 'react';
@@ -16,6 +15,11 @@ export const SpyBoardMenu: FC = () => {
             onClick: () => router.push('/'),
             color: 'border-teal-300 bg-teal-100 hover:bg-teal-200/80 text-teal-500',
         },
+        {
+            icon: IconEnum.REFRESH,
+            onClick: () => router.push('/spy'),
+            color: 'border-red-300 bg-red-100 outline-red-100 hover:bg-red-100/90 text-red-500',
+        },
     ];
 
     return (
@@ -27,7 +31,7 @@ export const SpyBoardMenu: FC = () => {
                     onClick={btn.onClick}
                     size="lg"
                     radius="full"
-                    className={ClassnameHelper.join('border-2', btn.color)}
+                    className="text-white bg-purple-100/10 hover:bg-purple-100/20 ring-1 ring-gray-100/20 hover:ring-gray-100/30"
                 >
                     <Icon name={btn.icon} />
                 </Button>

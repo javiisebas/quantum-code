@@ -46,9 +46,9 @@ export default function HomePage() {
                 <div className="max-w-lg w-full flex items-center justify-center flex-col">
                     {existingCode && (
                         <button className="mb-10 lg:mb-16 w-fit" onClick={handleResumeGame}>
-                            <div className="relative w-full flex flex-col md:flex-row gap-1 md:gap-2 rounded-full px-4 py-2 text-sm text-gray-200 bg-gray-800 ring-1 ring-gray-100/20 hover:ring-gray-100/30">
+                            <div className="relative w-full flex flex-col md:flex-row gap-1 md:gap-2 rounded-full px-4 py-2 text-sm text-gray-200 bg-green-100/10 ring-1 ring-gray-100/20 hover:ring-gray-100/30">
                                 <p className="hidden md:block">You already have an active game!</p>
-                                <p className="whitespace-nowrap font-semibold text-indigo-400 hover:text-indigo-500 transition">
+                                <p className="whitespace-nowrap font-semibold text-green-400 hover:text-green-500 transition">
                                     Resume your game <span aria-hidden="true">&rarr;</span>
                                 </p>
                             </div>
@@ -65,14 +65,14 @@ export default function HomePage() {
                         <Button
                             size="lg"
                             onClick={handleNewGame}
-                            className="w-full md:w-fit rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            className="w-full md:w-fit bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
                         >
                             New Game
                         </Button>
                         <Button
                             size="lg"
                             onClick={handleJoinAsSpy}
-                            className="w-full md:w-fit rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            className="w-full md:w-fit bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
                         >
                             Join as Spy
                         </Button>

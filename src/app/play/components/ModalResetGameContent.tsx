@@ -20,7 +20,7 @@ export const ModalResetGameContent: FC<ModalResetGameContentProps> = ({ resetGam
                     Cancel
                 </Button>
                 <Button
-                    color="primary"
+                    className="w-full md:w-fit bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
                     onPress={() => {
                         resetGame();
                         closeModal();

@@ -8,7 +8,7 @@ export default function ModalComponent() {
 
     return (
         <Modal backdrop="opaque" isOpen={isOpen} onClose={closeModal}>
-            <ModalContent>{modalContent}</ModalContent>
+            <ModalContent className="bg-gray-900">{modalContent}</ModalContent>
         </Modal>
     );
 }

@@ -25,7 +25,7 @@ export const SpyBoard: FC<SpyBoardProps> = ({ roles }) => {
                             <div
                                 className={ClassnameHelper.join(
                                     getCardColor(role),
-                                    'w-full h-full shadow-none border-2 rounded-md',
+                                    'w-full h-full shadow-none border-2 rounded-lg',
                                 )}
                             ></div>
                         </motion.div>

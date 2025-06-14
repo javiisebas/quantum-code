@@ -17,7 +17,7 @@ export const GameBoardTable: FC = () => {
     return (
         <div
             key={resetKey}
-            className="grid grid-cols-5 grid-rows-5 gap-4 w-full h-full p-4 mx-auto"
+            className="grid grid-cols-5 grid-rows-5 gap-3 w-full h-5/6 mx-auto z-10"
         >
             {getFilledWordsArray(0).map((_, index) => (
                 <motion.div
