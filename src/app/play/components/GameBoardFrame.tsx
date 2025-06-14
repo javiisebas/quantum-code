@@ -9,6 +9,8 @@ import { Spinner } from '@nextui-org/react';
 import { FC, useEffect } from 'react';
 import { GameBoardLost } from './GameBoardLost';
 import { GameBoardWon } from './GameBoardWon';
+import { GameLocalStorageKeyEnum } from '@/enum/game-local-storage-key.enum';
+import { LocalStorageHelper } from '@/helpers/local-storage.helper';
 
 export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
     const { loading, code, gameStatus } = useGame();
@@ -16,6 +18,7 @@ export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
     useEffect(() => {
         if (gameStatus !== GameStatusEnum.PLAYING) {
             ManageRolesService.deleteRoles(code);
+            LocalStorageHelper.removeLocalStorageItem(GameLocalStorageKeyEnum.GAME_CODE);
         }
     }, [gameStatus, code]);
 
