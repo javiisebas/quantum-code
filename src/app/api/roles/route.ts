@@ -1,4 +1,4 @@
-import { FileService } from '@/app/api/roles/services/file.service';
+import { RoleService } from '@/app/api/roles/services/role.service';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     }
 
     try {
-        const roles = await FileService.readRoles(code);
+        const roles = await RoleService.readRoles(code);
         if (!roles) {
             return NextResponse.json(null);
         }
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     }
 
     try {
-        await FileService.writeRoles(code, roles);
+        await RoleService.writeRoles(code, roles);
         return NextResponse.json({ message: 'Roles saved successfully' });
     } catch (error: unknown) {
         if (error instanceof Error) {
@@ -63,7 +63,7 @@ export async function DELETE(request: Request) {
     }
 
     try {
-        const success = await FileService.deleteRoles(code);
+        const success = await RoleService.deleteRoles(code);
         if (!success) {
             return NextResponse.json(
                 { error: 'Roles not found or could not be deleted' },
