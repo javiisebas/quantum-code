@@ -16,6 +16,7 @@ export default function HomePage() {
         const savedCode = LocalStorageHelper.getLocalStorageItem<number>(
             GameLocalStorageKeyEnum.GAME_CODE,
         );
+
         if (savedCode) setExistingCode(savedCode);
         setLoading(false);
     }, []);
