@@ -32,11 +32,10 @@ export class RoleService {
                 );
             }
 
-            const url = process.env[pair[0]]!;
-            // Diagnostic (no secrets): which var + host the client connects to.
-            console.log(`[RoleService] Redis via ${pair[0]} → ${new URL(url).host}`);
-
-            this.client = new Redis({ url, token: process.env[pair[1]]! });
+            this.client = new Redis({
+                url: process.env[pair[0]]!,
+                token: process.env[pair[1]]!,
+            });
         }
         return this.client;
     }
