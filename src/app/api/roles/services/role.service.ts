@@ -5,27 +5,37 @@ export class RoleService {
     private static readonly TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days in seconds
     private static client: Redis | null = null;
 
+    // (url, token) env-var name pairs, in priority order. Covers the Upstash SDK
+    // native names (local `.env.local`), the Vercel KV integration, and the Upstash
+    // Vercel marketplace integration (`UPSTASH_REDIS_` prefix) — all the same endpoint.
+    private static readonly CREDENTIAL_ENV_PAIRS: readonly [string, string][] = [
+        ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'],
+        ['KV_REST_API_URL', 'KV_REST_API_TOKEN'],
+        ['UPSTASH_REDIS_REST_API_URL', 'UPSTASH_REDIS_REST_API_TOKEN'],
+    ];
+
     /**
      * Lazily create and cache the Redis client. Building it at module load would
      * throw when env vars are absent (e.g. during `next build`, which imports this
      * module); creating it on first use keeps the import side-effect free.
-     *
-     * Reads either the Upstash-native variables (`UPSTASH_REDIS_REST_*`, used in
-     * local `.env.local`) or the Vercel KV integration variables (`KV_REST_API_*`,
-     * injected in the Vercel deployment) — both are the same Upstash REST endpoint.
      */
     private static getClient(): Redis {
         if (!this.client) {
-            const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
-            const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+            const pair = this.CREDENTIAL_ENV_PAIRS.find(
+                ([urlKey, tokenKey]) => process.env[urlKey] && process.env[tokenKey],
+            );
 
-            if (!url || !token) {
+            if (!pair) {
                 throw new Error(
-                    'Missing Redis credentials: set UPSTASH_REDIS_REST_URL/TOKEN or KV_REST_API_URL/TOKEN',
+                    'Missing Redis credentials: set one of UPSTASH_REDIS_REST_URL/TOKEN, ' +
+                        'KV_REST_API_URL/TOKEN, or UPSTASH_REDIS_REST_API_URL/TOKEN',
                 );
             }
 
-            this.client = new Redis({ url, token });
+            this.client = new Redis({
+                url: process.env[pair[0]]!,
+                token: process.env[pair[1]]!,
+            });
         }
         return this.client;
     }
