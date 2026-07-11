@@ -1,35 +1,39 @@
 {
-    "name": "secret-code-game",
+    "name": "quantum-code",
     "version": "0.1.0",
     "private": true,
+    "packageManager": "pnpm@11.1.1",
     "scripts": {
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
-        "format": "prettier --write ."
+        "typecheck": "tsc --noEmit",
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
     },
     "dependencies": {
-        "@nextui-org/react": "^2.4.8",
-        "@tailwindcss/forms": "^0.5.9",
-        "@upstash/redis": "^1.35.0",
+        "@heroui/react": "~2.7.11",
+        "@tailwindcss/forms": "^0.5.11",
+        "@upstash/redis": "^1.38.0",
         "clsx": "^2.1.1",
-        "framer-motion": "^12.18.1",
-        "next": "15.0.1",
-        "react": "^19.1.0",
-        "react-confetti": "^6.1.0",
-        "react-dom": "^19.1.0",
-        "react-icons": "^5.3.0"
+        "framer-motion": "^12.42.2",
+        "next": "^15.5.20",
+        "react": "^19.2.0",
+        "react-confetti": "^6.4.0",
+        "react-dom": "^19.2.0",
+        "react-icons": "^5.7.0"
     },
     "devDependencies": {
-        "@types/node": "^20",
-        "@types/react": "^19.1.8",
-        "@types/react-dom": "^19.1.6",
-        "eslint": "^8",
-        "eslint-config-next": "15.0.1",
-        "postcss": "^8",
-        "prettier": "^3.5.3",
-        "tailwindcss": "^3.4.1",
-        "typescript": "^5"
+        "@eslint/eslintrc": "^3.3.6",
+        "@types/node": "^22.20.1",
+        "@types/react": "^19.2.17",
+        "@types/react-dom": "^19.2.3",
+        "eslint": "^9.39.5",
+        "eslint-config-next": "^15.5.20",
+        "postcss": "^8.5.16",
+        "prettier": "^3.9.5",
+        "tailwindcss": "^3.4.19",
+        "typescript": "^5.9.3"
     }
 }

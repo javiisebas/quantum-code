@@ -2,24 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-    --background: #ffffff;
-    --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #0a0a0a;
-        --foreground: #ededed;
-    }
-}
-
+/* The app renders in a fixed dark theme (the `dark` class is set on <html>). */
 body {
-    color: var(--foreground);
-    background: var(--background);
+    color: #ededed;
     font-family: var(--font-montserrat), sans-serif;
 }
 
+/* 3D flip animation used by the board cards. */
 .perspective {
     perspective: 1000px;
     width: 100%;

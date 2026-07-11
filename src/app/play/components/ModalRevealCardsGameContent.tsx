@@ -1,5 +1,6 @@
+import { PrimaryButton } from '@/app/components/ui/Button';
 import { useModal } from '@/contexts/ModalContext';
-import { Button, ModalBody, ModalFooter, ModalHeader } from '@nextui-org/react';
+import { Button, ModalBody, ModalFooter, ModalHeader } from '@heroui/react';
 import { FC } from 'react';
 
 interface ModalRevealCardsGameContentProps {
@@ -24,15 +25,15 @@ export const ModalRevealCardsGameContent: FC<ModalRevealCardsGameContentProps> =
                 <Button color="danger" variant="light" onPress={() => closeModal()}>
                     Cancel
                 </Button>
-                <Button
-                    className="w-full md:w-fit bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
+                <PrimaryButton
+                    className="w-full md:w-fit"
                     onPress={() => {
                         revealAll();
                         closeModal();
                     }}
                 >
                     Confirm
-                </Button>
+                </PrimaryButton>
             </ModalFooter>
         </div>
     );

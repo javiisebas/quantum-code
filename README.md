@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Quantum Code
 
-## Getting Started
+A [Codenames](<https://en.wikipedia.org/wiki/Codenames_(board_game)>)-style party game built with the
+Next.js App Router. One device acts as the shared **board**; spies join from their own phones using a
+game code to see the secret role map.
 
-First, run the development server:
+## Stack
+
+- **Next.js 15** (App Router) + **React 19**
+- **TypeScript** (strict)
+- **HeroUI** + **Tailwind CSS 3** for the UI
+- **Framer Motion** for animations
+- **Upstash Redis** as the backing store for game role maps (7‑day TTL)
+
+## Getting started
+
+Requires **Node 22+** and **pnpm 11+**.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.local.example .env.local   # then fill in your Upstash credentials
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a free Redis database at [Upstash](https://console.upstash.com) and set:
 
-## Learn More
+| Variable                   | Description                         |
+| -------------------------- | ----------------------------------- |
+| `UPSTASH_REDIS_REST_URL`   | REST URL of your Upstash database   |
+| `UPSTASH_REDIS_REST_TOKEN` | REST token of your Upstash database |
 
-To learn more about Next.js, take a look at the following resources:
+These are read by `Redis.fromEnv()` on the server. Never commit real credentials — `.env*` is gitignored.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## How it works
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **/** — landing page: start a new game, resume an in‑progress one, or join as a spy.
+- **/play** — the shared board. Words and role assignments are generated locally and persisted to
+  `localStorage`; the role map is also written to Redis under the game code so spies can fetch it.
+- **/spy?code=XXXXXX** — a spy enters the game code and sees the colour map for that board.
 
-## Deploy on Vercel
+Game rules live in [`src/consts.ts`](src/consts.ts): 25 words per board — 7 red, 6 blue, 11 neutral and
+1 assassin (black).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Script              | Description                   |
+| ------------------- | ----------------------------- |
+| `pnpm dev`          | Start the dev server          |
+| `pnpm build`        | Production build              |
+| `pnpm start`        | Serve the production build    |
+| `pnpm lint`         | ESLint (Next.js config, flat) |
+| `pnpm typecheck`    | `tsc --noEmit`                |
+| `pnpm format`       | Format with Prettier          |
+| `pnpm format:check` | Check formatting              |
+
+## Project structure
+
+```
+src/
+  app/               App Router routes (/, /play, /spy) + API (/api/roles)
+    components/ui/   Shared UI primitives (Button, Icon, Modal)
+  contexts/          Game + Modal React contexts
+  services/          Pure game logic (shuffle, word/role generation, win check)
+  helpers/           localStorage + className helpers
+  enum/ · types/     Shared enums and types
+  consts.ts          Board composition constants
+```
+
+Continuous integration (type check, lint, build) runs on every push and pull request via
+[GitHub Actions](.github/workflows/ci.yml).

@@ -1,6 +1,7 @@
 'use client';
 
-import { Button, Input } from '@nextui-org/react';
+import { PrimaryButton } from '@/app/components/ui/Button';
+import { Input } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FC, FormEvent, useState } from 'react';
 
@@ -47,13 +48,9 @@ export const SpyJoinGame: FC = () => {
                                 variant="faded"
                             />
 
-                            <Button
-                                size="lg"
-                                type="submit"
-                                className="w-full bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
-                            >
+                            <PrimaryButton type="submit" className="w-full">
                                 Join Game
-                            </Button>
+                            </PrimaryButton>
                         </form>
 
                         <svg
@@ -65,7 +62,7 @@ export const SpyJoinGame: FC = () => {
                                 r={512}
                                 cx={512}
                                 cy={512}
-                                fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                                fill="url(#spy-join-gradient)"
                                 fillOpacity="0.7"
                             />
                             <defs>
@@ -73,7 +70,7 @@ export const SpyJoinGame: FC = () => {
                                     r={1}
                                     cx={0}
                                     cy={0}
-                                    id="759c1415-0410-454c-8f7c-9a820de03641"
+                                    id="spy-join-gradient"
                                     gradientUnits="userSpaceOnUse"
                                     gradientTransform="translate(512 512) rotate(90) scale(512)"
                                 >

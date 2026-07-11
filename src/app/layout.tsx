@@ -13,7 +13,8 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
     title: 'Quantum Code',
-    description: 'Quantum Code',
+    description:
+        'A Codenames-style spy game. Crack the code, outwit your rivals, and lead your team to victory.',
 };
 
 export default function RootLayout({
@@ -58,7 +59,7 @@ export default function RootLayout({
                             r={512}
                             cx={512}
                             cy={512}
-                            fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                            fill="url(#layout-bg-gradient)"
                             fillOpacity="0.7"
                         />
                         <defs>
@@ -66,7 +67,7 @@ export default function RootLayout({
                                 r={1}
                                 cx={0}
                                 cy={0}
-                                id="759c1415-0410-454c-8f7c-9a820de03641"
+                                id="layout-bg-gradient"
                                 gradientUnits="userSpaceOnUse"
                                 gradientTransform="translate(512 512) rotate(90) scale(512)"
                             >

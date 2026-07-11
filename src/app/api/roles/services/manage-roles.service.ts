@@ -3,10 +3,6 @@ import { shuffleRoles } from '@/services/shuffle-roles';
 import { HttpRoleService } from './http-role.service';
 
 export class ManageRolesService {
-    static async getRoles(code: number): Promise<string[] | null> {
-        return HttpRoleService.fetchRoles(code);
-    }
-
     static async getOrCreateRoles(code: number): Promise<RoleEnum[]> {
         const existingRoles = await HttpRoleService.fetchRoles(code);
         if (existingRoles) {

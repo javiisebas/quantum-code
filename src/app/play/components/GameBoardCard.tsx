@@ -4,46 +4,53 @@ import { useGame } from '@/contexts/GameContext';
 import { GameStatusEnum } from '@/enum/game-status.enum';
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
 import { getCardColor } from '@/services/get-card-color';
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 
 interface CardProps {
     index: number;
 }
 
+const sharedClasses =
+    'w-full h-full flex items-center justify-center font-medium rounded-lg p-1 sm:p-2 md:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl shadow-md';
+
 export const GameBoardCard: FC<CardProps> = ({ index }) => {
-    const [revealed, setRevealed] = useState(false);
     const { gameStatus, handleCardClick, roles, words, revealedRoles } = useGame();
 
     const role = roles[index];
     const word = words[index];
 
-    useEffect(() => {
-        if (gameStatus === GameStatusEnum.RESOLVED) setRevealed(true);
-        else if (gameStatus === GameStatusEnum.PLAYING) setRevealed(revealedRoles[index]);
-    }, [gameStatus, revealedRoles, index]);
+    // Single source of truth: the card's revealed state lives in the game context.
+    // `revealAll` also flips every entry to `true`, so this covers the RESOLVED case.
+    const revealed = revealedRoles[index];
+    const isInteractive = gameStatus === GameStatusEnum.PLAYING && !revealed;
 
     const handleClick = () => {
-        if (!revealed && gameStatus === GameStatusEnum.PLAYING) {
-            setRevealed(true);
-            handleCardClick(index);
-        }
+        if (isInteractive) handleCardClick(index);
     };
 
-    const sharedClasses =
-        'w-full h-full flex items-center justify-center font-medium rounded-lg p-4 md:text-md lg:text-lg xl:text-xl shadow-md';
-
     return (
-        <div className="perspective" onClick={handleClick}>
-            <div className={ClassnameHelper.join('flip-card-inner', revealed ? 'flipped' : '')}>
+        <button
+            type="button"
+            onClick={handleClick}
+            disabled={!isInteractive}
+            aria-label={revealed ? `${word} (revealed)` : word}
+            className={ClassnameHelper.join(
+                'perspective block appearance-none border-0 bg-transparent p-0 rounded-lg',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
+                isInteractive && 'cursor-pointer',
+            )}
+        >
+            <div className={ClassnameHelper.join('flip-card-inner', revealed && 'flipped')}>
                 <div
                     className={ClassnameHelper.join(
                         'flip-card-front bg-gray-100/80 text-purple-900 transition-transform duration-300',
-                        gameStatus === GameStatusEnum.PLAYING &&
-                            'cursor-pointer hover:bg-gray-50 hover:scale-[1.02]',
+                        isInteractive && 'hover:bg-gray-50 hover:scale-[1.02]',
                         sharedClasses,
                     )}
                 >
-                    <span className="text-center uppercase tracking-wide">{word}</span>
+                    <span className="w-full break-words text-center uppercase leading-tight tracking-tight sm:tracking-wide">
+                        {word}
+                    </span>
                 </div>
 
                 <div
@@ -53,9 +60,11 @@ export const GameBoardCard: FC<CardProps> = ({ index }) => {
                         getCardColor(role),
                     )}
                 >
-                    <span className="text-center uppercase tracking-wide">{word}</span>
+                    <span className="w-full break-words text-center uppercase leading-tight tracking-tight sm:tracking-wide">
+                        {word}
+                    </span>
                 </div>
             </div>
-        </div>
+        </button>
     );
 };

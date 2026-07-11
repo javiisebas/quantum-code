@@ -1,8 +1,8 @@
 'use client';
 
+import { PrimaryButton } from '@/app/components/ui/Button';
 import { GameLocalStorageKeyEnum } from '@/enum/game-local-storage-key.enum';
 import { LocalStorageHelper } from '@/helpers/local-storage.helper';
-import { Button } from '@nextui-org/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ManageRolesService } from './api/roles/services/manage-roles.service';
@@ -50,7 +50,12 @@ export default function HomePage() {
             <div className="w-full h-full flex items-center justify-center px-6 lg:px-8 ">
                 <div className="max-w-lg w-full flex items-center justify-center flex-col">
                     {existingCode && (
-                        <button className="mb-10 lg:mb-16 w-fit" onClick={handleResumeGame}>
+                        <button
+                            type="button"
+                            aria-label="Resume your active game"
+                            className="mb-10 lg:mb-16 w-fit"
+                            onClick={handleResumeGame}
+                        >
                             <div className="relative w-full flex flex-col md:flex-row gap-1 md:gap-2 rounded-full px-4 py-2 text-sm text-gray-200 bg-green-100/10 ring-1 ring-gray-100/20 hover:ring-gray-100/30">
                                 <p className="hidden md:block">You already have an active game!</p>
                                 <p className="whitespace-nowrap font-semibold text-green-400 hover:text-green-500 transition">
@@ -67,21 +72,16 @@ export default function HomePage() {
                         master spy or join a game to test your wits!
                     </p>
                     <div className="mt-10 w-full flex flex-col md:flex-row items-center justify-center gap-y-4 gap-x-6">
-                        <Button
-                            size="lg"
-                            onClick={handleNewGame}
+                        <PrimaryButton
+                            onPress={handleNewGame}
                             isLoading={loading}
-                            className="w-full md:w-fit bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
+                            className="w-full md:w-fit"
                         >
                             New Game
-                        </Button>
-                        <Button
-                            size="lg"
-                            onClick={handleJoinAsSpy}
-                            className="w-full md:w-fit bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
-                        >
+                        </PrimaryButton>
+                        <PrimaryButton onPress={handleJoinAsSpy} className="w-full md:w-fit">
                             Join as Spy
-                        </Button>
+                        </PrimaryButton>
                     </div>
                 </div>
             </div>

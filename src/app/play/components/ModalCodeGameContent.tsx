@@ -1,6 +1,6 @@
 'use client';
 
-import { ModalBody, ModalHeader, Snippet } from '@nextui-org/react';
+import { ModalBody, ModalHeader, Snippet } from '@heroui/react';
 import { FC } from 'react';
 
 interface ModalCodeGameContentProps {

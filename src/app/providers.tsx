@@ -1,10 +1,10 @@
 import { ModalProvider } from '@/contexts/ModalContext';
-import { NextUIProvider } from '@nextui-org/react';
+import { HeroUIProvider } from '@heroui/react';
 
 export function RootProviders({ children }: { children: React.ReactNode }) {
     return (
-        <NextUIProvider>
+        <HeroUIProvider>
             <ModalProvider>{children}</ModalProvider>
-        </NextUIProvider>
+        </HeroUIProvider>
     );
 }

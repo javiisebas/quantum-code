@@ -5,7 +5,7 @@ import { useGame } from '@/contexts/GameContext';
 import { GameStatusEnum } from '@/enum/game-status.enum';
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
 import { ChildrenProps } from '@/types/children.type';
-import { Spinner } from '@nextui-org/react';
+import { Spinner } from '@heroui/react';
 import { FC, useEffect } from 'react';
 import { GameBoardLost } from './GameBoardLost';
 import { GameBoardWon } from './GameBoardWon';

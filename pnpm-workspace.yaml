@@ -1,0 +1,11 @@
+allowBuilds:
+  '@heroui/shared-utils': set this to true or false
+  sharp: set this to true or false
+  unrs-resolver: set this to true or false
+
+overrides:
+  glob: '>=10.5.0'
+  postcss: '>=8.5.10'
+
+publicHoistPattern:
+  - '*@heroui/*'

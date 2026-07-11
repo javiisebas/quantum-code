@@ -1,13 +1,11 @@
-import { nextui } from '@nextui-org/react';
+import { heroui } from '@heroui/react';
 import forms from '@tailwindcss/forms';
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
     content: [
-        './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-        './src/components/**/*.{js,ts,jsx,tsx,mdx}',
         './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-        './node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}',
+        './node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}',
     ],
     theme: {
         extend: {
@@ -18,29 +16,32 @@ const config: Config = {
         },
     },
     darkMode: 'class',
-    plugins: [forms(), nextui()],
+    plugins: [forms(), heroui()],
 
+    // Role colours are applied through `getCardColor`, whose full class strings
+    // are statically present in the source and picked up by Tailwind's scanner.
+    // They are safelisted as a guard so a purge can never drop a board colour.
     safelist: [
-        'bg-black',
+        // blue
         'bg-sky-400',
-        'bg-gray-300',
-        'bg-orange-200',
-        'bg-rose-400',
-        'border-black-500/40',
-        'border-sky-500/40',
-        'border-orange-400/40',
-        'border-rose-500/40',
-        'shadow-black-600/30',
-        'shadow-sky-600/30',
-        'shadow-lg',
-        'shadow-orange-600/30',
-        'shadow-rose-600/30',
-        'text-gray-800',
-        'text-white',
-        'border-gray-300/80',
-        'text-orange-800',
         'text-sky-900',
+        'shadow-sky-600/30',
+        'border-sky-500/40',
+        // red
+        'bg-rose-400',
         'text-rose-900',
+        'shadow-rose-600/30',
+        'border-rose-500/40',
+        // black (assassin)
+        'bg-black',
+        'text-white',
+        'shadow-black/30',
+        'border-gray-300/80',
+        // neutral
+        'bg-orange-200',
+        'text-orange-800',
+        'shadow-orange-600/30',
+        'border-orange-400/40',
     ],
 };
 export default config;
