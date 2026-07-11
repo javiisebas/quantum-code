@@ -10,8 +10,8 @@ export class RoleService {
     // Vercel marketplace integration (`UPSTASH_REDIS_` prefix) — all the same endpoint.
     private static readonly CREDENTIAL_ENV_PAIRS: readonly [string, string][] = [
         ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'],
+        ['UPSTASH_REDIS_KV_REST_API_URL', 'UPSTASH_REDIS_KV_REST_API_TOKEN'],
         ['KV_REST_API_URL', 'KV_REST_API_TOKEN'],
-        ['UPSTASH_REDIS_REST_API_URL', 'UPSTASH_REDIS_REST_API_TOKEN'],
     ];
 
     /**
