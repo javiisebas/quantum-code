@@ -9,10 +9,23 @@ export class RoleService {
      * Lazily create and cache the Redis client. Building it at module load would
      * throw when env vars are absent (e.g. during `next build`, which imports this
      * module); creating it on first use keeps the import side-effect free.
+     *
+     * Reads either the Upstash-native variables (`UPSTASH_REDIS_REST_*`, used in
+     * local `.env.local`) or the Vercel KV integration variables (`KV_REST_API_*`,
+     * injected in the Vercel deployment) — both are the same Upstash REST endpoint.
      */
     private static getClient(): Redis {
         if (!this.client) {
-            this.client = Redis.fromEnv();
+            const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+            const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+
+            if (!url || !token) {
+                throw new Error(
+                    'Missing Redis credentials: set UPSTASH_REDIS_REST_URL/TOKEN or KV_REST_API_URL/TOKEN',
+                );
+            }
+
+            this.client = new Redis({ url, token });
         }
         return this.client;
     }
