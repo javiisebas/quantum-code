@@ -6,12 +6,12 @@ export class RoleService {
     private static client: Redis | null = null;
 
     // (url, token) env-var name pairs, in priority order. Covers the Upstash SDK
-    // native names (local `.env.local`), the Vercel KV integration, and the Upstash
-    // Vercel marketplace integration (`UPSTASH_REDIS_` prefix) — all the same endpoint.
+    // native names (local `.env.local`) and the active Upstash Vercel integration
+    // (`UPSTASH_REDIS_` prefix). The legacy `KV_REST_API_*` vars point at an archived
+    // (dead) database, so they are intentionally NOT used as a fallback.
     private static readonly CREDENTIAL_ENV_PAIRS: readonly [string, string][] = [
         ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'],
         ['UPSTASH_REDIS_KV_REST_API_URL', 'UPSTASH_REDIS_KV_REST_API_TOKEN'],
-        ['KV_REST_API_URL', 'KV_REST_API_TOKEN'],
     ];
 
     /**
@@ -27,15 +27,16 @@ export class RoleService {
 
             if (!pair) {
                 throw new Error(
-                    'Missing Redis credentials: set one of UPSTASH_REDIS_REST_URL/TOKEN, ' +
-                        'KV_REST_API_URL/TOKEN, or UPSTASH_REDIS_REST_API_URL/TOKEN',
+                    'Missing Redis credentials: set UPSTASH_REDIS_REST_URL/TOKEN or ' +
+                        'UPSTASH_REDIS_KV_REST_API_URL/TOKEN',
                 );
             }
 
-            this.client = new Redis({
-                url: process.env[pair[0]]!,
-                token: process.env[pair[1]]!,
-            });
+            const url = process.env[pair[0]]!;
+            // Diagnostic (no secrets): which var + host the client connects to.
+            console.log(`[RoleService] Redis via ${pair[0]} → ${new URL(url).host}`);
+
+            this.client = new Redis({ url, token: process.env[pair[1]]! });
         }
         return this.client;
     }
