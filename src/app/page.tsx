@@ -1,36 +1,8 @@
+import { accentOf } from '@/games/_shared/accents';
 import { gameManifests } from '@/games/registry';
 import type { GameManifest } from '@/games/types';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import Link from 'next/link';
-
-/**
- * Per-accent class strings. Kept as complete literals (not interpolated) so
- * Tailwind's scanner always sees them and never purges a card's colour.
- */
-const ACCENTS: Record<string, { ring: string; glow: string; chip: string }> = {
-    purple: {
-        ring: 'hover:ring-purple-400/60',
-        glow: 'from-purple-500/20',
-        chip: 'bg-purple-400/15 text-purple-200',
-    },
-    rose: {
-        ring: 'hover:ring-rose-400/60',
-        glow: 'from-rose-500/20',
-        chip: 'bg-rose-400/15 text-rose-200',
-    },
-    emerald: {
-        ring: 'hover:ring-emerald-400/60',
-        glow: 'from-emerald-500/20',
-        chip: 'bg-emerald-400/15 text-emerald-200',
-    },
-    amber: {
-        ring: 'hover:ring-amber-400/60',
-        glow: 'from-amber-500/20',
-        chip: 'bg-amber-400/15 text-amber-200',
-    },
-};
-
-const accentOf = (accent: string) => ACCENTS[accent] ?? ACCENTS.purple;
 
 const GameCard = ({ game }: { game: GameManifest }) => {
     const accent = accentOf(game.accent);
@@ -41,7 +13,7 @@ const GameCard = ({ game }: { game: GameManifest }) => {
             className={ClassnameHelper.join(
                 'group relative flex flex-col overflow-hidden rounded-3xl bg-gray-900/70 p-6 text-left ring-1 ring-inset ring-white/10 backdrop-blur transition',
                 'hover:-translate-y-1 hover:bg-gray-900/90',
-                accent.ring,
+                accent.ringHover,
             )}
         >
             <div

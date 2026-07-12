@@ -2,7 +2,7 @@ import { getServerGame } from '@/games/registry.server';
 import { emitRoomEvent } from '@/platform/events/webhooks';
 import { parseCode } from '@/platform/room';
 import { deleteRoom, readRoom, writeRoomIfAbsent } from '@/platform/room/room-store';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 
 /**
  * Generic room endpoint shared by every game: `/api/room/[game]`.
@@ -69,10 +69,14 @@ export async function POST(request: Request, { params }: RouteContext) {
     try {
         // Atomic create-if-absent. Return the AUTHORITATIVE payload (whoever won the
         // race), so the host and every joined phone converge on the same room.
-        const authoritative = await writeRoomIfAbsent(mod.namespace, code, payload);
-        // Best-effort outbound webhook (no-op unless QUANTUM_WEBHOOK_URL is set).
-        emitRoomEvent({ type: 'room.created', game, code });
-        return NextResponse.json(authoritative);
+        const { value, created } = await writeRoomIfAbsent(mod.namespace, code, payload);
+        // Fire the webhook exactly once, only when this call actually created the room,
+        // and as post-response work so a slow/failing hook never blocks the response
+        // (and isn't dropped when the serverless function freezes on return).
+        if (created) {
+            after(() => emitRoomEvent({ type: 'room.created', game, code }));
+        }
+        return NextResponse.json(value);
     } catch (error: unknown) {
         console.error(`Failed to save ${game} room:`, error);
         return NextResponse.json({ error: 'Failed to save room' }, { status: 500 });
@@ -95,7 +99,7 @@ export async function DELETE(request: Request, { params }: RouteContext) {
                 { status: 404 },
             );
         }
-        emitRoomEvent({ type: 'game.ended', game, code });
+        after(() => emitRoomEvent({ type: 'game.ended', game, code }));
         return NextResponse.json({ message: 'Room deleted successfully' });
     } catch (error: unknown) {
         console.error(`Failed to delete ${game} room:`, error);

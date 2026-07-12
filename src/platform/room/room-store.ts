@@ -54,11 +54,17 @@ const parseStored = <T>(data: T | string | null): T | null => {
 interface RoomStore {
     read<T>(namespace: string, code: number): Promise<T | null>;
     /**
-     * Atomic create-if-absent. Returns the AUTHORITATIVE payload: the passed `value`
-     * when this call created the key, or the pre-existing payload when the key already
-     * existed (i.e. a concurrent writer won the race).
+     * Atomic create-if-absent. Returns the AUTHORITATIVE payload plus whether THIS call
+     * actually created the key: `value` + `created: true` when we created it, or the
+     * pre-existing payload + `created: false` when the key already existed (a concurrent
+     * writer, a retry of the same code, etc.). `created` lets callers fire "room created"
+     * side effects exactly once.
      */
-    writeIfAbsent<T>(namespace: string, code: number, value: T): Promise<T>;
+    writeIfAbsent<T>(
+        namespace: string,
+        code: number,
+        value: T,
+    ): Promise<{ value: T; created: boolean }>;
     delete(namespace: string, code: number): Promise<boolean>;
     /**
      * Atomically claim the next seat in a room, returning a 1-based seat number. Used
@@ -96,14 +102,14 @@ const createRedisStore = (url: string, token: string): RoomStore => {
                 });
 
                 if (result === 'OK') {
-                    return value;
+                    return { value, created: true };
                 }
 
                 // A concurrent writer already created the key — return its value as the
                 // authoritative result. Fall back to our candidate only if it vanished
                 // (deleted/expired) between the SET and the GET.
                 const existing = parseStored<T>(await client.get<T | string>(key));
-                return existing ?? value;
+                return { value: existing ?? value, created: false };
             } catch (error: unknown) {
                 throw wrapError('writing', error);
             }
@@ -177,10 +183,10 @@ const createMemoryStore = (): RoomStore => {
             const key = roomKey(namespace, code);
             const existing = readLive<T>(key);
             if (existing !== null) {
-                return existing;
+                return { value: existing, created: false };
             }
             map.set(key, { value, expiresAt: Date.now() + TTL_SECONDS * 1000 });
-            return value;
+            return { value, created: true };
         },
 
         async delete(namespace: string, code: number) {
@@ -242,9 +248,16 @@ const getStore = (): RoomStore => {
 export const readRoom = <T>(namespace: string, code: number): Promise<T | null> =>
     getStore().read<T>(namespace, code);
 
-/** Atomically create a room's payload if absent, returning the authoritative value. */
-export const writeRoomIfAbsent = <T>(namespace: string, code: number, value: T): Promise<T> =>
-    getStore().writeIfAbsent<T>(namespace, code, value);
+/**
+ * Atomically create a room's payload if absent. Returns the authoritative value plus
+ * `created` (true only when this call created the key), so callers can fire
+ * create-once side effects (webhooks, analytics) without double-counting retries.
+ */
+export const writeRoomIfAbsent = <T>(
+    namespace: string,
+    code: number,
+    value: T,
+): Promise<{ value: T; created: boolean }> => getStore().writeIfAbsent<T>(namespace, code, value);
 
 /** Delete a room (payload + seat counter). Returns whether a payload was removed. */
 export const deleteRoom = (namespace: string, code: number): Promise<boolean> =>

@@ -105,7 +105,16 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
             const needsBoard =
                 persisted.status === GameStatusEnum.PLAYING && !persisted.roles?.length;
             dispatch({ type: 'HYDRATE', game: persisted, needsBoard });
-            if (needsBoard) loadBoard(persisted.code);
+            if (needsBoard) {
+                loadBoard(persisted.code);
+            } else if (persisted.status === GameStatusEnum.PLAYING && persisted.roles?.length) {
+                // Re-ensure the published board still exists (7-day TTL) so spies can
+                // rejoin a resumed game. Atomic SET NX → no-op when it's still there.
+                createRoom<Board>(CODENAMES_ID, persisted.code, {
+                    roles: persisted.roles,
+                    words: persisted.words,
+                }).catch(() => {});
+            }
         } else {
             createNewGame({ share: true });
         }

@@ -11,6 +11,7 @@ export function UndercoverHost() {
             game={undercoverManifest.id}
             gameName={undercoverManifest.name}
             emoji={undercoverManifest.emoji}
+            accent={undercoverManifest.accent}
             minPlayers={undercoverManifest.minPlayers}
             maxPlayers={undercoverManifest.maxPlayers}
             build={buildUndercover}

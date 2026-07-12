@@ -1,5 +1,6 @@
 'use client';
 
+import { accentOf } from '@/games/_shared/accents';
 import { LocalStorageHelper } from '@/platform/persistence/local-storage';
 import { generateCode } from '@/platform/room';
 import { createRoom, deleteRoom } from '@/platform/room/room-client';
@@ -28,6 +29,8 @@ interface PerPlayerHostProps<T> {
     game: string;
     gameName: string;
     emoji: string;
+    /** Accent token (`manifest.accent`) so the lobby CTAs match the game's colour. */
+    accent: string;
     minPlayers: number;
     maxPlayers: number;
     /** Build the shared payload for `count` players (one secret per seat). */
@@ -54,11 +57,13 @@ export function PerPlayerHost<T>({
     game,
     gameName,
     emoji,
+    accent,
     minPlayers,
     maxPlayers,
     build,
     hint,
 }: PerPlayerHostProps<T>) {
+    const acc = accentOf(accent);
     const [count, setCount] = useState(minPlayers);
     const [phase, setPhase] = useState<Phase<T>>({ kind: 'config' });
     const [origin, setOrigin] = useState('');
@@ -81,6 +86,10 @@ export function PerPlayerHost<T>({
         if (persisted?.code) {
             setCount(persisted.count);
             setPhase({ kind: 'live', code: persisted.code, payload: persisted.payload });
+            // Re-ensure the room still exists in the store (it may have expired past its
+            // TTL) so late joiners can connect to the resumed code. SET NX is a no-op
+            // when it's still there.
+            createRoom(game, persisted.code, persisted.payload).catch(() => {});
         }
     }, [game]);
 
@@ -178,10 +187,10 @@ export function PerPlayerHost<T>({
 
                 <div className="mt-2 flex gap-3">
                     <Button
-                        color="secondary"
                         size="lg"
                         startContent={<BiRefresh size={20} />}
                         onPress={newRound}
+                        className={ClassnameHelper.join('font-semibold text-white', acc.solidButton)}
                     >
                         Nueva ronda
                     </Button>
@@ -254,9 +263,11 @@ export function PerPlayerHost<T>({
             </div>
 
             <Button
-                color="secondary"
                 size="lg"
-                className="w-full max-w-xs bg-purple-700 font-semibold text-white hover:bg-purple-600"
+                className={ClassnameHelper.join(
+                    'w-full max-w-xs font-semibold text-white',
+                    acc.solidButton,
+                )}
                 onPress={() => startRound(count)}
             >
                 Empezar partida

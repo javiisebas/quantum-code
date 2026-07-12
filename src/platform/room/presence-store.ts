@@ -105,6 +105,13 @@ const getBackend = (): PresenceBackend => {
     } else {
         // No creds: in-memory in dev; in production presence simply reports what the
         // (empty) memory backend has rather than throwing — presence is non-critical.
+        // Warn loudly in prod, since counts will then be per-instance and unreliable.
+        if (process.env.NODE_ENV === 'production') {
+            console.warn(
+                '[presence-store] No Redis credentials in production — live player ' +
+                    'counts will be per-instance and unreliable.',
+            );
+        }
         backend = createMemoryBackend();
     }
     return backend;

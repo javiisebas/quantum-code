@@ -11,6 +11,7 @@ export function SpyfallHost() {
             game={spyfallManifest.id}
             gameName={spyfallManifest.name}
             emoji={spyfallManifest.emoji}
+            accent={spyfallManifest.accent}
             minPlayers={spyfallManifest.minPlayers}
             maxPlayers={spyfallManifest.maxPlayers}
             build={buildSpyfall}

@@ -11,6 +11,7 @@ export function WerewolfHost() {
             game={werewolfManifest.id}
             gameName={werewolfManifest.name}
             emoji={werewolfManifest.emoji}
+            accent={werewolfManifest.accent}
             minPlayers={werewolfManifest.minPlayers}
             maxPlayers={werewolfManifest.maxPlayers}
             build={buildWerewolf}

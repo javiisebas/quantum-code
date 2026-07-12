@@ -20,13 +20,14 @@ describe('room-store (in-memory backend)', () => {
         expect(await readRoom('t-unknown', 100001)).toBeNull();
     });
 
-    it('writeRoomIfAbsent creates then returns the authoritative payload', async () => {
+    it('writeRoomIfAbsent creates then returns the authoritative payload + created flag', async () => {
         const ns = 't-create';
         const first = await writeRoomIfAbsent(ns, 100002, { v: 1 });
-        expect(first).toEqual({ v: 1 });
-        // A second writer with a different payload must get the pre-existing one back.
+        expect(first).toEqual({ value: { v: 1 }, created: true });
+        // A second writer with a different payload must get the pre-existing one back,
+        // and created must be false (so a retry never re-fires create-once side effects).
         const second = await writeRoomIfAbsent(ns, 100002, { v: 2 });
-        expect(second).toEqual({ v: 1 });
+        expect(second).toEqual({ value: { v: 1 }, created: false });
         expect(await readRoom<{ v: number }>(ns, 100002)).toEqual({ v: 1 });
     });
 
