@@ -5,53 +5,69 @@ import { TeamEnum } from '@/domain';
 import { GameStatusEnum } from '@/enum/game-status.enum';
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
 import { FC } from 'react';
-import { BiRightArrowAlt } from 'react-icons/bi';
+import { BiTransferAlt } from 'react-icons/bi';
+
+interface TeamStyle {
+    label: string;
+    dot: string;
+    text: string;
+    ring: string;
+    glow: string;
+}
+
+const TEAM_STYLES: Record<TeamEnum, TeamStyle> = {
+    [TeamEnum.BLUE]: {
+        label: 'Azul',
+        dot: 'bg-sky-400',
+        text: 'text-sky-300',
+        ring: 'ring-sky-400/60',
+        glow: 'shadow-sky-500/20',
+    },
+    [TeamEnum.RED]: {
+        label: 'Rojo',
+        dot: 'bg-rose-400',
+        text: 'text-rose-300',
+        ring: 'ring-rose-400/60',
+        glow: 'shadow-rose-500/20',
+    },
+};
 
 interface TeamPillProps {
-    label: string;
+    style: TeamStyle;
     found: number;
     total: number;
-    dotClass: string;
-    textClass: string;
-    ringClass: string;
     active: boolean;
     playing: boolean;
 }
 
-const TeamPill: FC<TeamPillProps> = ({
-    label,
-    found,
-    total,
-    dotClass,
-    textClass,
-    ringClass,
-    active,
-    playing,
-}) => {
+const TeamPill: FC<TeamPillProps> = ({ style, found, total, active, playing }) => {
     const remaining = Math.max(total - found, 0);
+    const highlighted = active && playing;
     return (
         <div
             className={ClassnameHelper.join(
-                'flex items-center gap-2 rounded-full bg-gray-900/70 px-3 py-1.5 ring-1 backdrop-blur transition-all',
-                active && playing
-                    ? ClassnameHelper.join('ring-2 bg-gray-900/90', ringClass)
-                    : 'ring-white/10',
-                !active && playing && 'opacity-55',
+                'flex items-center gap-2 rounded-full px-3.5 py-1.5 backdrop-blur transition-all duration-300',
+                highlighted
+                    ? ClassnameHelper.join('bg-gray-900/90 ring-2 shadow-lg', style.ring, style.glow)
+                    : 'bg-gray-900/60 ring-1 ring-white/10',
+                !active && playing && 'opacity-45',
             )}
-            aria-label={`${label}: quedan ${remaining} de ${total}${active && playing ? ', en turno' : ''}`}
+            aria-label={`${style.label}: quedan ${remaining} de ${total}${highlighted ? ', en turno' : ''}`}
         >
             <span
                 className={ClassnameHelper.join(
                     'h-2.5 w-2.5 rounded-full',
-                    dotClass,
-                    active && playing && 'animate-pulse',
+                    style.dot,
+                    highlighted && 'animate-pulse',
                 )}
                 aria-hidden="true"
             />
-            <span className="text-xs font-medium text-gray-300">{label}</span>
-            <span className={`text-sm font-bold tabular-nums ${textClass}`}>
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-300">
+                {style.label}
+            </span>
+            <span className={ClassnameHelper.join('text-sm font-bold tabular-nums', style.text)}>
                 {remaining}
-                <span className="text-gray-500">/{total}</span>
+                <span className="text-gray-600">/{total}</span>
             </span>
         </div>
     );
@@ -59,33 +75,29 @@ const TeamPill: FC<TeamPillProps> = ({
 
 /**
  * Turn + score HUD. Shows cards-still-to-find per team and, while the game is in
- * progress, which team is on turn (highlighted) with a manual "pass turn" control.
- * Turn otherwise auto-passes on a neutral/rival reveal (see the game reducer).
+ * progress, which team is on turn (highlighted with a glow) plus a manual
+ * "pass turn" control. Turn otherwise auto-passes on a neutral/rival reveal
+ * (see the game reducer).
  */
 export const GameBoardScore: FC = () => {
     const { progress, currentTurn, gameStatus, passTurn } = useGame();
     const playing = gameStatus === GameStatusEnum.PLAYING;
+    const turnStyle = TEAM_STYLES[currentTurn];
 
     return (
-        <div className="absolute top-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2">
-            <div className="flex gap-3">
+        <div className="absolute top-5 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2.5">
+            <div className="flex items-center gap-2">
                 <TeamPill
-                    label="Azul"
+                    style={TEAM_STYLES[TeamEnum.BLUE]}
                     found={progress.blue.found}
                     total={progress.blue.total}
-                    dotClass="bg-sky-400"
-                    textClass="text-sky-300"
-                    ringClass="ring-sky-400/70"
                     active={currentTurn === TeamEnum.BLUE}
                     playing={playing}
                 />
                 <TeamPill
-                    label="Rojo"
+                    style={TEAM_STYLES[TeamEnum.RED]}
                     found={progress.red.found}
                     total={progress.red.total}
-                    dotClass="bg-rose-400"
-                    textClass="text-rose-300"
-                    ringClass="ring-rose-400/70"
                     active={currentTurn === TeamEnum.RED}
                     playing={playing}
                 />
@@ -95,19 +107,19 @@ export const GameBoardScore: FC = () => {
                 <button
                     type="button"
                     onClick={passTurn}
-                    className="flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-gray-400 transition-colors hover:text-white"
+                    className="group flex items-center gap-2 rounded-full bg-white/5 px-3.5 py-1.5 text-xs font-medium text-gray-300 ring-1 ring-white/10 backdrop-blur transition-colors hover:bg-white/10 hover:text-white"
                 >
-                    Turno de{' '}
-                    <span
-                        className={
-                            currentTurn === TeamEnum.BLUE ? 'text-sky-300' : 'text-rose-300'
-                        }
-                    >
-                        {currentTurn === TeamEnum.BLUE ? 'Azul' : 'Rojo'}
+                    <span className="text-gray-400">Turno de</span>
+                    <span className={ClassnameHelper.join('font-semibold', turnStyle.text)}>
+                        {turnStyle.label}
                     </span>
-                    <span className="mx-1 text-gray-600">·</span>
-                    Pasar turno
-                    <BiRightArrowAlt size={16} aria-hidden="true" />
+                    <span className="h-3.5 w-px bg-white/15" aria-hidden="true" />
+                    <span>Pasar turno</span>
+                    <BiTransferAlt
+                        size={15}
+                        aria-hidden="true"
+                        className="transition-transform group-hover:translate-x-0.5"
+                    />
                 </button>
             )}
         </div>

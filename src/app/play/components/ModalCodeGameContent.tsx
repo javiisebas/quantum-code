@@ -88,6 +88,7 @@ export const ModalCodeGameContent: FC<ModalCodeGameContentProps> = ({ code }) =>
 
                 <div className="flex w-full flex-col gap-2 sm:flex-row">
                     <Button
+                        size="lg"
                         variant="bordered"
                         className="w-full border-gray-100/20 text-white"
                         startContent={copied ? <BiCheck size={18} /> : <BiCopy size={18} />}
