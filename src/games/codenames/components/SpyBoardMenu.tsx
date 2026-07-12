@@ -1,7 +1,7 @@
 'use client';
 
 import { Icon } from '@/platform/ui/Icon';
-import { IconEnum } from '@/platform/ui/icon';
+import { IconEnum } from '@/platform/ui/icon-enum';
 import { Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FC } from 'react';

@@ -1,4 +1,4 @@
-import { IconEnum } from '@/platform/ui/icon';
+import { IconEnum } from '@/platform/ui/icon-enum';
 import { IconType } from 'react-icons';
 import { BiHome, BiSearch } from 'react-icons/bi';
 import { HiOutlineEye } from 'react-icons/hi';

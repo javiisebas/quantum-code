@@ -4,7 +4,7 @@ import { ModalHowToPlayContent } from '@/games/codenames/components/ModalHowToPl
 import { Icon } from '@/platform/ui/Icon';
 import { useGame } from '@/games/codenames/GameContext';
 import { useModal } from '@/platform/ui/modal-context';
-import { IconEnum } from '@/platform/ui/icon';
+import { IconEnum } from '@/platform/ui/icon-enum';
 import { Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FC, ReactNode } from 'react';

@@ -8,7 +8,7 @@ export const codenamesManifest: GameManifest = {
     id: CODENAMES_ID,
     name: 'Código Secreto',
     tagline: 'Encuentra las palabras de tu equipo antes que el rival — y nunca toques al asesino.',
-    emoji: '🕵️',
+    emoji: '🔤',
     accent: 'purple',
     minPlayers: 4,
     maxPlayers: 12,
