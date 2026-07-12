@@ -9,8 +9,10 @@ import { FC } from 'react';
 import { BiTransferAlt } from 'react-icons/bi';
 
 interface TeamStyle {
+    /** Screen-reader name only — not shown visually (the colour carries it). */
     label: string;
     dot: string;
+    number: string;
     activeBg: string;
     activeRing: string;
 }
@@ -19,12 +21,14 @@ const TEAM_STYLES: Record<TeamEnum, TeamStyle> = {
     [TeamEnum.BLUE]: {
         label: 'Azul',
         dot: 'bg-sky-400',
+        number: 'text-sky-300',
         activeBg: 'bg-sky-500/15',
         activeRing: 'ring-sky-400/50',
     },
     [TeamEnum.RED]: {
         label: 'Rojo',
         dot: 'bg-rose-400',
+        number: 'text-rose-300',
         activeBg: 'bg-rose-500/15',
         activeRing: 'ring-rose-400/50',
     },
@@ -61,15 +65,17 @@ const TeamSegment: FC<TeamSegmentProps> = ({ style, remaining, total, active, pl
                 )}
                 aria-hidden="true"
             />
-            <div className={ClassnameHelper.join('flex flex-col', align === 'right' && 'items-end')}>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400">
-                    {style.label}
-                </span>
-                <span className="text-lg font-bold leading-none tabular-nums text-white">
+            <span className="flex items-baseline gap-0.5">
+                <span
+                    className={ClassnameHelper.join(
+                        'text-2xl font-bold leading-none tabular-nums',
+                        style.number,
+                    )}
+                >
                     {remaining}
-                    <span className="text-sm font-medium text-gray-500">/{total}</span>
                 </span>
-            </div>
+                <span className="text-sm font-medium text-gray-500">/{total}</span>
+            </span>
         </div>
     );
 };
