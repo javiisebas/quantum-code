@@ -1,4 +1,13 @@
 import { describe, expect, it } from 'vitest';
+
+// CI injects PLACEHOLDER Upstash creds so the app can construct a Redis client at
+// build time. For this unit test we want the in-memory backend, so strip any creds
+// before the store resolves its (lazily cached) backend on first use.
+delete process.env.UPSTASH_REDIS_REST_URL;
+delete process.env.UPSTASH_REDIS_REST_TOKEN;
+delete process.env.UPSTASH_REDIS_KV_REST_API_URL;
+delete process.env.UPSTASH_REDIS_KV_REST_API_TOKEN;
+
 import { claimSeat, deleteRoom, readRoom, writeRoomIfAbsent } from './room-store';
 
 /**
