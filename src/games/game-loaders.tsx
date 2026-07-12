@@ -17,7 +17,20 @@ const gameLoaders: Record<string, GameLoader> = {
         Host: dynamic(() => import('./codenames/Host').then((m) => m.CodenamesHost)),
         Player: dynamic(() => import('./codenames/Player').then((m) => m.CodenamesPlayer)),
     },
+    spyfall: {
+        Host: dynamic(() => import('./spyfall/Host').then((m) => m.SpyfallHost)),
+        Player: dynamic(() => import('./spyfall/Player').then((m) => m.SpyfallPlayer)),
+    },
+    undercover: {
+        Host: dynamic(() => import('./undercover/Host').then((m) => m.UndercoverHost)),
+        Player: dynamic(() => import('./undercover/Player').then((m) => m.UndercoverPlayer)),
+    },
+    werewolf: {
+        Host: dynamic(() => import('./werewolf/Host').then((m) => m.WerewolfHost)),
+        Player: dynamic(() => import('./werewolf/Player').then((m) => m.WerewolfPlayer)),
+    },
 };
+
 
 /** Resolve a game's lazy Host/Player screens by id, or null when unknown. */
 export const getGameLoader = (id: string): GameLoader | null => gameLoaders[id] ?? null;

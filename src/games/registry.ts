@@ -1,4 +1,7 @@
 import { codenamesManifest } from './codenames/manifest';
+import { spyfallManifest } from './spyfall/manifest';
+import { undercoverManifest } from './undercover/manifest';
+import { werewolfManifest } from './werewolf/manifest';
 import type { GameManifest } from './types';
 
 /**
@@ -10,7 +13,12 @@ import type { GameManifest } from './types';
  *  - React screens → `game-loaders.tsx` (lazy Host/Player components).
  *  - Store + validation → `registry.server.ts` (namespaces + payload validators).
  */
-export const gameManifests: GameManifest[] = [codenamesManifest];
+export const gameManifests: GameManifest[] = [
+    codenamesManifest,
+    spyfallManifest,
+    undercoverManifest,
+    werewolfManifest,
+];
 
 /** Look up a game's manifest by id, or null when unknown. */
 export const getManifest = (id: string): GameManifest | null =>

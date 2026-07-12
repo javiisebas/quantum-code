@@ -1,4 +1,5 @@
 import { getServerGame } from '@/games/registry.server';
+import { emitRoomEvent } from '@/platform/events/webhooks';
 import { parseCode } from '@/platform/room';
 import { deleteRoom, readRoom, writeRoomIfAbsent } from '@/platform/room/room-store';
 import { NextResponse } from 'next/server';
@@ -69,6 +70,8 @@ export async function POST(request: Request, { params }: RouteContext) {
         // Atomic create-if-absent. Return the AUTHORITATIVE payload (whoever won the
         // race), so the host and every joined phone converge on the same room.
         const authoritative = await writeRoomIfAbsent(mod.namespace, code, payload);
+        // Best-effort outbound webhook (no-op unless QUANTUM_WEBHOOK_URL is set).
+        emitRoomEvent({ type: 'room.created', game, code });
         return NextResponse.json(authoritative);
     } catch (error: unknown) {
         console.error(`Failed to save ${game} room:`, error);
@@ -92,6 +95,7 @@ export async function DELETE(request: Request, { params }: RouteContext) {
                 { status: 404 },
             );
         }
+        emitRoomEvent({ type: 'game.ended', game, code });
         return NextResponse.json({ message: 'Room deleted successfully' });
     } catch (error: unknown) {
         console.error(`Failed to delete ${game} room:`, error);
