@@ -6,7 +6,8 @@ import { TeamEnum } from '@/enum/team.enum';
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
 import { getCardColor } from '@/services/get-card-color';
 import { motion } from 'framer-motion';
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
+import { BiSolidSkull } from 'react-icons/bi';
 import { SpyBoardFrame } from './SpyBoardFrame';
 
 interface SpyBoardProps {
@@ -18,6 +19,16 @@ const ROLE_LABELS: Record<RoleEnum, string> = {
     [TeamEnum.RED]: 'Equipo rojo',
     [NoTeamEnum.NEUTRAL]: 'Neutral',
     [NoTeamEnum.BLACK]: 'Asesino',
+};
+
+// Redundant, colour-independent cue for each role so the key is readable by
+// colour-blind players (and the assassin is unmistakable at a glance). Rendered
+// subtly, inheriting each card's own dark text colour.
+const ROLE_GLYPH: Record<RoleEnum, ReactNode> = {
+    [TeamEnum.BLUE]: 'A',
+    [TeamEnum.RED]: 'R',
+    [NoTeamEnum.NEUTRAL]: 'N',
+    [NoTeamEnum.BLACK]: <BiSolidSkull className="opacity-90" />,
 };
 
 export const SpyBoard: FC<SpyBoardProps> = ({ roles }) => {
@@ -42,9 +53,13 @@ export const SpyBoard: FC<SpyBoardProps> = ({ roles }) => {
                                 <div
                                     className={ClassnameHelper.join(
                                         getCardColor(role),
-                                        'w-full h-full shadow-none border-2 rounded-lg',
+                                        'flex h-full w-full items-center justify-center rounded-lg border-2 text-lg font-bold shadow-none',
                                     )}
-                                ></div>
+                                >
+                                    <span className="opacity-40 select-none" aria-hidden="true">
+                                        {ROLE_GLYPH[role]}
+                                    </span>
+                                </div>
                             </motion.div>
                         ))}
                     </div>
