@@ -1,4 +1,13 @@
-import { BOARD_SIZE, createRevealedState, getWinner, NoTeamEnum, RoleEnum, TeamEnum } from '@/domain';
+import {
+    BOARD_SIZE,
+    createRevealedState,
+    getWinner,
+    NoTeamEnum,
+    otherTeam,
+    RoleEnum,
+    STARTING_TEAM,
+    TeamEnum,
+} from '@/domain';
 import { GameStatusEnum } from '@/enum/game-status.enum';
 
 /**
@@ -11,6 +20,8 @@ export interface PersistedGame {
     code: number;
     status: GameStatusEnum;
     hasTeamWon: TeamEnum | null;
+    /** Team whose turn it is to guess. */
+    currentTurn: TeamEnum;
     words: string[];
     roles: RoleEnum[];
     revealedRoles: boolean[];
@@ -34,6 +45,7 @@ export const initialGameState: GameState = {
     code: 0,
     status: GameStatusEnum.PLAYING,
     hasTeamWon: null,
+    currentTurn: STARTING_TEAM,
     words: [],
     roles: [],
     revealedRoles: [],
@@ -50,6 +62,7 @@ export type GameAction =
     | { type: 'LOAD_ERROR'; message: string }
     | { type: 'RETRY' }
     | { type: 'REVEAL_CARD'; index: number }
+    | { type: 'PASS_TURN' }
     | { type: 'REVEAL_ALL' }
     | { type: 'CLEAR_CONFETTI' };
 
@@ -63,6 +76,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
             return {
                 ...state,
                 ...action.game,
+                // Older persisted games predate turn tracking — default the turn.
+                currentTurn: action.game.currentTurn ?? STARTING_TEAM,
                 hydrated: true,
                 // A persisted, in-progress game with no stored roles must fetch them;
                 // otherwise everything needed to render is already in hand.
@@ -80,6 +95,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
                 revealedRoles: createRevealedState(),
                 status: GameStatusEnum.PLAYING,
                 hasTeamWon: null,
+                currentTurn: STARTING_TEAM,
                 loading: true,
                 error: null,
                 showConfetti: false,
@@ -103,9 +119,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 
             const revealedRoles = state.revealedRoles.slice();
             revealedRoles[index] = true;
+            const revealedRole = state.roles[index];
 
             // Revealing the assassin (black) is an instant loss.
-            if (state.roles[index] === NoTeamEnum.BLACK) {
+            if (revealedRole === NoTeamEnum.BLACK) {
                 return { ...state, revealedRoles, status: GameStatusEnum.LOST };
             }
 
@@ -120,8 +137,22 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
                 };
             }
 
-            return { ...state, revealedRoles };
+            // Turn passes unless the current team revealed one of its own cards
+            // (guessing your colour lets you keep going; a neutral or the rival's
+            // card ends your turn).
+            const keepsTurn = revealedRole === state.currentTurn;
+            return {
+                ...state,
+                revealedRoles,
+                currentTurn: keepsTurn ? state.currentTurn : otherTeam(state.currentTurn),
+            };
         }
+
+        case 'PASS_TURN':
+            if (state.status !== GameStatusEnum.PLAYING) {
+                return state;
+            }
+            return { ...state, currentTurn: otherTeam(state.currentTurn) };
 
         case 'REVEAL_ALL':
             return {

@@ -5,7 +5,7 @@
  */
 
 // Rules constants + role types/enums (enum source files remain in src/enum).
-export { BOARD_SIZE, ROLE_COUNTS, NoTeamEnum, TeamEnum } from './rules';
+export { BOARD_SIZE, ROLE_COUNTS, STARTING_TEAM, otherTeam, NoTeamEnum, TeamEnum } from './rules';
 export type { RoleEnum } from './rules';
 
 // Board generation.

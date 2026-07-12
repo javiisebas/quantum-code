@@ -275,7 +275,7 @@ export const words_ddbb = [
     'nota',
     'nudo',
     'nueva york',
-    'o',
+    'volcán',
     'obra',
     'ojo',
     'ola',

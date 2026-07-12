@@ -27,6 +27,7 @@ interface GameContextType {
     code: number;
     gameStatus: GameStatusEnum;
     hasTeamWon: TeamEnum | null;
+    currentTurn: TeamEnum;
     loading: boolean;
     error: string | null;
     progress: TeamProgress;
@@ -40,6 +41,7 @@ interface GameContextType {
     resetGame: () => void;
     revealAll: () => void;
     retry: () => void;
+    passTurn: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -107,6 +109,7 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
             code: state.code,
             status: state.status,
             hasTeamWon: state.hasTeamWon,
+            currentTurn: state.currentTurn,
             words: state.words,
             roles: state.roles,
             revealedRoles: state.revealedRoles,
@@ -117,6 +120,7 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
         state.code,
         state.status,
         state.hasTeamWon,
+        state.currentTurn,
         state.words,
         state.roles,
         state.revealedRoles,
@@ -150,6 +154,10 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
         dispatch({ type: 'REVEAL_ALL' });
     }, []);
 
+    const passTurn = useCallback(() => {
+        dispatch({ type: 'PASS_TURN' });
+    }, []);
+
     const retry = useCallback(() => {
         dispatch({ type: 'RETRY' });
         loadRoles(stateRef.current.code);
@@ -174,6 +182,7 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
             code: state.code,
             gameStatus: state.status,
             hasTeamWon: state.hasTeamWon,
+            currentTurn: state.currentTurn,
             loading: state.loading,
             error: state.error,
             progress,
@@ -185,11 +194,13 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
             resetGame,
             revealAll,
             retry,
+            passTurn,
         }),
         [
             state.code,
             state.status,
             state.hasTeamWon,
+            state.currentTurn,
             state.loading,
             state.error,
             state.revealedRoles,
@@ -201,6 +212,7 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
             resetGame,
             revealAll,
             retry,
+            passTurn,
         ],
     );
 

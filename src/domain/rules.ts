@@ -22,6 +22,16 @@ export const ROLE_COUNTS = {
     black: 1,
 } as const;
 
+/**
+ * The team that plays first. As in Codenames, the team holding the extra card
+ * starts — here that is red (7 cards vs. blue's 6).
+ */
+export const STARTING_TEAM: TeamEnum = TeamEnum.RED;
+
+/** The opposing team. */
+export const otherTeam = (team: TeamEnum): TeamEnum =>
+    team === TeamEnum.RED ? TeamEnum.BLUE : TeamEnum.RED;
+
 // Re-export the role types/enums so consumers can depend on the domain as a single
 // entry point. The enum source files remain the canonical declarations.
 export { NoTeamEnum, TeamEnum };
