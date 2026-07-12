@@ -1,18 +1,18 @@
 import type { MetadataRoute } from 'next';
 
 /**
- * PWA web app manifest for Quantum Code.
+ * PWA web app manifest for Quantum Arcade.
  *
- * User-facing strings (name/description) are in Spanish, matching the game's
+ * User-facing strings (name/description) are in Spanish, matching the arcade's
  * Spanish-facing audience. Colors mirror the app's fixed dark theme
  * (Tailwind gray-900 background, purple accent).
  */
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'Quantum Code',
-        short_name: 'Quantum Code',
+        name: 'Quantum Arcade — Juegos de fiesta',
+        short_name: 'Quantum Arcade',
         description:
-            'Juego de espías tipo Codenames: descifra el código y guía a tu equipo a la victoria.',
+            'Juegos de fiesta para una pantalla y muchos móviles. Comparte un código y a jugar.',
         start_url: '/',
         display: 'standalone',
         orientation: 'any',

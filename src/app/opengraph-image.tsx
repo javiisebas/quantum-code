@@ -7,7 +7,7 @@ import { ImageResponse } from 'next/og';
  * Spanish tagline. Only satori-safe CSS is used (flexbox, solid colors,
  * gradients, border-radius); every multi-child container sets display: flex.
  */
-export const alt = 'Quantum Code';
+export const alt = 'Quantum Arcade — Juegos de fiesta';
 
 export const size = {
     width: 1200,
@@ -77,7 +77,7 @@ export default function OpengraphImage() {
                     }}
                 >
                     <span style={{ color: '#FFFFFF' }}>Quantum</span>
-                    <span style={{ color: '#C27AFF', marginLeft: 24 }}>Code</span>
+                    <span style={{ color: '#C27AFF', marginLeft: 24 }}>Arcade</span>
                 </div>
 
                 {/* Spanish tagline */}
@@ -90,7 +90,7 @@ export default function OpengraphImage() {
                         textAlign: 'center',
                     }}
                 >
-                    Descifra el código y guía a tu equipo a la victoria.
+                    Una pantalla, un móvil para cada uno. Juegos de fiesta.
                 </div>
             </div>
         ),

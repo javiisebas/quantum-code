@@ -11,14 +11,24 @@ const montserrat = Montserrat({
     variable: '--font-montserrat',
 });
 
+// Base URL for absolute metadata (OG/canonical). Prefers an explicit site URL, then
+// Vercel's deployment URL, falling back to localhost in dev.
+const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
 export const metadata: Metadata = {
-    title: 'Quantum Code',
+    metadataBase: new URL(siteUrl),
+    title: {
+        default: 'Quantum Arcade — Juegos de fiesta',
+        template: '%s · Quantum Arcade',
+    },
     description:
-        'Juego de espías tipo Codenames: descifra el código, supera a tus rivales y lleva a tu equipo a la victoria.',
-    applicationName: 'Quantum Code',
+        'Juegos de fiesta para una pantalla y muchos móviles: Código Secreto, ¿Dónde está el espía?, Impostor y Hombres Lobo. Comparte un código y a jugar.',
+    applicationName: 'Quantum Arcade',
     appleWebApp: {
         capable: true,
-        title: 'Quantum Code',
+        title: 'Quantum Arcade',
         statusBarStyle: 'black-translucent',
     },
 };
