@@ -19,17 +19,24 @@ jobs:
       UPSTASH_REDIS_REST_URL: https://example.upstash.io
       UPSTASH_REDIS_REST_TOKEN: ci-placeholder-token
     steps:
-      - uses: actions/checkout@v4
+      # Actions pinned to full commit SHAs (not mutable @v4 tags): a hijacked tag
+      # can't inject code into CI. Dependabot (github-actions ecosystem) bumps these.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Security gate: fail the build if any dependency has a known high/critical
+      # advisory. Moderate/low are surfaced by Dependabot alerts without blocking PRs.
+      - name: Security audit (dependencies)
+        run: pnpm audit --audit-level=high
 
       - name: Type check
         run: pnpm typecheck
