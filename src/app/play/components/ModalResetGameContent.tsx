@@ -12,13 +12,16 @@ export const ModalResetGameContent: FC<ModalResetGameContentProps> = ({ resetGam
 
     return (
         <div>
-            <ModalHeader className="flex flex-col gap-1">Confirm Reset</ModalHeader>
+            <ModalHeader className="flex flex-col gap-1">Nueva partida</ModalHeader>
             <ModalBody>
-                <p>Are you sure you want to reset the game? This action cannot be undone.</p>
+                <p>
+                    ¿Seguro que quieres empezar una partida nueva? Se generará un código nuevo y se
+                    perderá la partida actual.
+                </p>
             </ModalBody>
             <ModalFooter>
                 <Button color="danger" variant="light" onPress={() => closeModal()}>
-                    Cancel
+                    Cancelar
                 </Button>
                 <PrimaryButton
                     className="w-full md:w-fit"
@@ -27,7 +30,7 @@ export const ModalResetGameContent: FC<ModalResetGameContentProps> = ({ resetGam
                         closeModal();
                     }}
                 >
-                    Confirm
+                    Empezar de nuevo
                 </PrimaryButton>
             </ModalFooter>
         </div>

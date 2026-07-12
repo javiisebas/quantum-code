@@ -1,40 +1,59 @@
 'use client';
 
+import { ModalHowToPlayContent } from '@/app/components/ModalHowToPlayContent';
 import { Icon } from '@/app/components/ui/Icon';
 import { useGame } from '@/contexts/GameContext';
 import { useModal } from '@/contexts/ModalContext';
 import { IconEnum } from '@/enum/icon.enum';
 import { Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
+import { BiHelpCircle } from 'react-icons/bi';
 import { ModalCodeGameContent } from './ModalCodeGameContent';
 import { ModalResetGameContent } from './ModalResetGameContent';
 import { ModalRevealCardsGameContent } from './ModalRevealCardsGameContent';
+
+interface MenuButton {
+    id: string;
+    icon: ReactNode;
+    label: string;
+    onPress: () => void;
+}
 
 export const GameBoardMenu: FC = () => {
     const { code, resetGame, revealAll } = useGame();
     const { openModal } = useModal();
     const router = useRouter();
 
-    const menuBtns = [
+    const menuBtns: MenuButton[] = [
         {
-            icon: IconEnum.HOME,
-            label: 'Home',
+            id: 'home',
+            icon: <Icon name={IconEnum.HOME} />,
+            label: 'Inicio',
             onPress: () => router.push('/'),
         },
         {
-            icon: IconEnum.EYE,
-            label: 'Reveal cards',
-            onPress: () => openModal(<ModalRevealCardsGameContent revealAll={revealAll} />),
-        },
-        {
-            icon: IconEnum.CODE,
-            label: 'Show code',
+            id: 'share',
+            icon: <Icon name={IconEnum.CODE} />,
+            label: 'Compartir partida',
             onPress: () => openModal(<ModalCodeGameContent code={code} />),
         },
         {
-            icon: IconEnum.REFRESH,
-            label: 'Reset game',
+            id: 'how-to-play',
+            icon: <BiHelpCircle size={24} />,
+            label: 'Cómo se juega',
+            onPress: () => openModal(<ModalHowToPlayContent />),
+        },
+        {
+            id: 'reveal',
+            icon: <Icon name={IconEnum.EYE} />,
+            label: 'Revelar cartas',
+            onPress: () => openModal(<ModalRevealCardsGameContent revealAll={revealAll} />),
+        },
+        {
+            id: 'reset',
+            icon: <Icon name={IconEnum.REFRESH} />,
+            label: 'Nueva partida',
             onPress: () => openModal(<ModalResetGameContent resetGame={resetGame} />),
         },
     ];
@@ -44,14 +63,15 @@ export const GameBoardMenu: FC = () => {
             {menuBtns.map((btn) => (
                 <Button
                     isIconOnly
-                    key={btn.icon}
+                    key={btn.id}
                     aria-label={btn.label}
+                    title={btn.label}
                     onPress={btn.onPress}
                     size="lg"
                     radius="full"
                     className="text-white bg-purple-100/10 hover:bg-purple-100/20 ring-1 ring-gray-100/20 hover:ring-gray-100/30"
                 >
-                    <Icon name={btn.icon} />
+                    {btn.icon}
                 </Button>
             ))}
         </div>

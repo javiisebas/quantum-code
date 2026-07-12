@@ -1,0 +1,51 @@
+<svg
+    width="512"
+    height="512"
+    viewBox="0 0 512 512"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    role="img"
+    aria-label="Quantum Code"
+>
+    <defs>
+        <linearGradient id="qc-purple" x1="120" y1="120" x2="392" y2="392" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#C27AFF" />
+            <stop offset="1" stop-color="#7E22CE" />
+        </linearGradient>
+        <radialGradient id="qc-glow" cx="256" cy="256" r="180" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#C27AFF" stop-opacity="0.35" />
+            <stop offset="1" stop-color="#C27AFF" stop-opacity="0" />
+        </radialGradient>
+    </defs>
+
+    <!-- Dark brand tile (full-bleed for maskable safe zone) -->
+    <rect width="512" height="512" rx="112" fill="#111827" />
+
+    <!-- Soft purple glow behind the glyph -->
+    <circle cx="256" cy="256" r="180" fill="url(#qc-glow)" />
+
+    <!-- Spy "eye" almond, drawn as a stroke so the dark tile shows through -->
+    <path
+        d="M96 256C160 176 352 176 416 256C352 336 160 336 96 256Z"
+        fill="none"
+        stroke="url(#qc-purple)"
+        stroke-width="20"
+        stroke-linejoin="round"
+    />
+
+    <!-- Iris -->
+    <circle cx="256" cy="256" r="70" fill="url(#qc-purple)" />
+
+    <!-- Keyhole pupil (code / secret motif) cut into the iris -->
+    <circle cx="256" cy="240" r="26" fill="#111827" />
+    <path d="M244 250L268 250L278 296L234 296Z" fill="#111827" />
+
+    <!-- Catchlight -->
+    <circle cx="238" cy="226" r="10" fill="#F5EBFF" />
+
+    <!-- Agent-grid dots framing the eye -->
+    <circle cx="146" cy="146" r="12" fill="#7E22CE" />
+    <circle cx="366" cy="146" r="12" fill="#7E22CE" />
+    <circle cx="146" cy="366" r="12" fill="#7E22CE" />
+    <circle cx="366" cy="366" r="12" fill="#7E22CE" />
+</svg>

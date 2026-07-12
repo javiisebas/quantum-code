@@ -1,7 +1,7 @@
 'use client';
 
 import { useGame } from '@/contexts/GameContext';
-import { getFilledWordsArray } from '@/services/get-filled-words-array';
+import { BOARD_SIZE } from '@/domain';
 import { motion } from 'framer-motion';
 import { FC, useEffect, useState } from 'react';
 import { GameBoardCard } from './GameBoardCard';
@@ -17,9 +17,9 @@ export const GameBoardTable: FC = () => {
     return (
         <div
             key={resetKey}
-            className="grid grid-cols-5 grid-rows-5 gap-3 w-full h-5/6 mx-auto z-10"
+            className="grid grid-cols-5 grid-rows-5 gap-1.5 sm:gap-3 w-full h-5/6 mx-auto z-10"
         >
-            {getFilledWordsArray(0).map((_, index) => (
+            {Array.from({ length: BOARD_SIZE }).map((_, index) => (
                 <motion.div
                     key={index}
                     initial={{ opacity: 0, scale: 0.8 }}

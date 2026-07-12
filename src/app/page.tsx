@@ -1,65 +1,62 @@
 'use client';
 
+import { deleteRoles } from '@/app/api/roles/services/manage-roles.service';
+import { ModalHowToPlayContent } from '@/app/components/ModalHowToPlayContent';
 import { PrimaryButton } from '@/app/components/ui/Button';
-import { GameLocalStorageKeyEnum } from '@/enum/game-local-storage-key.enum';
-import { LocalStorageHelper } from '@/helpers/local-storage.helper';
+import { GAME_STORAGE_KEY, PersistedGame } from '@/contexts/game-state';
+import { useModal } from '@/contexts/ModalContext';
+import { GameStatusEnum } from '@/enum/game-status.enum';
+import { usePersistedState } from '@/hooks/usePersistedState';
+import { Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { ManageRolesService } from './api/roles/services/manage-roles.service';
+import { useState } from 'react';
 
 export default function HomePage() {
-    const [existingCode, setExistingCode] = useState<number | null>(null);
+    const [game, setGame, hydrated] = usePersistedState<PersistedGame | null>(
+        GAME_STORAGE_KEY,
+        null,
+    );
     const [loading, setLoading] = useState(false);
+    const { openModal } = useModal();
     const router = useRouter();
 
-    useEffect(() => {
-        const savedCode = LocalStorageHelper.getLocalStorageItem<number>(
-            GameLocalStorageKeyEnum.GAME_CODE,
-        );
-
-        if (savedCode) setExistingCode(savedCode);
-
-        setLoading(false);
-    }, []);
+    const canResume = hydrated && game?.status === GameStatusEnum.PLAYING && !!game.code;
 
     const handleResumeGame = () => {
-        if (existingCode) router.push(`/play`);
+        router.push('/play');
     };
 
     const handleNewGame = () => {
         setLoading(true);
-
-        for (const key of Object.keys(GameLocalStorageKeyEnum)) {
-            const value = GameLocalStorageKeyEnum[key as keyof typeof GameLocalStorageKeyEnum];
-            LocalStorageHelper.removeLocalStorageItem(value);
-        }
-
-        if (existingCode) {
-            ManageRolesService.deleteRoles(existingCode);
-        }
-
-        router.push(`/play`);
+        // Release the previous board (if any) and clear local state so /play boots fresh.
+        if (game?.code) deleteRoles(game.code).catch(() => {});
+        setGame(null);
+        router.push('/play');
     };
 
     const handleJoinAsSpy = () => {
         router.push('/spy');
     };
 
+    const handleHowToPlay = () => {
+        openModal(<ModalHowToPlayContent />);
+    };
+
     return (
         <div className="m-auto max-w-7xl flex justify-center items-center lg:gap-x-8 lg:px-8 min-h-screen">
             <div className="w-full h-full flex items-center justify-center px-6 lg:px-8 ">
                 <div className="max-w-lg w-full flex items-center justify-center flex-col">
-                    {existingCode && (
+                    {canResume && (
                         <button
                             type="button"
-                            aria-label="Resume your active game"
+                            aria-label="Reanudar tu partida activa"
                             className="mb-10 lg:mb-16 w-fit"
                             onClick={handleResumeGame}
                         >
                             <div className="relative w-full flex flex-col md:flex-row gap-1 md:gap-2 rounded-full px-4 py-2 text-sm text-gray-200 bg-green-100/10 ring-1 ring-gray-100/20 hover:ring-gray-100/30">
-                                <p className="hidden md:block">You already have an active game!</p>
+                                <p className="hidden md:block">¡Ya tienes una partida activa!</p>
                                 <p className="whitespace-nowrap font-semibold text-green-400 hover:text-green-500 transition">
-                                    Resume your game <span aria-hidden="true">&rarr;</span>
+                                    Reanudar partida <span aria-hidden="true">&rarr;</span>
                                 </p>
                             </div>
                         </button>
@@ -68,8 +65,8 @@ export default function HomePage() {
                         Quantum Code
                     </h1>
                     <p className="mt-8 text-lg font-medium text-gray-300 sm:text-xl text-center">
-                        Embark on a journey of secrets and strategy. Retake your position as a
-                        master spy or join a game to test your wits!
+                        Un juego de secretos y estrategia. Retoma tu papel de espía maestro o únete a
+                        una partida para poner a prueba tu ingenio.
                     </p>
                     <div className="mt-10 w-full flex flex-col md:flex-row items-center justify-center gap-y-4 gap-x-6">
                         <PrimaryButton
@@ -77,12 +74,19 @@ export default function HomePage() {
                             isLoading={loading}
                             className="w-full md:w-fit"
                         >
-                            New Game
+                            Nueva partida
                         </PrimaryButton>
                         <PrimaryButton onPress={handleJoinAsSpy} className="w-full md:w-fit">
-                            Join as Spy
+                            Unirse como espía
                         </PrimaryButton>
                     </div>
+                    <Button
+                        variant="light"
+                        className="mt-6 text-gray-300 hover:text-white"
+                        onPress={handleHowToPlay}
+                    >
+                        ¿Cómo se juega?
+                    </Button>
                 </div>
             </div>
         </div>

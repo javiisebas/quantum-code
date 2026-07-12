@@ -1,7 +1,7 @@
 import './globals.css';
 
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
 import ModalComponent from './components/ui/Modal';
 import { RootProviders } from './providers';
@@ -14,7 +14,19 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
     title: 'Quantum Code',
     description:
-        'A Codenames-style spy game. Crack the code, outwit your rivals, and lead your team to victory.',
+        'Juego de espías tipo Codenames: descifra el código, supera a tus rivales y lleva a tu equipo a la victoria.',
+    applicationName: 'Quantum Code',
+    appleWebApp: {
+        capable: true,
+        title: 'Quantum Code',
+        statusBarStyle: 'black-translucent',
+    },
+};
+
+export const viewport: Viewport = {
+    themeColor: '#111827',
+    // Fixed dark theme, edge-to-edge on mobile (safe-area aware layouts).
+    colorScheme: 'dark',
 };
 
 export default function RootLayout({
@@ -23,7 +35,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className={ClassnameHelper.join('dark', montserrat.variable)}>
+        <html lang="es" className={ClassnameHelper.join('dark', montserrat.variable)}>
             <body className="antialiased min-h-screen relative isolate overflow-hidden bg-gray-900">
                 <svg
                     aria-hidden="true"

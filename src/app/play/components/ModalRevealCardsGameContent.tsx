@@ -14,16 +14,16 @@ export const ModalRevealCardsGameContent: FC<ModalRevealCardsGameContentProps> =
 
     return (
         <div>
-            <ModalHeader className="flex flex-col gap-1">Reveal All Cards</ModalHeader>
+            <ModalHeader className="flex flex-col gap-1">Revelar todas las cartas</ModalHeader>
             <ModalBody>
                 <p>
-                    Are you sure you want to reveal all cards? This action will show all hidden
-                    cards.
+                    ¿Seguro que quieres revelar todas las cartas? Se mostrará el color de todas las
+                    palabras y la partida terminará.
                 </p>
             </ModalBody>
             <ModalFooter>
                 <Button color="danger" variant="light" onPress={() => closeModal()}>
-                    Cancel
+                    Cancelar
                 </Button>
                 <PrimaryButton
                     className="w-full md:w-fit"
@@ -32,7 +32,7 @@ export const ModalRevealCardsGameContent: FC<ModalRevealCardsGameContentProps> =
                         closeModal();
                     }}
                 >
-                    Confirm
+                    Revelar
                 </PrimaryButton>
             </ModalFooter>
         </div>

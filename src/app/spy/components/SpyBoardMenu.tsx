@@ -12,12 +12,12 @@ export const SpyBoardMenu: FC = () => {
     const menuBtns = [
         {
             icon: IconEnum.HOME,
-            label: 'Home',
+            label: 'Inicio',
             onPress: () => router.push('/'),
         },
         {
             icon: IconEnum.REFRESH,
-            label: 'New spy board',
+            label: 'Unirse a otra partida',
             onPress: () => router.push('/spy'),
         },
     ];

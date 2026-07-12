@@ -48,7 +48,7 @@ export const GameBoardCard: FC<CardProps> = ({ index }) => {
                         sharedClasses,
                     )}
                 >
-                    <span className="w-full break-words text-center uppercase leading-tight tracking-tight sm:tracking-wide">
+                    <span className="w-full hyphens-auto break-words text-center uppercase leading-tight tracking-tight sm:tracking-wide">
                         {word}
                     </span>
                 </div>
@@ -60,7 +60,7 @@ export const GameBoardCard: FC<CardProps> = ({ index }) => {
                         getCardColor(role),
                     )}
                 >
-                    <span className="w-full break-words text-center uppercase leading-tight tracking-tight sm:tracking-wide">
+                    <span className="w-full hyphens-auto break-words text-center uppercase leading-tight tracking-tight sm:tracking-wide">
                         {word}
                     </span>
                 </div>

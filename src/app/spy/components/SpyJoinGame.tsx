@@ -9,10 +9,13 @@ export const SpyJoinGame: FC = () => {
     const [gameCode, setGameCode] = useState('');
     const router = useRouter();
 
+    const normalizedCode = gameCode.replace(/\D/g, '').slice(0, 6);
+    const isValid = normalizedCode.length === 6;
+
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
-        router.push(`/spy?code=${gameCode.replace(/\s+/g, '')}`);
+        if (!isValid) return;
+        router.push(`/spy?code=${normalizedCode}`);
     };
 
     return (
@@ -22,11 +25,11 @@ export const SpyJoinGame: FC = () => {
                     <div className="relative isolate grid grid-cols-1 gap-10 overflow-hidden bg-gray-900 px-6 py-14 shadow-2xl rounded-lg sm:rounded-2xl sm:px-24 xl:grid-cols-5 xl:py-32 text-balance">
                         <div className="col-span-3 md:text-center xl:text-left">
                             <h2 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">
-                                Join the Spy Game
+                                Únete como espía
                             </h2>
                             <p className="mt-4 text-lg leading-6 text-gray-300">
-                                Enter the game code and become a spy. Ready to take on the
-                                challenge?
+                                Introduce el código de la partida y conviértete en espía. ¿Listo
+                                para el reto?
                             </p>
                         </div>
 
@@ -36,20 +39,23 @@ export const SpyJoinGame: FC = () => {
                         >
                             <Input
                                 classNames={{
-                                    input: 'focus:outline-none border-transparent focus:border-transparent focus:ring-0 px-1',
+                                    input: 'focus:outline-none border-transparent focus:border-transparent focus:ring-0 px-1 tracking-[0.3em] text-center text-lg',
                                     inputWrapper: 'h-full bg-white/5 text-white border',
                                 }}
+                                aria-label="Código de la partida"
+                                inputMode="numeric"
                                 isClearable={false}
-                                onChange={(e) => setGameCode(e.target.value)}
-                                placeholder="Enter game code"
+                                maxLength={6}
+                                onChange={(e) => setGameCode(e.target.value.replace(/\D/g, ''))}
+                                placeholder="Código"
                                 size="lg"
                                 type="text"
                                 value={gameCode}
                                 variant="faded"
                             />
 
-                            <PrimaryButton type="submit" className="w-full">
-                                Join Game
+                            <PrimaryButton type="submit" className="w-full" isDisabled={!isValid}>
+                                Unirse a la partida
                             </PrimaryButton>
                         </form>
 

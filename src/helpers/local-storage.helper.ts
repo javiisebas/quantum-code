@@ -24,28 +24,8 @@ export class LocalStorageHelper {
         return null;
     }
 
-    static getOrSetLocalStorageItem<T>(key: string, setValue: T): T {
-        try {
-            const stringValue = localStorage.getItem(key);
-            if (!stringValue) {
-                LocalStorageHelper.setLocalStorageItem(key, setValue);
-                return setValue;
-            }
-
-            const { value } = JSON.parse(stringValue);
-            return value;
-        } catch {
-            return setValue;
-        }
-    }
-
     static removeLocalStorageItem(key: string): void {
         try {
-            if (!localStorage.getItem(key)) {
-                console.warn(`Key "${key}" does not exist in localStorage.`);
-                return;
-            }
-
             localStorage.removeItem(key);
         } catch (error) {
             console.warn(`Unable to remove localStorage<${key}>. Error:`, error);

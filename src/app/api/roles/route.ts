@@ -1,38 +1,17 @@
-import { RoleService } from '@/app/api/roles/services/role.service';
-import { WORDS_LENGTH } from '@/consts';
-import { NoTeamEnum } from '@/enum/no-team.enum';
-import { RoleEnum } from '@/enum/role.enum';
-import { TeamEnum } from '@/enum/team.enum';
+import { deleteRoles, readRoles, writeRolesIfAbsent } from '@/app/api/roles/services/role-store';
+import { BOARD_SIZE, NoTeamEnum, parseCode, RoleEnum, TeamEnum } from '@/domain';
 import { NextResponse } from 'next/server';
-
-const MIN_CODE = 100000;
-const MAX_CODE = 999999;
 
 const VALID_ROLES = new Set<string>([...Object.values(TeamEnum), ...Object.values(NoTeamEnum)]);
 
 /**
- * Parse a game code from the query string. Codes are always 6-digit integers
- * (100000–999999); anything else is rejected. Returns null when invalid.
- */
-const parseCode = (raw: string | null): number | null => {
-    if (!raw || !/^\d+$/.test(raw)) {
-        return null;
-    }
-    const code = Number(raw);
-    if (!Number.isInteger(code) || code < MIN_CODE || code > MAX_CODE) {
-        return null;
-    }
-    return code;
-};
-
-/**
- * A valid roles payload is an array of exactly WORDS_LENGTH entries, each a
- * known RoleEnum value. This blocks arbitrary/oversized junk from reaching Redis.
+ * A valid roles payload is an array of exactly BOARD_SIZE entries, each a known
+ * RoleEnum value. This blocks arbitrary/oversized junk from reaching the store.
  */
 const isValidRoles = (value: unknown): value is RoleEnum[] => {
     return (
         Array.isArray(value) &&
-        value.length === WORDS_LENGTH &&
+        value.length === BOARD_SIZE &&
         value.every((role) => typeof role === 'string' && VALID_ROLES.has(role))
     );
 };
@@ -46,7 +25,7 @@ export async function GET(request: Request) {
     }
 
     try {
-        const roles = await RoleService.readRoles(code);
+        const roles = await readRoles(code);
         if (!roles) {
             return NextResponse.json(null);
         }
@@ -79,8 +58,10 @@ export async function POST(request: Request) {
     }
 
     try {
-        await RoleService.writeRoles(code, roles);
-        return NextResponse.json({ message: 'Roles saved successfully' });
+        // Atomic create-if-absent. Return the AUTHORITATIVE roles (whoever won the
+        // race), so the client always converges on the same board for a code.
+        const authoritativeRoles = await writeRolesIfAbsent(code, roles);
+        return NextResponse.json(authoritativeRoles);
     } catch (error: unknown) {
         console.error('Failed to save roles:', error);
         return NextResponse.json({ error: 'Failed to save roles' }, { status: 500 });
@@ -96,7 +77,7 @@ export async function DELETE(request: Request) {
     }
 
     try {
-        const success = await RoleService.deleteRoles(code);
+        const success = await deleteRoles(code);
         if (!success) {
             return NextResponse.json(
                 { error: 'Roles not found or could not be deleted' },
