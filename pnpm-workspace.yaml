@@ -10,6 +10,7 @@ minimumReleaseAge: 4320
 
 allowBuilds:
   '@heroui/shared-utils': true
+  esbuild: true
   sharp: true
   unrs-resolver: true
 
