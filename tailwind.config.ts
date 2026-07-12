@@ -4,7 +4,10 @@ import type { Config } from 'tailwindcss';
 
 const config: Config = {
     content: [
-        './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+        // Scan the whole `src` tree: the arcade splits code across `platform/`,
+        // `games/`, and `app/`, so limiting the scan to `app/` would drop classes
+        // used by game modules and shared UI outside the route tree.
+        './src/**/*.{js,ts,jsx,tsx,mdx}',
         './node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}',
     ],
     theme: {

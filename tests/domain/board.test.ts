@@ -3,17 +3,16 @@ import { describe, it, expect } from 'vitest';
 import {
     generateRoles,
     generateWords,
-    generateCode,
     createRevealedState,
-    parseCode,
     getTeamProgress,
     getWinner,
     BOARD_SIZE,
     ROLE_COUNTS,
-} from '@/domain';
-import { TeamEnum } from '@/enum/team.enum';
-import { NoTeamEnum } from '@/enum/no-team.enum';
-import type { RoleEnum } from '@/enum/role.enum';
+} from '@/games/codenames/domain';
+import { generateCode, parseCode } from '@/platform/room';
+import { TeamEnum } from '@/games/codenames/enums/team.enum';
+import { NoTeamEnum } from '@/games/codenames/enums/no-team.enum';
+import type { RoleEnum } from '@/games/codenames/enums/role.enum';
 
 /**
  * All valid role values, used to assert that generated roles are well-formed

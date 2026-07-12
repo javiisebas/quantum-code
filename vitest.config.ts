@@ -12,6 +12,9 @@ export default defineConfig({
     test: {
         environment: 'node',
         globals: false,
-        include: ['tests/**/*.test.ts'],
+        // Domain tests live colocated with each game (`src/games/*/**.test.ts`) and
+        // the platform (`src/platform/**.test.ts`); `tests/` is kept for any
+        // cross-cutting suites.
+        include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
     },
 });

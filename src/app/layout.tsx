@@ -1,9 +1,9 @@
 import './globals.css';
 
-import { ClassnameHelper } from '@/helpers/clean-classname.helper';
+import { ClassnameHelper } from '@/platform/util/classnames';
 import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
-import ModalComponent from './components/ui/Modal';
+import ModalComponent from '@/platform/ui/Modal';
 import { RootProviders } from './providers';
 
 const montserrat = Montserrat({

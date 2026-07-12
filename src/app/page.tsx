@@ -1,94 +1,112 @@
-'use client';
+import { gameManifests } from '@/games/registry';
+import type { GameManifest } from '@/games/types';
+import { ClassnameHelper } from '@/platform/util/classnames';
+import Link from 'next/link';
 
-import { deleteBoard } from '@/app/api/roles/services/manage-board.service';
-import { ModalHowToPlayContent } from '@/app/components/ModalHowToPlayContent';
-import { PrimaryButton } from '@/app/components/ui/Button';
-import { GAME_STORAGE_KEY, PersistedGame } from '@/contexts/game-state';
-import { useModal } from '@/contexts/ModalContext';
-import { GameStatusEnum } from '@/enum/game-status.enum';
-import { usePersistedState } from '@/hooks/usePersistedState';
-import { Button } from '@heroui/react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+/**
+ * Per-accent class strings. Kept as complete literals (not interpolated) so
+ * Tailwind's scanner always sees them and never purges a card's colour.
+ */
+const ACCENTS: Record<string, { ring: string; glow: string; chip: string }> = {
+    purple: {
+        ring: 'hover:ring-purple-400/60',
+        glow: 'from-purple-500/20',
+        chip: 'bg-purple-400/15 text-purple-200',
+    },
+    rose: {
+        ring: 'hover:ring-rose-400/60',
+        glow: 'from-rose-500/20',
+        chip: 'bg-rose-400/15 text-rose-200',
+    },
+    emerald: {
+        ring: 'hover:ring-emerald-400/60',
+        glow: 'from-emerald-500/20',
+        chip: 'bg-emerald-400/15 text-emerald-200',
+    },
+    amber: {
+        ring: 'hover:ring-amber-400/60',
+        glow: 'from-amber-500/20',
+        chip: 'bg-amber-400/15 text-amber-200',
+    },
+};
 
-export default function HomePage() {
-    const [game, setGame, hydrated] = usePersistedState<PersistedGame | null>(
-        GAME_STORAGE_KEY,
-        null,
-    );
-    const [loading, setLoading] = useState(false);
-    const { openModal } = useModal();
-    const router = useRouter();
+const accentOf = (accent: string) => ACCENTS[accent] ?? ACCENTS.purple;
 
-    const canResume = hydrated && game?.status === GameStatusEnum.PLAYING && !!game.code;
-
-    const handleResumeGame = () => {
-        router.push('/play');
-    };
-
-    const handleNewGame = () => {
-        setLoading(true);
-        // Release the previous board (if any) and clear local state so /play boots fresh.
-        if (game?.code) deleteBoard(game.code).catch(() => {});
-        setGame(null);
-        router.push('/play');
-    };
-
-    const handleJoinAsSpy = () => {
-        router.push('/spy');
-    };
-
-    const handleHowToPlay = () => {
-        openModal(<ModalHowToPlayContent />);
-    };
-
+const GameCard = ({ game }: { game: GameManifest }) => {
+    const accent = accentOf(game.accent);
     return (
-        <div className="m-auto max-w-7xl flex justify-center items-center lg:gap-x-8 lg:px-8 min-h-screen">
-            <div className="w-full h-full flex items-center justify-center px-6 lg:px-8 ">
-                <div className="max-w-lg w-full flex items-center justify-center flex-col">
-                    {canResume && (
-                        <button
-                            type="button"
-                            aria-label="Reanudar tu partida activa"
-                            className="mb-10 lg:mb-16 w-fit"
-                            onClick={handleResumeGame}
-                        >
-                            <div className="relative w-full flex flex-col md:flex-row gap-1 md:gap-2 rounded-full px-4 py-2 text-sm text-gray-200 bg-green-100/10 ring-1 ring-gray-100/20 hover:ring-gray-100/30">
-                                <p className="hidden md:block">¡Ya tienes una partida activa!</p>
-                                <p className="whitespace-nowrap font-semibold text-green-400 hover:text-green-500 transition">
-                                    Reanudar partida <span aria-hidden="true">&rarr;</span>
-                                </p>
-                            </div>
-                        </button>
+        <Link
+            href={`/host/${game.id}`}
+            aria-label={`Crear una partida de ${game.name}`}
+            className={ClassnameHelper.join(
+                'group relative flex flex-col overflow-hidden rounded-3xl bg-gray-900/70 p-6 text-left ring-1 ring-inset ring-white/10 backdrop-blur transition',
+                'hover:-translate-y-1 hover:bg-gray-900/90',
+                accent.ring,
+            )}
+        >
+            <div
+                className={ClassnameHelper.join(
+                    'pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br to-transparent opacity-60 blur-2xl transition-opacity group-hover:opacity-100',
+                    accent.glow,
+                )}
+                aria-hidden="true"
+            />
+            <span className="text-5xl" aria-hidden="true">
+                {game.emoji}
+            </span>
+            <h2 className="mt-4 text-xl font-bold text-white">{game.name}</h2>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-400">{game.tagline}</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+                <span
+                    className={ClassnameHelper.join(
+                        'rounded-full px-3 py-1 text-xs font-semibold',
+                        accent.chip,
                     )}
-                    <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">
-                        Quantum Code
-                    </h1>
-                    <p className="mt-8 text-lg font-medium text-gray-300 sm:text-xl text-center">
-                        Un juego de secretos y estrategia. Retoma tu papel de espía maestro o únete a
-                        una partida para poner a prueba tu ingenio.
-                    </p>
-                    <div className="mt-10 w-full flex flex-col md:flex-row items-center justify-center gap-y-4 gap-x-6">
-                        <PrimaryButton
-                            onPress={handleNewGame}
-                            isLoading={loading}
-                            className="w-full md:w-fit"
-                        >
-                            Nueva partida
-                        </PrimaryButton>
-                        <PrimaryButton onPress={handleJoinAsSpy} className="w-full md:w-fit">
-                            Unirse como espía
-                        </PrimaryButton>
-                    </div>
-                    <Button
-                        variant="light"
-                        className="mt-6 text-gray-300 hover:text-white"
-                        onPress={handleHowToPlay}
-                    >
-                        ¿Cómo se juega?
-                    </Button>
-                </div>
+                >
+                    {game.players} jugadores
+                </span>
+                <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-gray-300">
+                    {game.duration}
+                </span>
             </div>
-        </div>
+        </Link>
+    );
+};
+
+export default function ArcadeHomePage() {
+    return (
+        <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-16 lg:px-8">
+            <header className="text-center">
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-purple-300">
+                    Quantum Arcade
+                </p>
+                <h1 className="mt-3 text-4xl font-bold tracking-tight text-white sm:text-6xl">
+                    Juegos de fiesta
+                </h1>
+                <p className="mx-auto mt-5 max-w-xl text-lg text-gray-300">
+                    Una pantalla para todos, un móvil para cada uno. Elige un juego, comparte el
+                    código y a jugar.
+                </p>
+            </header>
+
+            <section
+                aria-label="Catálogo de juegos"
+                className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+            >
+                {gameManifests.map((game) => (
+                    <GameCard key={game.id} game={game} />
+                ))}
+            </section>
+
+            <div className="mt-12 flex flex-col items-center gap-3">
+                <p className="text-sm text-gray-400">¿Ya tienes un código de partida?</p>
+                <Link
+                    href="/join"
+                    className="rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+                >
+                    Unirse a una partida
+                </Link>
+            </div>
+        </main>
     );
 }

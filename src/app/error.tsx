@@ -1,6 +1,6 @@
 'use client';
 
-import { PrimaryButton } from '@/app/components/ui/Button';
+import { PrimaryButton } from '@/platform/ui/Button';
 import { Button } from '@heroui/react';
 import Link from 'next/link';
 import { useEffect } from 'react';
