@@ -12,6 +12,7 @@ import { SpyBoardFrame } from './SpyBoardFrame';
 
 interface SpyBoardProps {
     roles: RoleEnum[];
+    words: string[];
 }
 
 const ROLE_LABELS: Record<RoleEnum, string> = {
@@ -23,41 +24,52 @@ const ROLE_LABELS: Record<RoleEnum, string> = {
 
 // Redundant, colour-independent cue for each role so the key is readable by
 // colour-blind players (and the assassin is unmistakable at a glance). Rendered
-// subtly, inheriting each card's own dark text colour.
+// subtly in the corner, inheriting each card's own dark text colour.
 const ROLE_GLYPH: Record<RoleEnum, ReactNode> = {
     [TeamEnum.BLUE]: 'A',
     [TeamEnum.RED]: 'R',
     [NoTeamEnum.NEUTRAL]: 'N',
-    [NoTeamEnum.BLACK]: <BiSolidSkull className="opacity-90" />,
+    [NoTeamEnum.BLACK]: <BiSolidSkull />,
 };
 
-export const SpyBoard: FC<SpyBoardProps> = ({ roles }) => {
+/**
+ * The spies' view: the full board with each word shown on its team colour, kept in
+ * the same 5×5 layout as the shared play board so spymasters can correlate by
+ * position. Scrolls vertically on small screens where 25 word-cells don't fit.
+ */
+export const SpyBoard: FC<SpyBoardProps> = ({ roles, words }) => {
     return (
         <SpyBoardFrame>
-            <div className="max-w-xl aspect-square w-[90%] h-[90%] rounded-xl bg-gray-400/50 p-2 ring-1 ring-inset ring-gray-900/10 lg:-m-4 lg:rounded-2xl lg:p-4 shadow-2xl shadow-gray-200/10">
-                <div className="bg-gray-900 w-full h-full p-2 rounded-lg">
+            <div className="w-full rounded-2xl bg-gray-400/50 p-2 shadow-2xl shadow-gray-200/10 ring-1 ring-inset ring-gray-900/10 sm:p-3">
+                <div className="rounded-xl bg-gray-900 p-2 sm:p-3">
                     <div
-                        className="grid grid-cols-5 grid-rows-5 gap-2 mx-auto w-full h-full"
+                        className="grid grid-cols-5 gap-1.5 sm:gap-2"
                         role="list"
-                        aria-label="Mapa secreto de roles"
+                        aria-label="Mapa secreto de la partida"
                     >
                         {roles.map((role, index) => (
                             <motion.div
                                 key={index}
                                 role="listitem"
-                                aria-label={`Casilla ${index + 1}: ${ROLE_LABELS[role]}`}
-                                initial={{ opacity: 0, scale: 0.8 }}
+                                aria-label={`Casilla ${index + 1}: ${words[index]}, ${ROLE_LABELS[role]}`}
+                                initial={{ opacity: 0, scale: 0.85 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 0.3, delay: index * 0.05 }}
+                                transition={{ duration: 0.25, delay: index * 0.03 }}
                             >
                                 <div
                                     className={ClassnameHelper.join(
                                         getCardColor(role),
-                                        'flex h-full w-full items-center justify-center rounded-lg border-2 text-lg font-bold shadow-none',
+                                        'relative flex min-h-[64px] w-full items-center justify-center rounded-lg border-2 p-1 shadow-none sm:min-h-[84px] sm:p-2',
                                     )}
                                 >
-                                    <span className="opacity-40 select-none" aria-hidden="true">
+                                    <span
+                                        className="absolute left-1 top-0.5 text-[9px] font-bold opacity-45 sm:text-[11px]"
+                                        aria-hidden="true"
+                                    >
                                         {ROLE_GLYPH[role]}
+                                    </span>
+                                    <span className="hyphens-auto break-words text-center text-[11px] font-semibold uppercase leading-tight tracking-tight sm:text-sm">
+                                        {words[index]}
                                     </span>
                                 </div>
                             </motion.div>

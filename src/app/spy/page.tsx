@@ -1,5 +1,5 @@
-import { readRoles } from '@/app/api/roles/services/role-store';
-import { parseCode, RoleEnum } from '@/domain';
+import { readBoard } from '@/app/api/roles/services/board-store';
+import { parseCode } from '@/domain';
 import { SpyBoard } from './components/SpyBoard';
 import { SpyJoinGame } from './components/SpyJoinGame';
 
@@ -17,11 +17,11 @@ export default async function SpyPage({ searchParams }: SpyPageProps) {
     }
 
     try {
-        const roles = (await readRoles(code)) || [];
+        const board = await readBoard(code);
 
-        if (!roles.length) return <SpyJoinGame />;
+        if (!board?.roles.length) return <SpyJoinGame />;
 
-        return <SpyBoard roles={roles as RoleEnum[]} />;
+        return <SpyBoard roles={board.roles} words={board.words} />;
     } catch {
         return <SpyJoinGame />;
     }

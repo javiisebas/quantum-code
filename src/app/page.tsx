@@ -1,6 +1,6 @@
 'use client';
 
-import { deleteRoles } from '@/app/api/roles/services/manage-roles.service';
+import { deleteBoard } from '@/app/api/roles/services/manage-board.service';
 import { ModalHowToPlayContent } from '@/app/components/ModalHowToPlayContent';
 import { PrimaryButton } from '@/app/components/ui/Button';
 import { GAME_STORAGE_KEY, PersistedGame } from '@/contexts/game-state';
@@ -29,7 +29,7 @@ export default function HomePage() {
     const handleNewGame = () => {
         setLoading(true);
         // Release the previous board (if any) and clear local state so /play boots fresh.
-        if (game?.code) deleteRoles(game.code).catch(() => {});
+        if (game?.code) deleteBoard(game.code).catch(() => {});
         setGame(null);
         router.push('/play');
     };

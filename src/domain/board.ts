@@ -41,3 +41,19 @@ export const generateWords = (): string[] => {
 export const createRevealedState = (): boolean[] => {
     return new Array(BOARD_SIZE).fill(false);
 };
+
+/**
+ * A full board is the pairing of roles and words by index: card `i` shows
+ * `words[i]` and belongs to `roles[i]`. Both are published together so the play
+ * device and the spies see exactly the same board for a code.
+ */
+export interface Board {
+    roles: RoleEnum[];
+    words: string[];
+}
+
+/** Generate a fresh, self-consistent board (roles + words). */
+export const generateBoard = (): Board => ({
+    roles: generateRoles(),
+    words: generateWords(),
+});

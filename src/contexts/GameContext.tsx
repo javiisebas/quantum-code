@@ -1,10 +1,10 @@
 'use client';
 
-import { deleteRoles, getOrCreateRoles } from '@/app/api/roles/services/manage-roles.service';
+import { deleteBoard, getOrCreateBoard } from '@/app/api/roles/services/manage-board.service';
 import { ModalCodeGameContent } from '@/app/play/components/ModalCodeGameContent';
 import {
+    generateBoard,
     generateCode,
-    generateWords,
     getTeamProgress,
     RoleEnum,
     TeamEnum,
@@ -57,30 +57,30 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
     const stateRef = useRef<GameState>(state);
     stateRef.current = state;
 
-    // Fetch (or atomically create) the roles for a code and publish them to Redis.
-    const loadRoles = useCallback(async (code: number) => {
-        try {
-            const roles = await getOrCreateRoles(code);
-            dispatch({ type: 'ROLES_LOADED', roles });
-        } catch {
-            dispatch({ type: 'LOAD_ERROR', message: LOAD_ERROR_MESSAGE });
-        }
-    }, []);
-
-    // Start a brand-new game: fresh code + words, then create/publish its roles.
-    const createNewGame = useCallback(
-        async (options?: { share?: boolean }) => {
-            const code = generateCode();
-            dispatch({ type: 'NEW_GAME', code, words: generateWords() });
+    // Fetch (or atomically create) the board for a code and publish it to Redis. We
+    // send a freshly generated candidate; the server returns the authoritative board
+    // (roles + words), so the play device and the spies always match.
+    const loadBoard = useCallback(
+        async (code: number, options?: { share?: boolean }) => {
             try {
-                const roles = await getOrCreateRoles(code);
-                dispatch({ type: 'ROLES_LOADED', roles });
+                const board = await getOrCreateBoard(code, generateBoard());
+                dispatch({ type: 'BOARD_LOADED', roles: board.roles, words: board.words });
                 if (options?.share) openModal(<ModalCodeGameContent code={code} />);
             } catch {
                 dispatch({ type: 'LOAD_ERROR', message: LOAD_ERROR_MESSAGE });
             }
         },
         [openModal],
+    );
+
+    // Start a brand-new game: fresh code, then create/publish its board.
+    const createNewGame = useCallback(
+        async (options?: { share?: boolean }) => {
+            const code = generateCode();
+            dispatch({ type: 'NEW_GAME', code });
+            await loadBoard(code, options);
+        },
+        [loadBoard],
     );
 
     // Bootstrap once: resume a persisted game, or start a new one. Guarded so React
@@ -93,14 +93,14 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
         const persisted = LocalStorageHelper.getLocalStorageItem<PersistedGame>(GAME_STORAGE_KEY);
 
         if (persisted?.code) {
-            const needsRoles =
+            const needsBoard =
                 persisted.status === GameStatusEnum.PLAYING && !persisted.roles?.length;
-            dispatch({ type: 'HYDRATE', game: persisted, needsRoles });
-            if (needsRoles) loadRoles(persisted.code);
+            dispatch({ type: 'HYDRATE', game: persisted, needsBoard });
+            if (needsBoard) loadBoard(persisted.code);
         } else {
             createNewGame({ share: true });
         }
-    }, [loadRoles, createNewGame]);
+    }, [loadBoard, createNewGame]);
 
     // Centralised persistence: mirror the persisted slice whenever it changes.
     useEffect(() => {
@@ -126,14 +126,14 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
         state.revealedRoles,
     ]);
 
-    // Release roles from Redis once a game reaches a terminal state, so spies can no
-    // longer peek at a finished board. Runs at most once per code.
+    // Release the board from Redis once a game reaches a terminal state, so spies can
+    // no longer peek at a finished board. Runs at most once per code.
     const releasedCodeRef = useRef<number | null>(null);
     useEffect(() => {
         if (!state.hydrated || !state.code) return;
         if (isTerminal(state.status) && releasedCodeRef.current !== state.code) {
             releasedCodeRef.current = state.code;
-            deleteRoles(state.code).catch(() => {
+            deleteBoard(state.code).catch(() => {
                 /* best-effort cleanup; the 7-day TTL is the backstop */
             });
         }
@@ -160,14 +160,14 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
 
     const retry = useCallback(() => {
         dispatch({ type: 'RETRY' });
-        loadRoles(stateRef.current.code);
-    }, [loadRoles]);
+        loadBoard(stateRef.current.code);
+    }, [loadBoard]);
 
     const resetGame = useCallback(() => {
         const { code, status } = stateRef.current;
-        // Release the previous board's roles from Redis before starting a new game.
+        // Release the previous board from Redis before starting a new game.
         if (code && status === GameStatusEnum.PLAYING) {
-            deleteRoles(code).catch(() => {});
+            deleteBoard(code).catch(() => {});
         }
         createNewGame({ share: true });
     }, [createNewGame]);

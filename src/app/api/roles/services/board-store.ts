@@ -1,8 +1,8 @@
-import { RoleEnum } from '@/enum/role.enum';
+import { Board } from '@/domain';
 import { Redis } from '@upstash/redis';
 
 /**
- * Server-side persistence for a board's roles, keyed by game code.
+ * Server-side persistence for a game board (roles + words), keyed by game code.
  *
  * Backends (resolved lazily, once, on first use):
  *   - Upstash Redis when credentials are present (production and any env with creds).
@@ -10,7 +10,7 @@ import { Redis } from '@upstash/redis';
  *     runs locally without a live Upstash database. This NEVER activates in
  *     production: with no creds in production we still throw.
  *
- * The public API is three plain functions: readRoles, writeRolesIfAbsent, deleteRoles.
+ * The public API is three plain functions: readBoard, writeBoardIfAbsent, deleteBoard.
  */
 
 const TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days.
@@ -24,15 +24,15 @@ const CREDENTIAL_ENV_PAIRS: readonly [string, string][] = [
     ['UPSTASH_REDIS_KV_REST_API_URL', 'UPSTASH_REDIS_KV_REST_API_TOKEN'],
 ];
 
-const getKey = (code: number): string => `roles:${code}`;
+const getKey = (code: number): string => `board:${code}`;
 
 /** Normalize a stored payload (Upstash auto-deserializes JSON; be robust to raw strings). */
-const parseStored = (data: RoleEnum[] | string | null): RoleEnum[] | null => {
+const parseStored = (data: Board | string | null): Board | null => {
     if (!data) {
         return null;
     }
     if (typeof data === 'string') {
-        return JSON.parse(data) as RoleEnum[];
+        return JSON.parse(data) as Board;
     }
     return data;
 };
@@ -41,59 +41,59 @@ const parseStored = (data: RoleEnum[] | string | null): RoleEnum[] | null => {
  * Common backend contract. Both the Redis and in-memory implementations satisfy it,
  * so the exported functions don't care which one is active.
  */
-interface RolesStore {
-    readRoles(code: number): Promise<RoleEnum[] | null>;
+interface BoardStore {
+    readBoard(code: number): Promise<Board | null>;
     /**
-     * Atomic create-if-absent. Returns the AUTHORITATIVE roles: the passed `roles`
-     * when this call created the key, or the pre-existing roles when the key already
+     * Atomic create-if-absent. Returns the AUTHORITATIVE board: the passed `board`
+     * when this call created the key, or the pre-existing board when the key already
      * existed (i.e. a concurrent writer won the race).
      */
-    writeRolesIfAbsent(code: number, roles: RoleEnum[]): Promise<RoleEnum[]>;
-    deleteRoles(code: number): Promise<boolean>;
+    writeBoardIfAbsent(code: number, board: Board): Promise<Board>;
+    deleteBoard(code: number): Promise<boolean>;
 }
 
 // ---------------------------------------------------------------------------
 // Redis-backed store
 // ---------------------------------------------------------------------------
 
-const createRedisStore = (url: string, token: string): RolesStore => {
+const createRedisStore = (url: string, token: string): BoardStore => {
     const client = new Redis({ url, token });
 
     return {
-        async readRoles(code) {
+        async readBoard(code) {
             try {
-                const data = await client.get<RoleEnum[] | string>(getKey(code));
+                const data = await client.get<Board | string>(getKey(code));
                 return parseStored(data);
             } catch (error: unknown) {
                 throw wrapError('reading', error);
             }
         },
 
-        async writeRolesIfAbsent(code, roles) {
+        async writeBoardIfAbsent(code, board) {
             try {
                 const key = getKey(code);
                 // Atomic SET NX EX: "OK" when created, null when the key already existed.
                 // This closes the read-then-create race the old getOrCreate had.
-                const result = await client.set(key, JSON.stringify(roles), {
+                const result = await client.set(key, JSON.stringify(board), {
                     nx: true,
                     ex: TTL_SECONDS,
                 });
 
                 if (result === 'OK') {
-                    return roles;
+                    return board;
                 }
 
                 // A concurrent writer already created the key — return its value as the
                 // authoritative result. Fall back to our candidate only if it vanished
                 // (deleted/expired) between the SET and the GET.
-                const existing = parseStored(await client.get<RoleEnum[] | string>(key));
-                return existing ?? roles;
+                const existing = parseStored(await client.get<Board | string>(key));
+                return existing ?? board;
             } catch (error: unknown) {
                 throw wrapError('writing', error);
             }
         },
 
-        async deleteRoles(code) {
+        async deleteBoard(code) {
             try {
                 // redis.del returns the number of keys removed.
                 return (await client.del(getKey(code))) > 0;
@@ -106,24 +106,24 @@ const createRedisStore = (url: string, token: string): RolesStore => {
 
 const wrapError = (action: 'reading' | 'writing' | 'deleting', error: unknown): Error => {
     const detail = error instanceof Error ? error.message : 'unknown error';
-    return new Error(`Error ${action} roles from Redis: ${detail}`);
+    return new Error(`Error ${action} board from Redis: ${detail}`);
 };
 
 // ---------------------------------------------------------------------------
 // In-memory store (dev-only fallback)
 // ---------------------------------------------------------------------------
 
-type MemoryEntry = { roles: RoleEnum[]; expiresAt: number };
+type MemoryEntry = { board: Board; expiresAt: number };
 
 // Stored on globalThis so the map survives Next.js HMR module reloads in dev.
 const globalForStore = globalThis as unknown as {
-    __rolesMemoryStore?: Map<string, MemoryEntry>;
+    __boardMemoryStore?: Map<string, MemoryEntry>;
 };
 
-const createMemoryStore = (): RolesStore => {
-    const map = (globalForStore.__rolesMemoryStore ??= new Map<string, MemoryEntry>());
+const createMemoryStore = (): BoardStore => {
+    const map = (globalForStore.__boardMemoryStore ??= new Map<string, MemoryEntry>());
 
-    const readLive = (key: string): RoleEnum[] | null => {
+    const readLive = (key: string): Board | null => {
         const entry = map.get(key);
         if (!entry) {
             return null;
@@ -132,25 +132,25 @@ const createMemoryStore = (): RolesStore => {
             map.delete(key);
             return null;
         }
-        return entry.roles;
+        return entry.board;
     };
 
     return {
-        async readRoles(code) {
+        async readBoard(code) {
             return readLive(getKey(code));
         },
 
-        async writeRolesIfAbsent(code, roles) {
+        async writeBoardIfAbsent(code, board) {
             const key = getKey(code);
             const existing = readLive(key);
             if (existing) {
                 return existing;
             }
-            map.set(key, { roles, expiresAt: Date.now() + TTL_SECONDS * 1000 });
-            return roles;
+            map.set(key, { board, expiresAt: Date.now() + TTL_SECONDS * 1000 });
+            return board;
         },
 
-        async deleteRoles(code) {
+        async deleteBoard(code) {
             return map.delete(getKey(code));
         },
     };
@@ -160,9 +160,9 @@ const createMemoryStore = (): RolesStore => {
 // Backend resolution (lazy, cached once)
 // ---------------------------------------------------------------------------
 
-let store: RolesStore | null = null;
+let store: BoardStore | null = null;
 
-const getStore = (): RolesStore => {
+const getStore = (): BoardStore => {
     if (store) {
         return store;
     }
@@ -180,7 +180,7 @@ const getStore = (): RolesStore => {
     // without a live Upstash DB; in production, missing creds must fail loudly.
     if (process.env.NODE_ENV !== 'production') {
         console.warn(
-            '[role-store] No Redis credentials found — using in-memory store (dev only). ' +
+            '[board-store] No Redis credentials found — using in-memory store (dev only). ' +
                 'Data is not shared across processes and is lost on restart.',
         );
         store = createMemoryStore();
@@ -197,9 +197,9 @@ const getStore = (): RolesStore => {
 // Public API
 // ---------------------------------------------------------------------------
 
-export const readRoles = (code: number): Promise<RoleEnum[] | null> => getStore().readRoles(code);
+export const readBoard = (code: number): Promise<Board | null> => getStore().readBoard(code);
 
-export const writeRolesIfAbsent = (code: number, roles: RoleEnum[]): Promise<RoleEnum[]> =>
-    getStore().writeRolesIfAbsent(code, roles);
+export const writeBoardIfAbsent = (code: number, board: Board): Promise<Board> =>
+    getStore().writeBoardIfAbsent(code, board);
 
-export const deleteRoles = (code: number): Promise<boolean> => getStore().deleteRoles(code);
+export const deleteBoard = (code: number): Promise<boolean> => getStore().deleteBoard(code);

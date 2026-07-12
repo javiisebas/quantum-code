@@ -9,7 +9,8 @@ export { BOARD_SIZE, ROLE_COUNTS, STARTING_TEAM, otherTeam, NoTeamEnum, TeamEnum
 export type { RoleEnum } from './rules';
 
 // Board generation.
-export { generateRoles, generateWords, createRevealedState } from './board';
+export { generateRoles, generateWords, createRevealedState, generateBoard } from './board';
+export type { Board } from './board';
 
 // Game codes.
 export { generateCode, parseCode } from './code';

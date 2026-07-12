@@ -56,9 +56,9 @@ export const initialGameState: GameState = {
 };
 
 export type GameAction =
-    | { type: 'HYDRATE'; game: PersistedGame; needsRoles: boolean }
-    | { type: 'NEW_GAME'; code: number; words: string[] }
-    | { type: 'ROLES_LOADED'; roles: RoleEnum[] }
+    | { type: 'HYDRATE'; game: PersistedGame; needsBoard: boolean }
+    | { type: 'NEW_GAME'; code: number }
+    | { type: 'BOARD_LOADED'; roles: RoleEnum[]; words: string[] }
     | { type: 'LOAD_ERROR'; message: string }
     | { type: 'RETRY' }
     | { type: 'REVEAL_CARD'; index: number }
@@ -79,9 +79,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
                 // Older persisted games predate turn tracking — default the turn.
                 currentTurn: action.game.currentTurn ?? STARTING_TEAM,
                 hydrated: true,
-                // A persisted, in-progress game with no stored roles must fetch them;
+                // A persisted, in-progress game with no stored board must fetch it;
                 // otherwise everything needed to render is already in hand.
-                loading: action.needsRoles,
+                loading: action.needsBoard,
                 error: null,
                 showConfetti: false,
             };
@@ -90,7 +90,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
             return {
                 ...state,
                 code: action.code,
-                words: action.words,
+                words: [],
                 roles: [],
                 revealedRoles: createRevealedState(),
                 status: GameStatusEnum.PLAYING,
@@ -102,8 +102,14 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
                 hydrated: true,
             };
 
-        case 'ROLES_LOADED':
-            return { ...state, roles: action.roles, loading: false, error: null };
+        case 'BOARD_LOADED':
+            return {
+                ...state,
+                roles: action.roles,
+                words: action.words,
+                loading: false,
+                error: null,
+            };
 
         case 'LOAD_ERROR':
             return { ...state, loading: false, error: action.message };

@@ -101,12 +101,26 @@ describe('gameReducer — REVEAL_ALL / NEW_GAME', () => {
         const next = gameReducer(makeState({ status: GameStatusEnum.LOST }), {
             type: 'NEW_GAME',
             code: 123456,
-            words: ['a', 'b'],
         });
         expect(next.status).toBe(GameStatusEnum.PLAYING);
         expect(next.code).toBe(123456);
         expect(next.currentTurn).toBe(TeamEnum.RED); // STARTING_TEAM
         expect(next.hasTeamWon).toBeNull();
+        expect(next.loading).toBe(true);
+        expect(next.words).toEqual([]);
+        expect(next.roles).toEqual([]);
         expect(next.revealedRoles.every((r) => r === false)).toBe(true);
+    });
+
+    it('BOARD_LOADED fills roles + words and clears loading', () => {
+        const next = gameReducer(makeState({ loading: true, roles: [], words: [] }), {
+            type: 'BOARD_LOADED',
+            roles: ROLES,
+            words: ['uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis'],
+        });
+        expect(next.roles).toEqual(ROLES);
+        expect(next.words).toHaveLength(ROLES.length);
+        expect(next.loading).toBe(false);
+        expect(next.error).toBeNull();
     });
 });
