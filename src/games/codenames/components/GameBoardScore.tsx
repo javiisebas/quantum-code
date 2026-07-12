@@ -3,6 +3,7 @@
 import { useGame } from '@/games/codenames/GameContext';
 import { TeamEnum } from '@/games/codenames/domain';
 import { GameStatusEnum } from '@/games/codenames/enums/game-status.enum';
+import { BarDivider, FLOATING_BAR, IconButton } from '@/platform/ui/IconButton';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import { FC } from 'react';
 import { BiTransferAlt } from 'react-icons/bi';
@@ -43,7 +44,7 @@ const TeamSegment: FC<TeamSegmentProps> = ({ style, remaining, total, active, pl
     return (
         <div
             className={ClassnameHelper.join(
-                'flex items-center gap-2.5 rounded-2xl px-4 py-2 ring-1 ring-inset transition-all duration-300',
+                'flex items-center gap-2.5 rounded-xl px-4 py-2.5 ring-1 ring-inset transition-all duration-300',
                 align === 'right' && 'flex-row-reverse',
                 highlighted
                     ? ClassnameHelper.join(style.activeBg, style.activeRing)
@@ -86,7 +87,7 @@ export const GameBoardScore: FC = () => {
 
     return (
         <div className="absolute left-1/2 top-5 z-20 -translate-x-1/2">
-            <div className="flex items-center gap-1 rounded-[1.4rem] bg-gray-900/70 p-1.5 shadow-xl shadow-black/30 ring-1 ring-white/10 backdrop-blur-md">
+            <div className={FLOATING_BAR}>
                 <TeamSegment
                     style={TEAM_STYLES[TeamEnum.BLUE]}
                     remaining={Math.max(progress.blue.total - progress.blue.found, 0)}
@@ -96,26 +97,17 @@ export const GameBoardScore: FC = () => {
                     align="left"
                 />
 
-                {playing ? (
-                    <button
-                        type="button"
-                        onClick={passTurn}
-                        aria-label={`Pasar turno (ahora juega ${turnStyle.label})`}
-                        title="Pasar turno"
-                        className={ClassnameHelper.join(
-                            'group flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
-                            'bg-white/5 text-gray-300 ring-1 ring-inset ring-white/10 transition-all',
-                            'hover:bg-white/15 hover:text-white active:scale-90',
-                        )}
-                    >
-                        <BiTransferAlt
-                            size={20}
-                            aria-hidden="true"
-                            className="transition-transform duration-300 group-hover:rotate-180"
+                {playing && (
+                    <>
+                        <BarDivider />
+                        <IconButton
+                            label={`Pasar turno (ahora juega ${turnStyle.label})`}
+                            icon={<BiTransferAlt size={20} />}
+                            onPress={passTurn}
+                            placement="bottom"
                         />
-                    </button>
-                ) : (
-                    <span className="w-2" aria-hidden="true" />
+                        <BarDivider />
+                    </>
                 )}
 
                 <TeamSegment
