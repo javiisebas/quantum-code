@@ -18,7 +18,7 @@ const LEGEND: LegendItem[] = [
 
 const STEPS: string[] = [
     'Un dispositivo hace de tablero compartido y muestra 25 palabras.',
-    'Cada espía escanea el QR (o entra en /spy e introduce el código) para ver en su móvil el mapa secreto de colores.',
+    'Cada espía escanea el QR (o entra en /join e introduce el código) para ver en su móvil el mapa secreto de colores.',
     'Por turnos, el equipo da pistas y toca palabras en el tablero para revelar su color.',
     'Aciertas una carta de tu color y sigues; fallas y pasa el turno al rival.',
     'Gana el primer equipo que revela todas sus cartas. Revelar al asesino es la derrota inmediata.',

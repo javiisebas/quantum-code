@@ -72,7 +72,7 @@ export default function JoinPage() {
                         inputMode="numeric"
                         maxLength={6}
                         onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                        placeholder="Código de 6 cifras"
+                        placeholder="Código"
                         size="lg"
                         type="text"
                         value={code}

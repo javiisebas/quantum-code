@@ -18,12 +18,12 @@ export const SpyBoardMenu: FC = () => {
         {
             icon: IconEnum.REFRESH,
             label: 'Unirse a otra partida',
-            onPress: () => router.push('/join/codenames'),
+            onPress: () => router.push('/join'),
         },
     ];
 
     return (
-        <div className="flex justify-center gap-4 mt-6">
+        <div className="flex justify-center gap-4">
             {menuBtns.map((btn, index) => (
                 <Button
                     isIconOnly

@@ -1,12 +1,13 @@
 'use client';
 
+import { JoinForm } from '@/games/_shared/JoinForm';
 import { fetchRoom } from '@/platform/room/room-client';
 import { Spinner } from '@heroui/react';
 import { useEffect, useState } from 'react';
 import { SpyBoard } from './components/SpyBoard';
-import { SpyJoinGame } from './components/SpyJoinGame';
 import type { Board } from './domain';
 import { CODENAMES_ID } from './manifest';
+import { codenamesManifest } from './manifest';
 
 type PlayerState =
     | { status: 'loading' }
@@ -59,5 +60,5 @@ export function CodenamesPlayer({ code }: { code: number | null }) {
         return <SpyBoard roles={state.board.roles} words={state.board.words} />;
     }
 
-    return <SpyJoinGame />;
+    return <JoinForm game={CODENAMES_ID} gameName={codenamesManifest.name} />;
 }

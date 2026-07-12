@@ -33,7 +33,7 @@ export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
     if (loading) {
         return (
             <div className="flex h-screen w-screen flex-col items-center justify-center gap-4">
-                <Spinner size="lg" color="default" />
+                <Spinner size="lg" color="secondary" />
                 <p className="text-sm text-gray-400">Preparando la partida…</p>
             </div>
         );

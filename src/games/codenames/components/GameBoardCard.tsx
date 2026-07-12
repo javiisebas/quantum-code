@@ -33,7 +33,7 @@ export const GameBoardCard: FC<CardProps> = ({ index }) => {
             type="button"
             onClick={handleClick}
             disabled={!isInteractive}
-            aria-label={revealed ? `${word} (revealed)` : word}
+            aria-label={revealed ? `${word} (revelada)` : word}
             className={ClassnameHelper.join(
                 'perspective block appearance-none border-0 bg-transparent p-0 rounded-lg',
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70',

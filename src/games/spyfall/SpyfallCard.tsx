@@ -83,7 +83,7 @@ export const SpyfallCard: FC<SpyfallCardProps> = ({ payload, seat }) => {
                             <span className="text-xs uppercase tracking-widest text-gray-400">
                                 Tu rol
                             </span>
-                            <p className="text-xl font-bold text-purple-200">
+                            <p className="text-xl font-bold text-rose-200">
                                 {payload.roleBySeat[seat - 1]}
                             </p>
                         </div>

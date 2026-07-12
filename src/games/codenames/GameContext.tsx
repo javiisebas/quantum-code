@@ -2,7 +2,7 @@
 
 import { generateCode } from '@/platform/room';
 import { createRoom, deleteRoom } from '@/platform/room/room-client';
-import { ModalCodeGameContent } from '@/games/codenames/components/ModalCodeGameContent';
+import { ShareModal } from '@/platform/ui/ShareModal';
 import {
     Board,
     generateBoard,
@@ -11,7 +11,7 @@ import {
     TeamEnum,
     TeamProgress,
 } from '@/games/codenames/domain';
-import { CODENAMES_ID } from '@/games/codenames/manifest';
+import { CODENAMES_ID, codenamesManifest } from '@/games/codenames/manifest';
 import { GameStatusEnum } from '@/games/codenames/enums/game-status.enum';
 import { LocalStorageHelper } from '@/platform/persistence/local-storage';
 import { createContext, FC, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
@@ -67,7 +67,14 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
             try {
                 const board = await createRoom<Board>(CODENAMES_ID, code, generateBoard());
                 dispatch({ type: 'BOARD_LOADED', roles: board.roles, words: board.words });
-                if (options?.share) openModal(<ModalCodeGameContent code={code} />);
+                if (options?.share)
+                    openModal(
+                        <ShareModal
+                            code={code}
+                            game={CODENAMES_ID}
+                            gameName={codenamesManifest.name}
+                        />,
+                    );
             } catch {
                 dispatch({ type: 'LOAD_ERROR', message: LOAD_ERROR_MESSAGE });
             }
