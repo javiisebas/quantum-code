@@ -23,7 +23,7 @@ import {
     isTerminal,
     PersistedGame,
 } from './game-state';
-import { useModal } from './ModalContext';
+import { useModal } from '@/platform/ui/modal-context';
 
 interface GameContextType {
     code: number;

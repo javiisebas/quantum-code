@@ -1,8 +1,8 @@
-import { GameState, gameReducer, initialGameState } from '@/contexts/game-state';
-import { NoTeamEnum } from '@/enum/no-team.enum';
-import { RoleEnum } from '@/enum/role.enum';
-import { GameStatusEnum } from '@/enum/game-status.enum';
-import { TeamEnum } from '@/enum/team.enum';
+import { GameState, gameReducer, initialGameState } from '@/games/codenames/game-state';
+import { NoTeamEnum } from '@/games/codenames/enums/no-team.enum';
+import { RoleEnum } from '@/games/codenames/enums/role.enum';
+import { GameStatusEnum } from '@/games/codenames/enums/game-status.enum';
+import { TeamEnum } from '@/games/codenames/enums/team.enum';
 import { describe, expect, it } from 'vitest';
 
 // Small handcrafted board (order matters for the index-based assertions):
