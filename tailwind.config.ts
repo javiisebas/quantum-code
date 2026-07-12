@@ -10,14 +10,6 @@ const config: Config = {
         './src/**/*.{js,ts,jsx,tsx,mdx}',
         './node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}',
     ],
-    theme: {
-        extend: {
-            colors: {
-                background: 'var(--background)',
-                foreground: 'var(--foreground)',
-            },
-        },
-    },
     darkMode: 'class',
     plugins: [forms(), heroui()],
 
@@ -26,25 +18,28 @@ const config: Config = {
     // They are safelisted as a guard so a purge can never drop a board colour.
     safelist: [
         // blue
-        'bg-sky-400',
-        'text-sky-900',
-        'shadow-sky-600/30',
-        'border-sky-500/40',
+        'bg-sky-500',
+        'ring-sky-300/40',
+        'shadow-sky-950/40',
         // red
-        'bg-rose-400',
-        'text-rose-900',
-        'shadow-rose-600/30',
-        'border-rose-500/40',
-        // black (assassin)
-        'bg-black',
-        'text-white',
-        'shadow-black/30',
-        'border-gray-300/80',
+        'bg-rose-500',
+        'ring-rose-300/40',
+        'shadow-rose-950/40',
         // neutral
-        'bg-orange-200',
-        'text-orange-800',
-        'shadow-orange-600/30',
-        'border-orange-400/40',
+        'bg-stone-300',
+        'text-stone-700',
+        'ring-stone-400/50',
+        'shadow-stone-950/20',
+        // black (assassin)
+        'bg-gray-950',
+        'text-rose-50',
+        'ring-rose-500/60',
+        'shadow-black/60',
+        // shared
+        'text-white',
+        'ring-1',
+        'ring-inset',
+        'shadow-lg',
     ],
 };
 export default config;

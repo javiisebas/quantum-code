@@ -65,7 +65,8 @@ export const Button: FC<ButtonProps> = ({
         variant={HERO_VARIANT[variant]}
         disableRipple
         className={ClassnameHelper.join(
-            'transition active:scale-[0.98]',
+            // One control radius across the app: buttons match inputs/code cells (rounded-xl).
+            'rounded-xl transition active:scale-[0.98]',
             VARIANT[variant],
             variant === 'accent' && accentClass,
             fullWidth && 'w-full',

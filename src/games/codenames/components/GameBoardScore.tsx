@@ -3,7 +3,7 @@
 import { useGame } from '@/games/codenames/GameContext';
 import { TeamEnum } from '@/games/codenames/domain';
 import { GameStatusEnum } from '@/games/codenames/enums/game-status.enum';
-import { BarDivider, FLOATING_BAR, IconButton } from '@/platform/ui/IconButton';
+import { BarButton, BarDivider, FLOATING_BAR } from '@/platform/ui/FloatingBar';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import { FC } from 'react';
 import { BiTransferAlt } from 'react-icons/bi';
@@ -106,7 +106,7 @@ export const GameBoardScore: FC = () => {
                 {playing && (
                     <>
                         <BarDivider />
-                        <IconButton
+                        <BarButton
                             label={`Pasar turno (ahora juega ${turnStyle.label})`}
                             icon={<BiTransferAlt size={20} />}
                             onPress={passTurn}

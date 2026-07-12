@@ -5,9 +5,11 @@ import { LocalStorageHelper } from '@/platform/persistence/local-storage';
 import { generateCode } from '@/platform/room';
 import { createRoom, deleteRoom } from '@/platform/room/room-client';
 import { useLiveCount } from '@/platform/room/use-presence';
-import { ClassnameHelper } from '@/platform/util/classnames';
-import { Button, Spinner } from '@heroui/react';
-import { QRCodeSVG } from 'qrcode.react';
+import { Button, IconButton } from '@/platform/ui/Button';
+import { Chip } from '@/platform/ui/Chip';
+import { Eyebrow } from '@/platform/ui/Eyebrow';
+import { RoomShare } from '@/platform/ui/RoomShare';
+import { Spinner } from '@heroui/react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BiGroup, BiHome, BiMinus, BiPlus, BiRefresh } from 'react-icons/bi';
@@ -23,7 +25,9 @@ import { BiGroup, BiHome, BiMinus, BiPlus, BiRefresh } from 'react-icons/bi';
  *
  * The room `{ code, payload, count }` is persisted so a host reload resumes the same
  * round. Every per-player game reuses this, which is what keeps their host screens
- * visually identical.
+ * visually identical. The share surface (QR + code + copy/share) is delegated to the
+ * shared <RoomShare>, so per-player games get the same copy/native-share shortcuts as
+ * codenames for free.
  */
 interface PerPlayerHostProps<T> {
     game: string;
@@ -35,7 +39,7 @@ interface PerPlayerHostProps<T> {
     maxPlayers: number;
     /** Build the shared payload for `count` players (one secret per seat). */
     build: (count: number) => T;
-    /** Optional per-game hint shown under the code (e.g. rules reminder). */
+    /** Optional per-game hint shown under the actions (e.g. a rules reminder). */
     hint?: string;
 }
 
@@ -66,14 +70,9 @@ export function PerPlayerHost<T>({
     const acc = accentOf(accent);
     const [count, setCount] = useState(minPlayers);
     const [phase, setPhase] = useState<Phase<T>>({ kind: 'config' });
-    const [origin, setOrigin] = useState('');
 
     const buildRef = useRef(build);
     buildRef.current = build;
-
-    useEffect(() => {
-        setOrigin(window.location.origin);
-    }, []);
 
     // Resume a persisted round on mount (guard against StrictMode double-invoke).
     const bootstrappedRef = useRef(false);
@@ -137,7 +136,7 @@ export function PerPlayerHost<T>({
         return (
             <div className="flex h-screen flex-col items-center justify-center gap-4 px-6 text-center">
                 <p className="text-lg text-gray-200">No se pudo crear la partida.</p>
-                <Button color="secondary" onPress={() => startRound(count)}>
+                <Button variant="secondary" onPress={() => startRound(count)}>
                     Reintentar
                 </Button>
             </div>
@@ -145,9 +144,8 @@ export function PerPlayerHost<T>({
     }
 
     if (phase.kind === 'live') {
-        const joinUrl = origin ? `${origin}/join/${game}?code=${phase.code}` : '';
         return (
-            <main className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-6 px-6 py-12 text-center">
+            <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 px-6 py-12 text-center">
                 <div>
                     <span className="text-5xl" aria-hidden="true">
                         {emoji}
@@ -155,56 +153,38 @@ export function PerPlayerHost<T>({
                     <h1 className="mt-2 text-2xl font-bold text-white">{gameName}</h1>
                 </div>
 
-                {joinUrl ? (
-                    <div className="rounded-2xl bg-white p-4 shadow-lg">
-                        <QRCodeSVG value={joinUrl} size={200} level="M" marginSize={0} />
-                    </div>
-                ) : (
-                    <div className="h-[232px] w-[232px] animate-pulse rounded-2xl bg-white/10" />
-                )}
+                <RoomShare code={phase.code} game={game} gameName={gameName} />
 
-                <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs uppercase tracking-widest text-gray-400">Código</span>
-                    <span className="font-mono text-5xl font-bold tracking-[0.2em] text-white">
-                        {phase.code}
-                    </span>
+                <div aria-live="polite">
+                    <Chip>
+                        <BiGroup className="text-emerald-300" size={16} />
+                        <span>
+                            {connected}{' '}
+                            {connected === 1 ? 'jugador conectado' : 'jugadores conectados'}
+                        </span>
+                    </Chip>
                 </div>
 
-                <div
-                    className="flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 ring-1 ring-inset ring-white/10"
-                    aria-live="polite"
-                >
-                    <BiGroup className="text-emerald-300" size={18} />
-                    <span className="text-sm font-semibold text-white">
-                        {connected} {connected === 1 ? 'jugador conectado' : 'jugadores conectados'}
-                    </span>
-                </div>
-
-                <p className="max-w-xs text-sm text-gray-400">
-                    Cada jugador entra en <span className="font-semibold text-gray-200">/join</span>,
-                    elige {gameName} y mete el código.{hint ? ` ${hint}` : ''}
-                </p>
-
-                <div className="mt-2 flex gap-3">
+                <div className="flex flex-wrap justify-center gap-3">
                     <Button
-                        size="lg"
+                        variant="accent"
+                        accentClass={acc.solidButton}
                         startContent={<BiRefresh size={20} />}
                         onPress={newRound}
-                        className={ClassnameHelper.join('font-semibold text-white', acc.solidButton)}
                     >
                         Nueva ronda
                     </Button>
                     <Button
+                        variant="secondary"
                         as={Link}
                         href="/"
-                        size="lg"
-                        variant="bordered"
-                        className="border-white/20 text-white"
                         startContent={<BiHome size={20} />}
                     >
                         Inicio
                     </Button>
                 </div>
+
+                {hint && <p className="max-w-xs text-sm text-gray-400">{hint}</p>}
             </main>
         );
     }
@@ -223,39 +203,23 @@ export function PerPlayerHost<T>({
             </div>
 
             <div className="flex flex-col items-center gap-3">
-                <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-                    Número de jugadores
-                </span>
+                <Eyebrow>Número de jugadores</Eyebrow>
                 <div className="flex items-center gap-6">
-                    <Button
-                        isIconOnly
-                        size="lg"
-                        radius="full"
+                    <IconButton
                         aria-label="Menos jugadores"
                         onPress={dec}
                         isDisabled={count <= minPlayers}
-                        className={ClassnameHelper.join(
-                            'bg-white/5 text-white ring-1 ring-inset ring-white/10',
-                            'hover:bg-white/10',
-                        )}
                     >
                         <BiMinus size={22} />
-                    </Button>
+                    </IconButton>
                     <span className="w-14 font-mono text-5xl font-bold text-white">{count}</span>
-                    <Button
-                        isIconOnly
-                        size="lg"
-                        radius="full"
+                    <IconButton
                         aria-label="Más jugadores"
                         onPress={inc}
                         isDisabled={count >= maxPlayers}
-                        className={ClassnameHelper.join(
-                            'bg-white/5 text-white ring-1 ring-inset ring-white/10',
-                            'hover:bg-white/10',
-                        )}
                     >
                         <BiPlus size={22} />
-                    </Button>
+                    </IconButton>
                 </div>
                 <span className="text-xs text-gray-500">
                     entre {minPlayers} y {maxPlayers}
@@ -263,11 +227,9 @@ export function PerPlayerHost<T>({
             </div>
 
             <Button
-                size="lg"
-                className={ClassnameHelper.join(
-                    'w-full max-w-xs font-semibold text-white',
-                    acc.solidButton,
-                )}
+                variant="accent"
+                accentClass={acc.solidButton}
+                className="w-full max-w-xs"
                 onPress={() => startRound(count)}
             >
                 Empezar partida

@@ -43,8 +43,11 @@ export const GameBoardCard: FC<CardProps> = ({ index }) => {
             <div className={ClassnameHelper.join('flip-card-inner', revealed && 'flipped')}>
                 <div
                     className={ClassnameHelper.join(
-                        'flip-card-front bg-gray-100/80 text-purple-900 transition-transform duration-300',
-                        isInteractive && 'hover:bg-gray-50 hover:scale-[1.02]',
+                        // Unrevealed cards are dark "chips" so any revealed card — teams,
+                        // and especially the light neutral — pops and is never mistaken
+                        // for a still-unclicked card.
+                        'flip-card-front bg-slate-700 text-slate-50 ring-1 ring-inset ring-white/10 transition-transform duration-300',
+                        isInteractive && 'hover:bg-slate-600 hover:scale-[1.02]',
                         sharedClasses,
                     )}
                 >
@@ -55,7 +58,7 @@ export const GameBoardCard: FC<CardProps> = ({ index }) => {
 
                 <div
                     className={ClassnameHelper.join(
-                        'flip-card-back border-2',
+                        'flip-card-back',
                         sharedClasses,
                         getCardColor(role),
                     )}

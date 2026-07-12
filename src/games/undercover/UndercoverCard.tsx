@@ -1,5 +1,7 @@
 'use client';
 
+import { Eyebrow } from '@/platform/ui/Eyebrow';
+import { Surface } from '@/platform/ui/Surface';
 import { FC } from 'react';
 import type { UndercoverRoom } from './domain';
 
@@ -17,27 +19,23 @@ export const UndercoverCard: FC<UndercoverCardProps> = ({ payload, seat }) => {
     if (seat > payload.wordBySeat.length) {
         return (
             <main className="flex min-h-screen items-center justify-center px-6 text-center">
-                <div className="max-w-sm rounded-3xl bg-gray-900/80 p-8 ring-1 ring-inset ring-white/10">
+                <Surface className="max-w-sm p-8">
                     <p className="text-lg text-gray-200">La partida ya está completa.</p>
                     <p className="mt-2 text-sm text-gray-400">
                         Pide al anfitrión una <span className="font-semibold">nueva ronda</span> con
                         más jugadores.
                     </p>
-                </div>
+                </Surface>
             </main>
         );
     }
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
-            <span className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-500">
-                Jugador {seat}
-            </span>
+            <Eyebrow className="mb-3">Jugador {seat}</Eyebrow>
 
-            <div className="flex w-full max-w-sm flex-col items-center rounded-3xl bg-gray-900/80 p-8 text-center ring-1 ring-inset ring-white/10 backdrop-blur">
-                <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-                    Tu palabra
-                </span>
+            <Surface className="flex w-full max-w-sm flex-col items-center p-8 text-center">
+                <Eyebrow>Tu palabra</Eyebrow>
                 <h1 className="mt-1 text-3xl font-extrabold text-emerald-300">
                     {payload.wordBySeat[seat - 1]}
                 </h1>
@@ -45,7 +43,7 @@ export const UndercoverCard: FC<UndercoverCardProps> = ({ payload, seat }) => {
                     Descríbela con una sola palabra en cada ronda y desenmascara al impostor sin
                     delatarte.
                 </p>
-            </div>
+            </Surface>
         </main>
     );
 };

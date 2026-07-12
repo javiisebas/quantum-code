@@ -1,8 +1,8 @@
 'use client';
 
-import { PrimaryButton } from '@/platform/ui/Button';
+import { Button } from '@/platform/ui/Button';
 import { useModal } from '@/platform/ui/modal-context';
-import { Button, ModalBody, ModalFooter, ModalHeader } from '@heroui/react';
+import { ModalBody, ModalFooter, ModalHeader } from '@heroui/react';
 import { FC, ReactNode } from 'react';
 
 interface ConfirmModalProps {
@@ -12,6 +12,8 @@ interface ConfirmModalProps {
     onConfirm: () => void;
     confirmIcon?: ReactNode;
     cancelLabel?: string;
+    /** Style the confirm action as destructive (red) — for irreversible actions. */
+    destructive?: boolean;
 }
 
 /**
@@ -27,6 +29,7 @@ export const ConfirmModal: FC<ConfirmModalProps> = ({
     onConfirm,
     confirmIcon,
     cancelLabel = 'Cancelar',
+    destructive = false,
 }) => {
     const { closeModal } = useModal();
 
@@ -37,15 +40,11 @@ export const ConfirmModal: FC<ConfirmModalProps> = ({
                 <p className="text-sm leading-relaxed text-gray-300">{message}</p>
             </ModalBody>
             <ModalFooter className="gap-2">
-                <Button
-                    size="lg"
-                    variant="light"
-                    className="font-medium text-gray-300 hover:text-white"
-                    onPress={closeModal}
-                >
+                <Button variant="ghost" onPress={closeModal}>
                     {cancelLabel}
                 </Button>
-                <PrimaryButton
+                <Button
+                    variant={destructive ? 'danger' : 'primary'}
                     startContent={confirmIcon}
                     onPress={() => {
                         onConfirm();
@@ -53,7 +52,7 @@ export const ConfirmModal: FC<ConfirmModalProps> = ({
                     }}
                 >
                     {confirmLabel}
-                </PrimaryButton>
+                </Button>
             </ModalFooter>
         </div>
     );

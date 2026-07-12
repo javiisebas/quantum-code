@@ -4,7 +4,7 @@ import { useGame } from '@/games/codenames/GameContext';
 import { ModalHowToPlayContent } from '@/games/codenames/components/ModalHowToPlayContent';
 import { CODENAMES_ID, codenamesManifest } from '@/games/codenames/manifest';
 import { ConfirmModal } from '@/platform/ui/ConfirmModal';
-import { BarDivider, FLOATING_BAR, IconButton } from '@/platform/ui/IconButton';
+import { BarDivider, FLOATING_BAR, BarButton } from '@/platform/ui/FloatingBar';
 import { useModal } from '@/platform/ui/modal-context';
 import { ShareModal } from '@/platform/ui/ShareModal';
 import { useRouter } from 'next/navigation';
@@ -92,7 +92,7 @@ export const GameBoardMenu: FC = () => {
                 {items.map((item) => (
                     <Fragment key={item.id}>
                         {item.dividerBefore && <BarDivider />}
-                        <IconButton
+                        <BarButton
                             label={item.label}
                             icon={item.icon}
                             onPress={item.onPress}

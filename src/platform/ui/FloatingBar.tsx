@@ -5,25 +5,24 @@ import { Tooltip } from '@heroui/react';
 import { forwardRef, ReactNode } from 'react';
 
 /**
- * The shared "glass bar" surface for every floating control cluster (board HUD, dock,
- * spy menu). Using one class string keeps their container — radius, padding, blur,
- * ring, shadow — identical, so the chrome reads as one system.
+ * Chrome for the game's floating control clusters (board HUD, dock, spy menu).
+ *
+ * These bars are a distinct pattern from a standalone round `IconButton` (see
+ * `Button.tsx`): they're squared, tooltip-labelled, and grouped inside one glass bar,
+ * "Apple-dock" style. Keeping their button (`BarButton`), separator (`BarDivider`) and
+ * bar surface (`FLOATING_BAR`) here — under their own name — is what lets every floating
+ * cluster share the exact same shape while staying clearly separate from the generic
+ * icon button used elsewhere (steppers, scanner close…).
  */
+
+/** The shared "glass bar" surface for every floating control cluster. */
 export const FLOATING_BAR =
     'flex items-center gap-1 rounded-2xl bg-gray-900/70 p-2 shadow-2xl shadow-black/40 ring-1 ring-white/10 backdrop-blur-md';
 
 /** A thin vertical separator for use inside a FLOATING_BAR. */
-export const BarDivider = () => (
-    <span className="mx-1 h-6 w-px bg-white/10" aria-hidden="true" />
-);
+export const BarDivider = () => <span className="mx-1 h-6 w-px bg-white/10" aria-hidden="true" />;
 
-/**
- * The one icon-button used across every floating bar (board HUD, dock, spy menu), so
- * they all share the exact same shape, size, hover/active feedback and a styled
- * tooltip — instead of each surface hand-rolling its own round/square button. Keeping
- * this single component is what makes the chrome feel homogeneous.
- */
-export interface IconButtonProps {
+export interface BarButtonProps {
     /** Accessible name + tooltip label. */
     label: string;
     icon: ReactNode;
@@ -34,7 +33,7 @@ export interface IconButtonProps {
     placement?: 'top' | 'bottom';
 }
 
-export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
+export const BarButton = forwardRef<HTMLButtonElement, BarButtonProps>(function BarButton(
     { label, icon, onPress, danger = false, placement = 'top' },
     ref,
 ) {

@@ -46,7 +46,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="es" className={ClassnameHelper.join('dark', montserrat.variable)}>
-            <body className="antialiased min-h-screen relative isolate overflow-hidden bg-gray-900">
+            <body className="antialiased min-h-screen relative isolate overflow-x-hidden bg-gray-900">
                 <svg
                     aria-hidden="true"
                     className="absolute inset-0 -z-10 size-full stroke-gray-800 [mask-image:radial-gradient(150%_150%_at_top_right,white,transparent)]"

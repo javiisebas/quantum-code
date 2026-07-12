@@ -1,54 +1,101 @@
 'use client';
 
-import { PrimaryButton } from '@/platform/ui/Button';
-import { Input } from '@heroui/react';
+import { parseJoinTarget } from '@/platform/room/join-target';
+import { Button } from '@/platform/ui/Button';
+import { CodeInput } from '@/platform/ui/CodeInput';
+import { QrScannerOverlay } from '@/platform/ui/QrScannerOverlay';
+import { Surface } from '@/platform/ui/Surface';
 import { useRouter } from 'next/navigation';
-import { FC, FormEvent, useState } from 'react';
+import { FC, useState } from 'react';
+import { BiQr } from 'react-icons/bi';
 
 /**
  * Shared "enter the code" panel for a single game's player view — the empty state
- * every phone shows when it arrives without a valid code. One component so all four
- * games' join screens look identical (the generic `/join` page adds a game picker on
- * top of the same visual language).
+ * every phone shows when it arrives without a valid code. The game is already fixed
+ * (this phone is on `/join/<game>`), so there's no picker: just the code, a QR scanner
+ * and Join. One component so every game's join screen looks identical (the generic
+ * `/join` page layers a game picker on top of the same visual language).
  */
 export const JoinForm: FC<{ game: string; gameName: string }> = ({ game, gameName }) => {
     const router = useRouter();
     const [code, setCode] = useState('');
-    const normalized = code.replace(/\D/g, '').slice(0, 6);
-    const isValid = normalized.length === 6;
+    const [scanning, setScanning] = useState(false);
+    const [scanError, setScanError] = useState(false);
 
-    const submit = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (isValid) router.push(`/join/${game}?code=${normalized}`);
+    const routeTo = (targetGame: string, joinCode: number | string) =>
+        router.push(`/join/${targetGame}?code=${joinCode}`);
+
+    /** From the "Unirse" button — routes this game with the typed code. */
+    const submit = () => {
+        if (code.length === 6) routeTo(game, code);
+    };
+
+    /** From `CodeInput.onComplete` — the freshly-completed digits arrive as an arg. */
+    const submitIfValid = (digits: string) => {
+        if (digits.length === 6) routeTo(game, digits);
+    };
+
+    const handleCode = (digits: string) => {
+        setScanError(false);
+        setCode(digits);
+    };
+
+    const handleDetect = (text: string) => {
+        const target = parseJoinTarget(text, game);
+        if (target) {
+            setScanning(false);
+            routeTo(target.game, target.code);
+        } else {
+            // Keep the scanner open so the player can re-aim; surface a note underneath.
+            setScanError(true);
+        }
+    };
+
+    const openScanner = () => {
+        setScanError(false);
+        setScanning(true);
     };
 
     return (
         <main className="flex min-h-screen items-center justify-center px-6 py-12">
-            <div className="w-full max-w-sm rounded-3xl bg-gray-900/80 p-8 text-center ring-1 ring-inset ring-white/10 backdrop-blur">
+            <Surface as="section" className="w-full max-w-sm p-8 text-center">
                 <h1 className="text-2xl font-bold text-white">{gameName}</h1>
                 <p className="mt-2 text-sm text-gray-400">
                     Introduce el código que ve el anfitrión en la pantalla.
                 </p>
-                <form className="mt-6 flex flex-col gap-4" onSubmit={submit}>
-                    <Input
-                        classNames={{
-                            input: 'px-1 text-center text-lg tracking-[0.3em]',
-                            inputWrapper: 'h-14 bg-white/5 text-white',
-                        }}
-                        aria-label="Código de la partida"
-                        inputMode="numeric"
-                        maxLength={6}
-                        onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                        placeholder="Código"
-                        size="lg"
+                <div className="mt-6 flex flex-col gap-4">
+                    <CodeInput
                         value={code}
-                        variant="faded"
+                        onChange={handleCode}
+                        onComplete={submitIfValid}
+                        autoFocus
                     />
-                    <PrimaryButton type="submit" className="w-full" isDisabled={!isValid}>
+                    <Button
+                        variant="primary"
+                        fullWidth
+                        isDisabled={code.length !== 6}
+                        onPress={submit}
+                    >
                         Unirse
-                    </PrimaryButton>
-                </form>
-            </div>
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        fullWidth
+                        startContent={<BiQr size={20} />}
+                        onPress={openScanner}
+                    >
+                        Escanear QR
+                    </Button>
+                    {scanError && (
+                        <p className="text-sm text-rose-300" role="alert">
+                            QR no válido. Inténtalo de nuevo.
+                        </p>
+                    )}
+                </div>
+            </Surface>
+            {scanning && (
+                <QrScannerOverlay onDetect={handleDetect} onClose={() => setScanning(false)} />
+            )}
         </main>
     );
 };

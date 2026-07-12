@@ -1,6 +1,6 @@
 'use client';
 
-import { PrimaryButton } from '@/platform/ui/Button';
+import { Button } from '@/platform/ui/Button';
 import { useGame } from '@/games/codenames/GameContext';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import { ChildrenProps } from '@/platform/util/children';
@@ -25,7 +25,9 @@ export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
                     <h2 className="text-xl font-semibold text-white">Algo ha ido mal</h2>
                     <p className="max-w-sm text-sm text-gray-300">{error}</p>
                 </div>
-                <PrimaryButton onPress={retry}>Reintentar</PrimaryButton>
+                <Button variant="primary" onPress={retry}>
+                    Reintentar
+                </Button>
             </div>
         );
     }

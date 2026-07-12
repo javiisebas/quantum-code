@@ -1,6 +1,6 @@
 'use client';
 
-import { FLOATING_BAR, IconButton } from '@/platform/ui/IconButton';
+import { BarButton, FLOATING_BAR } from '@/platform/ui/FloatingBar';
 import { useRouter } from 'next/navigation';
 import { FC } from 'react';
 import { BiHome, BiRefresh } from 'react-icons/bi';
@@ -10,13 +10,13 @@ export const SpyBoardMenu: FC = () => {
 
     return (
         <div className={FLOATING_BAR}>
-            <IconButton
+            <BarButton
                 label="Inicio"
                 icon={<BiHome size={22} />}
                 onPress={() => router.push('/')}
                 placement="top"
             />
-            <IconButton
+            <BarButton
                 label="Unirse a otra partida"
                 icon={<BiRefresh size={22} />}
                 onPress={() => router.push('/join')}

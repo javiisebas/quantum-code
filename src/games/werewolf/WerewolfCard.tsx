@@ -1,5 +1,8 @@
 'use client';
 
+import { Chip } from '@/platform/ui/Chip';
+import { Eyebrow } from '@/platform/ui/Eyebrow';
+import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import { FC } from 'react';
 import { WEREWOLF_ROLES, type WerewolfRoom } from './domain';
@@ -15,13 +18,13 @@ export const WerewolfCard: FC<WerewolfCardProps> = ({ payload, seat }) => {
     if (seat > payload.roleBySeat.length) {
         return (
             <main className="flex min-h-screen items-center justify-center px-6 text-center">
-                <div className="max-w-sm rounded-3xl bg-gray-900/80 p-8 ring-1 ring-inset ring-white/10">
+                <Surface className="max-w-sm p-8">
                     <p className="text-lg text-gray-200">La partida ya está completa.</p>
                     <p className="mt-2 text-sm text-gray-400">
                         Pide al anfitrión una <span className="font-semibold">nueva ronda</span> con
                         más jugadores.
                     </p>
-                </div>
+                </Surface>
             </main>
         );
     }
@@ -32,25 +35,20 @@ export const WerewolfCard: FC<WerewolfCardProps> = ({ payload, seat }) => {
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
-            <span className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-500">
-                Jugador {seat}
-            </span>
+            <Eyebrow className="mb-3">Jugador {seat}</Eyebrow>
 
-            <div
+            <Surface
+                tone={isWolf ? 'plain' : 'panel'}
                 className={ClassnameHelper.join(
-                    'flex w-full max-w-sm flex-col items-center rounded-3xl p-8 text-center ring-1 ring-inset',
-                    isWolf
-                        ? 'bg-rose-950/60 ring-rose-500/40'
-                        : 'bg-gray-900/80 ring-white/10 backdrop-blur',
+                    'flex w-full max-w-sm flex-col items-center p-8 text-center',
+                    isWolf && 'bg-rose-950/60 ring-rose-500/40',
                 )}
             >
                 <span className="text-6xl" aria-hidden="true">
                     {info.emoji}
                 </span>
 
-                <span className="mt-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
-                    Tu rol
-                </span>
+                <Eyebrow className="mt-3">Tu rol</Eyebrow>
                 <h1
                     className={ClassnameHelper.join(
                         'mt-1 text-3xl font-extrabold',
@@ -60,19 +58,20 @@ export const WerewolfCard: FC<WerewolfCardProps> = ({ payload, seat }) => {
                     {info.label}
                 </h1>
 
-                <span
+                <Chip
+                    tone="bare"
                     className={ClassnameHelper.join(
-                        'mt-4 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-widest ring-1 ring-inset',
+                        'mt-4 font-semibold uppercase tracking-widest ring-1 ring-inset',
                         isWolf
                             ? 'bg-rose-500/15 text-rose-300 ring-rose-500/40'
                             : 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/40',
                     )}
                 >
                     {isWolf ? 'Lobos' : 'Aldea'}
-                </span>
+                </Chip>
 
                 <p className="mt-5 text-sm text-gray-300">{info.description}</p>
-            </div>
+            </Surface>
         </main>
     );
 };

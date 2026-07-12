@@ -1,13 +1,13 @@
 'use client';
 
-import { PrimaryButton } from '@/platform/ui/Button';
 import { useGame } from '@/games/codenames/GameContext';
 import { TeamEnum } from '@/games/codenames/domain';
 import { GameStatusEnum } from '@/games/codenames/enums/game-status.enum';
-import { Button } from '@heroui/react';
+import { Button } from '@/platform/ui/Button';
+import { Surface } from '@/platform/ui/Surface';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 import { BiHome, BiRefresh, BiShowAlt, BiSolidSkull, BiTrophy } from 'react-icons/bi';
 
 interface ResultContent {
@@ -18,6 +18,12 @@ interface ResultContent {
     badge: string;
 }
 
+/**
+ * Content for the end-of-game overlay. Only WON / LOST get a panel: those are outcomes
+ * worth announcing. RESOLVED (the player chose "revelar cartas") deliberately returns
+ * null — revealing the cards is precisely so you can SEE them, so we never cover the
+ * board with a panel in that case.
+ */
 const getResultContent = (
     status: GameStatusEnum,
     hasTeamWon: TeamEnum | null,
@@ -41,38 +47,25 @@ const getResultContent = (
             badge: 'bg-white/10',
         };
     }
-    if (status === GameStatusEnum.RESOLVED) {
-        return {
-            icon: <BiShowAlt size={34} />,
-            title: 'Cartas reveladas',
-            subtitle: 'Se muestra el color de todas las palabras.',
-            accent: 'text-purple-300',
-            badge: 'bg-purple-400/15',
-        };
-    }
     return null;
 };
 
 /**
- * End-of-game result overlay: announces the outcome and offers the next actions.
- * Dismissible ("Ver tablero") so players can review the fully-revealed grid.
+ * End-of-game result overlay. Announces a win/loss and offers the next actions:
+ *  - "Revelar cartas" reveals every colour and, because RESOLVED shows no panel,
+ *    dismisses this overlay so you land on the fully-revealed board.
+ *  - "Nueva partida" / "Inicio" for what's next.
+ * (No standalone "ver tablero": revealing the cards is the useful way to inspect it.)
  */
 export const GameResultPanel: FC = () => {
-    const { gameStatus, hasTeamWon, resetGame } = useGame();
+    const { gameStatus, hasTeamWon, resetGame, revealAll } = useGame();
     const router = useRouter();
-    const [dismissed, setDismissed] = useState(false);
-
-    // Re-show the panel on every fresh terminal transition.
-    useEffect(() => {
-        setDismissed(false);
-    }, [gameStatus]);
 
     const content = getResultContent(gameStatus, hasTeamWon);
-    const isOpen = !!content && !dismissed;
 
     return (
         <AnimatePresence>
-            {isOpen && content && (
+            {content && (
                 <motion.div
                     className="absolute inset-0 z-30 flex items-center justify-center p-6"
                     initial={{ opacity: 0 }}
@@ -81,7 +74,7 @@ export const GameResultPanel: FC = () => {
                     transition={{ duration: 0.4, delay: 0.3 }}
                 >
                     <motion.div
-                        className="flex w-full max-w-xs flex-col items-center gap-5 rounded-3xl bg-gray-900/95 p-7 text-center ring-1 ring-white/10 shadow-2xl backdrop-blur-md"
+                        className="flex w-full max-w-xs flex-col items-center gap-5 rounded-3xl bg-gray-900/95 p-7 text-center shadow-2xl ring-1 ring-white/10 backdrop-blur-md"
                         initial={{ scale: 0.9, y: 12 }}
                         animate={{ scale: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
@@ -100,26 +93,25 @@ export const GameResultPanel: FC = () => {
                             </p>
                         </div>
                         <div className="flex w-full flex-col gap-2.5">
-                            <PrimaryButton
-                                className="w-full"
+                            <Button
+                                variant="primary"
+                                fullWidth
                                 startContent={<BiRefresh size={20} />}
                                 onPress={resetGame}
                             >
                                 Nueva partida
-                            </PrimaryButton>
-                            <Button
-                                size="lg"
-                                variant="bordered"
-                                className="w-full border-white/20 text-white"
-                                startContent={<BiShowAlt size={20} />}
-                                onPress={() => setDismissed(true)}
-                            >
-                                Ver tablero
                             </Button>
                             <Button
-                                size="lg"
-                                variant="bordered"
-                                className="w-full border-white/20 text-white"
+                                variant="secondary"
+                                fullWidth
+                                startContent={<BiShowAlt size={20} />}
+                                onPress={revealAll}
+                            >
+                                Revelar cartas
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                fullWidth
                                 startContent={<BiHome size={20} />}
                                 onPress={() => router.push('/')}
                             >
