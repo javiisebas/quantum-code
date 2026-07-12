@@ -1,86 +1,95 @@
-import { RoleService } from '@/app/api/roles/services/role.service';
+import { deleteBoard, readBoard, writeBoardIfAbsent } from '@/app/api/roles/services/board-store';
+import { Board, BOARD_SIZE, NoTeamEnum, parseCode, RoleEnum, TeamEnum } from '@/domain';
 import { NextResponse } from 'next/server';
+
+const VALID_ROLES = new Set<string>([...Object.values(TeamEnum), ...Object.values(NoTeamEnum)]);
+const MAX_WORD_LENGTH = 40;
+
+/** Exactly BOARD_SIZE entries, each a known RoleEnum value. */
+const isValidRoles = (value: unknown): value is RoleEnum[] =>
+    Array.isArray(value) &&
+    value.length === BOARD_SIZE &&
+    value.every((role) => typeof role === 'string' && VALID_ROLES.has(role));
+
+/** Exactly BOARD_SIZE non-empty, length-bounded strings. */
+const isValidWords = (value: unknown): value is string[] =>
+    Array.isArray(value) &&
+    value.length === BOARD_SIZE &&
+    value.every((w) => typeof w === 'string' && w.length > 0 && w.length <= MAX_WORD_LENGTH);
 
 export async function GET(request: Request) {
     const url = new URL(request.url);
-    const code = parseInt(url.searchParams.get('code') || '', 10);
+    const code = parseCode(url.searchParams.get('code'));
 
-    if (isNaN(code)) {
+    if (code === null) {
         return NextResponse.json({ error: 'Invalid or missing code parameter' }, { status: 400 });
     }
 
     try {
-        const roles = await RoleService.readRoles(code);
-        if (!roles) {
-            return NextResponse.json(null);
-        }
-        return NextResponse.json(roles);
+        const board = await readBoard(code);
+        return NextResponse.json(board ?? null);
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            return NextResponse.json(
-                { error: 'Failed to read roles', details: error.message },
-                { status: 500 },
-            );
-        }
-        return NextResponse.json(
-            { error: 'Unknown error occurred while reading roles' },
-            { status: 500 },
-        );
+        console.error('Failed to read board:', error);
+        return NextResponse.json({ error: 'Failed to read board' }, { status: 500 });
     }
 }
 
 export async function POST(request: Request) {
-    const body = await request.json();
-    const { code, roles } = body;
+    let body: unknown;
+    try {
+        body = await request.json();
+    } catch {
+        return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
 
-    if (!code || !Array.isArray(roles)) {
+    const {
+        code: rawCode,
+        roles,
+        words,
+    } = (body ?? {}) as { code?: unknown; roles?: unknown; words?: unknown };
+    const codeStr =
+        typeof rawCode === 'number'
+            ? String(rawCode)
+            : typeof rawCode === 'string'
+              ? rawCode
+              : null;
+    const code = parseCode(codeStr);
+
+    if (code === null || !isValidRoles(roles) || !isValidWords(words)) {
         return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
     try {
-        await RoleService.writeRoles(code, roles);
-        return NextResponse.json({ message: 'Roles saved successfully' });
+        // Atomic create-if-absent. Return the AUTHORITATIVE board (whoever won the
+        // race), so the play device and the spies converge on the same board.
+        const board: Board = { roles, words };
+        const authoritative = await writeBoardIfAbsent(code, board);
+        return NextResponse.json(authoritative);
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            return NextResponse.json(
-                { error: 'Failed to save roles', details: error.message },
-                { status: 500 },
-            );
-        }
-        return NextResponse.json(
-            { error: 'Unknown error occurred while saving roles' },
-            { status: 500 },
-        );
+        console.error('Failed to save board:', error);
+        return NextResponse.json({ error: 'Failed to save board' }, { status: 500 });
     }
 }
 
 export async function DELETE(request: Request) {
     const url = new URL(request.url);
-    const code = parseInt(url.searchParams.get('code') || '', 10);
+    const code = parseCode(url.searchParams.get('code'));
 
-    if (isNaN(code)) {
+    if (code === null) {
         return NextResponse.json({ error: 'Invalid or missing code parameter' }, { status: 400 });
     }
 
     try {
-        const success = await RoleService.deleteRoles(code);
+        const success = await deleteBoard(code);
         if (!success) {
             return NextResponse.json(
-                { error: 'Roles not found or could not be deleted' },
+                { error: 'Board not found or could not be deleted' },
                 { status: 404 },
             );
         }
-        return NextResponse.json({ message: 'Roles deleted successfully' });
+        return NextResponse.json({ message: 'Board deleted successfully' });
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            return NextResponse.json(
-                { error: 'Failed to delete roles', details: error.message },
-                { status: 500 },
-            );
-        }
-        return NextResponse.json(
-            { error: 'Unknown error occurred while deleting roles' },
-            { status: 500 },
-        );
+        console.error('Failed to delete board:', error);
+        return NextResponse.json({ error: 'Failed to delete board' }, { status: 500 });
     }
 }

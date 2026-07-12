@@ -1,5 +1,5 @@
-import { RoleEnum } from '@/enum/role.enum';
-import { RoleService } from '../api/roles/services/role.service';
+import { readBoard } from '@/app/api/roles/services/board-store';
+import { parseCode } from '@/domain';
 import { SpyBoard } from './components/SpyBoard';
 import { SpyJoinGame } from './components/SpyJoinGame';
 
@@ -9,14 +9,19 @@ interface SpyPageProps {
 
 export default async function SpyPage({ searchParams }: SpyPageProps) {
     const params = await searchParams;
-    const code = parseInt(params.code || '', 10);
+    const code = parseCode(params.code ?? null);
+
+    // Reject junk codes up front — no Redis round-trip for invalid input.
+    if (code === null) {
+        return <SpyJoinGame />;
+    }
 
     try {
-        const roles = (await RoleService.readRoles(code)) || [];
+        const board = await readBoard(code);
 
-        if (!roles.length) return <SpyJoinGame />;
+        if (!board?.roles.length) return <SpyJoinGame />;
 
-        return <SpyBoard roles={roles as RoleEnum[]} />;
+        return <SpyBoard roles={board.roles} words={board.words} />;
     } catch {
         return <SpyJoinGame />;
     }

@@ -1,7 +1,7 @@
 import './globals.css';
 
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
 import ModalComponent from './components/ui/Modal';
 import { RootProviders } from './providers';
@@ -13,7 +13,20 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
     title: 'Quantum Code',
-    description: 'Quantum Code',
+    description:
+        'Juego de espías tipo Codenames: descifra el código, supera a tus rivales y lleva a tu equipo a la victoria.',
+    applicationName: 'Quantum Code',
+    appleWebApp: {
+        capable: true,
+        title: 'Quantum Code',
+        statusBarStyle: 'black-translucent',
+    },
+};
+
+export const viewport: Viewport = {
+    themeColor: '#111827',
+    // Fixed dark theme, edge-to-edge on mobile (safe-area aware layouts).
+    colorScheme: 'dark',
 };
 
 export default function RootLayout({
@@ -22,7 +35,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className={ClassnameHelper.join('dark', montserrat.variable)}>
+        <html lang="es" className={ClassnameHelper.join('dark', montserrat.variable)}>
             <body className="antialiased min-h-screen relative isolate overflow-hidden bg-gray-900">
                 <svg
                     aria-hidden="true"
@@ -58,7 +71,7 @@ export default function RootLayout({
                             r={512}
                             cx={512}
                             cy={512}
-                            fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                            fill="url(#layout-bg-gradient)"
                             fillOpacity="0.7"
                         />
                         <defs>
@@ -66,7 +79,7 @@ export default function RootLayout({
                                 r={1}
                                 cx={0}
                                 cy={0}
-                                id="759c1415-0410-454c-8f7c-9a820de03641"
+                                id="layout-bg-gradient"
                                 gradientUnits="userSpaceOnUse"
                                 gradientTransform="translate(512 512) rotate(90) scale(512)"
                             >

@@ -1,5 +1,8 @@
-import { WORDS_LENGTH } from '@/consts';
-
+/**
+ * Master pool of Spanish words the board draws from. Game-facing content, so it
+ * intentionally stays in Spanish. This is the single source of truth for the word
+ * list (previously in src/services/get-words.ts).
+ */
 export const words_ddbb = [
     'abogado',
     'aceite',
@@ -248,8 +251,7 @@ export const words_ddbb = [
     'metro',
     'méxico',
     'micro',
-    'microscopi',
-    'mielo',
+    'microscopio',
     'millonario',
     'mina',
     'misil',
@@ -273,7 +275,7 @@ export const words_ddbb = [
     'nota',
     'nudo',
     'nueva york',
-    'o',
+    'volcán',
     'obra',
     'ojo',
     'ola',
@@ -403,12 +405,3 @@ export const words_ddbb = [
     'zanahoria',
     'zapato',
 ];
-
-export const getWords = () => {
-    const words = [];
-    for (let i = 0; i < WORDS_LENGTH; i++) {
-        const randomIndex = Math.floor(Math.random() * words.length);
-        words.push(words_ddbb.splice(randomIndex, 1)[0]);
-    }
-    return words;
-};

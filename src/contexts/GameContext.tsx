@@ -1,25 +1,36 @@
 'use client';
 
-import { ManageRolesService } from '@/app/api/roles/services/manage-roles.service';
+import { deleteBoard, getOrCreateBoard } from '@/app/api/roles/services/manage-board.service';
 import { ModalCodeGameContent } from '@/app/play/components/ModalCodeGameContent';
-import { GameLocalStorageKeyEnum } from '@/enum/game-local-storage-key.enum';
+import {
+    generateBoard,
+    generateCode,
+    getTeamProgress,
+    RoleEnum,
+    TeamEnum,
+    TeamProgress,
+} from '@/domain';
 import { GameStatusEnum } from '@/enum/game-status.enum';
-import { NoTeamEnum } from '@/enum/no-team.enum';
-import { RoleEnum } from '@/enum/role.enum';
-import { TeamEnum } from '@/enum/team.enum';
 import { LocalStorageHelper } from '@/helpers/local-storage.helper';
-import { checkHasTeamWon } from '@/services/checkhas-team-won';
-import { getFilledWordsArray } from '@/services/get-filled-words-array';
-import { getRandomCode } from '@/services/get-random-code';
-import { getRandomWords } from '@/services/get-random-words';
-import { createContext, FC, useContext, useEffect, useState } from 'react';
+import { createContext, FC, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
+import {
+    GAME_STORAGE_KEY,
+    GameState,
+    gameReducer,
+    initialGameState,
+    isTerminal,
+    PersistedGame,
+} from './game-state';
 import { useModal } from './ModalContext';
 
 interface GameContextType {
     code: number;
     gameStatus: GameStatusEnum;
     hasTeamWon: TeamEnum | null;
+    currentTurn: TeamEnum;
     loading: boolean;
+    error: string | null;
+    progress: TeamProgress;
     revealedRoles: boolean[];
     roles: RoleEnum[];
     showConfetti: boolean;
@@ -29,178 +40,183 @@ interface GameContextType {
     handleCardClick: (index: number) => void;
     resetGame: () => void;
     revealAll: () => void;
+    retry: () => void;
+    passTurn: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
+const LOAD_ERROR_MESSAGE = 'No se pudieron cargar las cartas. Revisa tu conexión e inténtalo de nuevo.';
+
 export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [loading, setLoading] = useState(true);
-    const [roles, setRoles] = useState<RoleEnum[]>([]);
-    const [showConfetti, setShowConfetti] = useState(false);
+    const [state, dispatch] = useReducer(gameReducer, initialGameState);
     const { openModal } = useModal();
-    const [isRolesDeleted, setIsRolesDeleted] = useState<boolean>(false);
 
-    const [code, setCode] = useState<number>(
-        LocalStorageHelper.getOrSetLocalStorageItem(
-            GameLocalStorageKeyEnum.GAME_CODE,
-            getRandomCode(),
-        ),
-    );
-    const [gameStatus, setGameStatus] = useState<GameStatusEnum>(
-        LocalStorageHelper.getOrSetLocalStorageItem(
-            GameLocalStorageKeyEnum.GAME_STATUS,
-            GameStatusEnum.PLAYING,
-        ),
-    );
-    const [hasTeamWon, setHasTeamWon] = useState<TeamEnum | null>(
-        LocalStorageHelper.getOrSetLocalStorageItem(GameLocalStorageKeyEnum.GAME_TEAM_WON, null),
-    );
-    const [revealedRoles, setRevealedRoles] = useState<boolean[]>(
-        LocalStorageHelper.getOrSetLocalStorageItem(
-            GameLocalStorageKeyEnum.GAME_REVEALED_ROLES,
-            getFilledWordsArray(false),
-        ),
-    );
-    const [words, setWords] = useState<string[]>(
-        LocalStorageHelper.getOrSetLocalStorageItem(
-            GameLocalStorageKeyEnum.GAME_WORDS,
-            getRandomWords(),
-        ),
-    );
+    // Always-current snapshot of state for stable callbacks that must read the
+    // latest code/status without being re-created (and re-triggering effects).
+    const stateRef = useRef<GameState>(state);
+    stateRef.current = state;
 
-    useEffect(() => {
-        const initializeGame = async () => {
-            if (!code) return;
-
+    // Fetch (or atomically create) the board for a code and publish it to Redis. We
+    // send a freshly generated candidate; the server returns the authoritative board
+    // (roles + words), so the play device and the spies always match.
+    const loadBoard = useCallback(
+        async (code: number, options?: { share?: boolean }) => {
             try {
-                const fetchedRoles = await ManageRolesService.getOrCreateRoles(code);
-                setRoles(fetchedRoles);
-
-                if (gameStatus === GameStatusEnum.PLAYING) {
-                    openModal(<ModalCodeGameContent code={code} />);
-                }
-                setLoading(false);
-            } catch (error) {
-                console.error('Error initializing game:', error);
-            }
-        };
-
-        initializeGame();
-    }, [code]);
-
-    const handleCardClick = (index: number) => {
-        if (gameStatus !== GameStatusEnum.PLAYING || revealedRoles[index]) return;
-
-        const newRevealedRoles = [...revealedRoles];
-        newRevealedRoles[index] = true;
-        handleSetRevealedRoles(newRevealedRoles);
-
-        const role = roles[index];
-
-        if (role === NoTeamEnum.BLACK) {
-            handleSetGameStatus(GameStatusEnum.LOST);
-        } else {
-            const revealedRolesArray = newRevealedRoles.map((revealed, i) =>
-                revealed ? roles[i] : null,
-            );
-
-            let teamWon = null;
-            if (checkHasTeamWon(revealedRolesArray, TeamEnum.BLUE)) {
-                teamWon = TeamEnum.BLUE;
-            } else if (checkHasTeamWon(revealedRolesArray, TeamEnum.RED)) {
-                teamWon = TeamEnum.RED;
-            }
-
-            if (teamWon) {
-                handleSetGameStatus(GameStatusEnum.WON);
-                handleSetHasTeamWon(teamWon);
-                setShowConfetti(true);
-            }
-        }
-    };
-
-    const resetGame = () => {
-        setLoading(true);
-
-        if (gameStatus === GameStatusEnum.PLAYING) handleDeleteRoles();
-
-        handleSetCode(getRandomCode());
-
-        handleSetGameStatus(GameStatusEnum.PLAYING);
-        handleSetHasTeamWon(null);
-        handleSetRevealedRoles(getFilledWordsArray(false));
-        handleSetWords(getRandomWords());
-        setIsRolesDeleted(false);
-        setShowConfetti(false);
-    };
-
-    const revealAll = () => {
-        LocalStorageHelper.removeLocalStorageItem(GameLocalStorageKeyEnum.GAME_CODE);
-
-        handleSetGameStatus(GameStatusEnum.RESOLVED);
-        handleSetRevealedRoles(getFilledWordsArray(true));
-        setShowConfetti(false);
-    };
-
-    const handleDeleteRoles = async () => {
-        if (!isRolesDeleted) {
-            try {
-                await ManageRolesService.deleteRoles(code);
-                setIsRolesDeleted(true);
+                const board = await getOrCreateBoard(code, generateBoard());
+                dispatch({ type: 'BOARD_LOADED', roles: board.roles, words: board.words });
+                if (options?.share) openModal(<ModalCodeGameContent code={code} />);
             } catch {
-                setIsRolesDeleted(true);
+                dispatch({ type: 'LOAD_ERROR', message: LOAD_ERROR_MESSAGE });
             }
-        }
-    };
-
-    const handleSetCode = (code: number) => {
-        setCode(code);
-        LocalStorageHelper.setLocalStorageItem(GameLocalStorageKeyEnum.GAME_CODE, code);
-    };
-
-    const handleSetRevealedRoles = (revealedRoles: boolean[]) => {
-        setRevealedRoles(revealedRoles);
-        LocalStorageHelper.setLocalStorageItem(
-            GameLocalStorageKeyEnum.GAME_REVEALED_ROLES,
-            revealedRoles,
-        );
-    };
-
-    const handleSetWords = (words: string[]) => {
-        setWords(words);
-        LocalStorageHelper.setLocalStorageItem(GameLocalStorageKeyEnum.GAME_WORDS, words);
-    };
-
-    const handleSetGameStatus = (gameStatus: GameStatusEnum) => {
-        setGameStatus(gameStatus);
-        LocalStorageHelper.setLocalStorageItem(GameLocalStorageKeyEnum.GAME_STATUS, gameStatus);
-    };
-
-    const handleSetHasTeamWon = (hasTeamWon: TeamEnum | null) => {
-        setHasTeamWon(hasTeamWon);
-        LocalStorageHelper.setLocalStorageItem(GameLocalStorageKeyEnum.GAME_TEAM_WON, hasTeamWon);
-    };
-
-    return (
-        <GameContext.Provider
-            value={{
-                code,
-                gameStatus,
-                hasTeamWon,
-                loading,
-                revealedRoles,
-                roles,
-                showConfetti,
-                words,
-
-                handleCardClick,
-                resetGame,
-                revealAll,
-            }}
-        >
-            {children}
-        </GameContext.Provider>
+        },
+        [openModal],
     );
+
+    // Start a brand-new game: fresh code, then create/publish its board.
+    const createNewGame = useCallback(
+        async (options?: { share?: boolean }) => {
+            const code = generateCode();
+            dispatch({ type: 'NEW_GAME', code });
+            await loadBoard(code, options);
+        },
+        [loadBoard],
+    );
+
+    // Bootstrap once: resume a persisted game, or start a new one. Guarded so React
+    // StrictMode's double-invoke in dev can't create two games / double-fetch.
+    const bootstrappedRef = useRef(false);
+    useEffect(() => {
+        if (bootstrappedRef.current) return;
+        bootstrappedRef.current = true;
+
+        const persisted = LocalStorageHelper.getLocalStorageItem<PersistedGame>(GAME_STORAGE_KEY);
+
+        if (persisted?.code) {
+            const needsBoard =
+                persisted.status === GameStatusEnum.PLAYING && !persisted.roles?.length;
+            dispatch({ type: 'HYDRATE', game: persisted, needsBoard });
+            if (needsBoard) loadBoard(persisted.code);
+        } else {
+            createNewGame({ share: true });
+        }
+    }, [loadBoard, createNewGame]);
+
+    // Centralised persistence: mirror the persisted slice whenever it changes.
+    useEffect(() => {
+        if (!state.hydrated) return;
+        const slice: PersistedGame = {
+            code: state.code,
+            status: state.status,
+            hasTeamWon: state.hasTeamWon,
+            currentTurn: state.currentTurn,
+            words: state.words,
+            roles: state.roles,
+            revealedRoles: state.revealedRoles,
+        };
+        LocalStorageHelper.setLocalStorageItem(GAME_STORAGE_KEY, slice);
+    }, [
+        state.hydrated,
+        state.code,
+        state.status,
+        state.hasTeamWon,
+        state.currentTurn,
+        state.words,
+        state.roles,
+        state.revealedRoles,
+    ]);
+
+    // Release the board from Redis once a game reaches a terminal state, so spies can
+    // no longer peek at a finished board. Runs at most once per code.
+    const releasedCodeRef = useRef<number | null>(null);
+    useEffect(() => {
+        if (!state.hydrated || !state.code) return;
+        if (isTerminal(state.status) && releasedCodeRef.current !== state.code) {
+            releasedCodeRef.current = state.code;
+            deleteBoard(state.code).catch(() => {
+                /* best-effort cleanup; the 7-day TTL is the backstop */
+            });
+        }
+    }, [state.hydrated, state.status, state.code]);
+
+    // Auto-dismiss the winning confetti so it never runs forever.
+    useEffect(() => {
+        if (!state.showConfetti) return;
+        const timer = window.setTimeout(() => dispatch({ type: 'CLEAR_CONFETTI' }), 8000);
+        return () => window.clearTimeout(timer);
+    }, [state.showConfetti]);
+
+    const handleCardClick = useCallback((index: number) => {
+        dispatch({ type: 'REVEAL_CARD', index });
+    }, []);
+
+    const revealAll = useCallback(() => {
+        dispatch({ type: 'REVEAL_ALL' });
+    }, []);
+
+    const passTurn = useCallback(() => {
+        dispatch({ type: 'PASS_TURN' });
+    }, []);
+
+    const retry = useCallback(() => {
+        dispatch({ type: 'RETRY' });
+        loadBoard(stateRef.current.code);
+    }, [loadBoard]);
+
+    const resetGame = useCallback(() => {
+        const { code, status } = stateRef.current;
+        // Release the previous board from Redis before starting a new game.
+        if (code && status === GameStatusEnum.PLAYING) {
+            deleteBoard(code).catch(() => {});
+        }
+        createNewGame({ share: true });
+    }, [createNewGame]);
+
+    const progress = useMemo(
+        () => getTeamProgress(state.roles, state.revealedRoles),
+        [state.roles, state.revealedRoles],
+    );
+
+    const value = useMemo<GameContextType>(
+        () => ({
+            code: state.code,
+            gameStatus: state.status,
+            hasTeamWon: state.hasTeamWon,
+            currentTurn: state.currentTurn,
+            loading: state.loading,
+            error: state.error,
+            progress,
+            revealedRoles: state.revealedRoles,
+            roles: state.roles,
+            showConfetti: state.showConfetti,
+            words: state.words,
+            handleCardClick,
+            resetGame,
+            revealAll,
+            retry,
+            passTurn,
+        }),
+        [
+            state.code,
+            state.status,
+            state.hasTeamWon,
+            state.currentTurn,
+            state.loading,
+            state.error,
+            state.revealedRoles,
+            state.roles,
+            state.showConfetti,
+            state.words,
+            progress,
+            handleCardClick,
+            resetGame,
+            revealAll,
+            retry,
+            passTurn,
+        ],
+    );
+
+    return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 };
 
 export const useGame = (): GameContextType => {

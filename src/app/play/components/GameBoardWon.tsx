@@ -31,7 +31,7 @@ export const GameBoardWon: FC = () => {
                     transition={{ duration: 3, ease: 'easeIn' }}
                 />
             </AnimatePresence>
-            <Confetti colors={confettiColors} />;
+            <Confetti colors={confettiColors} />
         </>
     );
 };

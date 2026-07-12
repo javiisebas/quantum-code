@@ -1,0 +1,22 @@
+# Supply-chain hardening: refuse to install any dependency version published less
+# than 3 days ago. The 2025 npm attacks (qix / Shai-Hulud) were caught and yanked
+# within hours-to-a-day, so this cooling-off window keeps a freshly-compromised
+# release out of our lockfile at resolution time (`pnpm add` / `pnpm update`).
+# It is a no-op for `--frozen-lockfile` installs (CI + Vercel), which never resolve
+# new versions — so it cannot break those builds.
+# Escape hatch for an urgent same-day security patch: add the package to
+# `minimumReleaseAgeExclude` below (create the key) or update it in a fresh checkout.
+minimumReleaseAge: 4320
+
+allowBuilds:
+  '@heroui/shared-utils': true
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+
+overrides:
+  glob: '>=10.5.0'
+  postcss: '>=8.5.10'
+
+publicHoistPattern:
+  - '*@heroui/*'

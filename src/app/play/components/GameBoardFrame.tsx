@@ -1,31 +1,40 @@
 'use client';
 
-import { ManageRolesService } from '@/app/api/roles/services/manage-roles.service';
+import { PrimaryButton } from '@/app/components/ui/Button';
 import { useGame } from '@/contexts/GameContext';
-import { GameStatusEnum } from '@/enum/game-status.enum';
 import { ClassnameHelper } from '@/helpers/clean-classname.helper';
 import { ChildrenProps } from '@/types/children.type';
-import { Spinner } from '@nextui-org/react';
-import { FC, useEffect } from 'react';
+import { Spinner } from '@heroui/react';
+import { FC } from 'react';
+import { BiErrorCircle } from 'react-icons/bi';
 import { GameBoardLost } from './GameBoardLost';
+import { GameBoardScore } from './GameBoardScore';
 import { GameBoardWon } from './GameBoardWon';
-import { GameLocalStorageKeyEnum } from '@/enum/game-local-storage-key.enum';
-import { LocalStorageHelper } from '@/helpers/local-storage.helper';
+import { GameResultPanel } from './GameResultPanel';
 
 export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
-    const { loading, code, gameStatus } = useGame();
+    const { loading, error, retry } = useGame();
 
-    useEffect(() => {
-        if (gameStatus !== GameStatusEnum.PLAYING) {
-            ManageRolesService.deleteRoles(code);
-            LocalStorageHelper.removeLocalStorageItem(GameLocalStorageKeyEnum.GAME_CODE);
-        }
-    }, [gameStatus, code]);
+    // Role loading failed (e.g. the API/Redis is down) — never leave the board stuck
+    // on a spinner; show a recoverable error with a retry action.
+    if (error) {
+        return (
+            <div className="flex h-screen w-screen flex-col items-center justify-center gap-5 px-6 text-center">
+                <BiErrorCircle className="text-rose-400" size={48} aria-hidden="true" />
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-xl font-semibold text-white">Algo ha ido mal</h2>
+                    <p className="max-w-sm text-sm text-gray-300">{error}</p>
+                </div>
+                <PrimaryButton onPress={retry}>Reintentar</PrimaryButton>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
-            <div className="h-screen w-screen flex items-center justify-center">
+            <div className="flex h-screen w-screen flex-col items-center justify-center gap-4">
                 <Spinner size="lg" color="default" />
+                <p className="text-sm text-gray-400">Preparando la partida…</p>
             </div>
         );
     }
@@ -38,8 +47,11 @@ export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
         >
             <GameBoardLost />
             <GameBoardWon />
+            <GameBoardScore />
 
             <div className="w-5/6 h-5/6 flex items-center justify-center flex-col">{children}</div>
+
+            <GameResultPanel />
         </div>
     );
 };

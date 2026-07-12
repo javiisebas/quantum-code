@@ -2,24 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-    --background: #ffffff;
-    --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #0a0a0a;
-        --foreground: #ededed;
-    }
-}
-
+/* The app renders in a fixed dark theme (the `dark` class is set on <html>). */
 body {
-    color: var(--foreground);
-    background: var(--background);
+    color: #ededed;
     font-family: var(--font-montserrat), sans-serif;
 }
 
+/* 3D flip animation used by the board cards. */
 .perspective {
     perspective: 1000px;
     width: 100%;
@@ -46,4 +35,22 @@ body {
 
 .flip-card-back {
     transform: rotateY(180deg);
+}
+
+/* Respect users who ask for less motion: keep the reveal instant, drop long
+ * transitions/animations. Framer Motion is handled separately via <MotionConfig
+ * reducedMotion="user">. */
+@media (prefers-reduced-motion: reduce) {
+    .flip-card-inner {
+        transition: none;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

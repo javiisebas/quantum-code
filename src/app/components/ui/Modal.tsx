@@ -1,7 +1,7 @@
 'use client';
 
 import { useModal } from '@/contexts/ModalContext';
-import { Modal, ModalContent } from '@nextui-org/react';
+import { Modal, ModalContent } from '@heroui/react';
 
 export default function ModalComponent() {
     const { isOpen, closeModal, modalContent } = useModal();
