@@ -112,15 +112,16 @@ describe('chispas domain', () => {
                 ],
                 { 0: 1, 1: 2, 2: 0 },
             );
-            const scores = applyRoundScores({ 1: 100 }, reveal);
+            // Ana carries 50 from earlier; this round Ana +1 vote, Bea +2 votes, Caro +0.
+            const scores = applyRoundScores({ 1: 50 }, reveal);
             expect(scores).toEqual({
-                1: 100 + 1 * POINTS_PER_VOTE,
-                2: 2 * POINTS_PER_VOTE,
+                1: 50 + 1 * POINTS_PER_VOTE, // 150
+                2: 2 * POINTS_PER_VOTE, // 200
                 3: 0,
             });
 
             const board = scoreboard(players, scores);
-            expect(board.map((s) => s.seat)).toEqual([2, 1, 3]);
+            expect(board.map((s) => s.seat)).toEqual([2, 1, 3]); // 200, 150, 0
             expect(board[0]).toMatchObject({ name: 'Bea', score: 200 });
         });
     });
