@@ -5,17 +5,16 @@ import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import { FC } from 'react';
-import { WEREWOLF_ROLES, type WerewolfRoom } from './domain';
+import { WEREWOLF_ROLES, type WerewolfSeatView } from './domain';
 
 interface WerewolfCardProps {
-    payload: WerewolfRoom;
-    seat: number;
+    view: WerewolfSeatView;
 }
 
 /** This phone's secret Hombres Lobo card: the role dealt to this seat. */
-export const WerewolfCard: FC<WerewolfCardProps> = ({ payload, seat }) => {
+export const WerewolfCard: FC<WerewolfCardProps> = ({ view }) => {
     // More phones joined than seats dealt — this player has no assignment this round.
-    if (seat > payload.roleBySeat.length) {
+    if (view.kind === 'full') {
         return (
             <main className="flex min-h-screen items-center justify-center px-6 text-center">
                 <Surface className="max-w-sm p-8">
@@ -29,13 +28,12 @@ export const WerewolfCard: FC<WerewolfCardProps> = ({ payload, seat }) => {
         );
     }
 
-    const role = payload.roleBySeat[seat - 1];
-    const info = WEREWOLF_ROLES[role];
+    const info = WEREWOLF_ROLES[view.role];
     const isWolf = info.team === 'lobos';
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
-            <Eyebrow className="mb-3">Jugador {seat}</Eyebrow>
+            <Eyebrow className="mb-3">Jugador {view.seat}</Eyebrow>
 
             <Surface
                 tone={isWolf ? 'plain' : 'panel'}

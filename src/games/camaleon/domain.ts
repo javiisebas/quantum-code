@@ -23,6 +23,17 @@ export interface CamaleonRoom {
     chameleonSeat: number;
 }
 
+/**
+ * What a single phone at `seat` is allowed to see of a Camaleón room. The theme and
+ * board are PUBLIC (shown to everyone); the SECRET is `secretIndex`. The Chameleon's
+ * view OMITS `secretIndex` entirely, so their phone can never leak which cell is the
+ * secret word — they must deduce it. Neither view carries `chameleonSeat`: no phone
+ * ever needs to know who the Chameleon is.
+ */
+export type CamaleonSeatView =
+    | { kind: 'chameleon'; seat: number; theme: string; grid: string[] }
+    | { kind: 'player'; seat: number; theme: string; grid: string[]; secretIndex: number };
+
 const shuffle = <T>(items: T[]): T[] => {
     const copy = items.slice();
     for (let i = copy.length - 1; i > 0; i--) {
@@ -45,4 +56,19 @@ export const buildCamaleon = (count: number): CamaleonRoom => {
     const secretIndex = randomInt(16);
     const chameleonSeat = randomInt(count) + 1; // 1-based
     return { theme: topic.theme, grid, secretIndex, chameleonSeat };
+};
+
+/**
+ * Project a full room down to only what `seat` may see, so a phone never receives more
+ * than its seat is entitled to. The Chameleon's seat gets the theme + board with NO
+ * `secretIndex`; every other seat additionally gets `secretIndex` (the secret cell).
+ * Unlike the role games there is no "seat beyond count" case: the board is shared, so a
+ * late joiner is simply a non-Chameleon player who sees the secret — today's behaviour.
+ */
+export const projectCamaleon = (payload: CamaleonRoom, seat: number): CamaleonSeatView => {
+    const { theme, grid } = payload;
+    if (seat === payload.chameleonSeat) {
+        return { kind: 'chameleon', seat, theme, grid };
+    }
+    return { kind: 'player', seat, theme, grid, secretIndex: payload.secretIndex };
 };

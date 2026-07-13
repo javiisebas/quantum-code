@@ -66,3 +66,25 @@ export const buildSpyfall = (count: number): SpyfallRoom => {
 
 /** All location names, shown to every player so they can reason / accuse. */
 export const SPYFALL_LOCATION_NAMES: string[] = SPYFALL_LOCATIONS.map((l) => l.name);
+
+/**
+ * The single-seat slice a Spyfall phone is allowed to receive. The spy learns only that
+ * they are the spy; every other player gets the shared location plus their own role; a
+ * seat beyond the dealt count gets the "table full" marker. No other seat's role — and no
+ * hint of who the spy is — is ever present.
+ */
+export type SpyfallSeatView =
+    | { kind: 'spy'; seat: number }
+    | { kind: 'player'; seat: number; location: string; role: string }
+    | { kind: 'full'; seat: number };
+
+/**
+ * Project a Spyfall room down to what `seat` (1-based) may see. Pure and server-side: the
+ * `location` reaches only non-spy players and `spySeat` never leaves the server, so the
+ * phone can render its card without any other seat's secret.
+ */
+export const projectSpyfall = (payload: SpyfallRoom, seat: number): SpyfallSeatView => {
+    if (seat > payload.roleBySeat.length) return { kind: 'full', seat };
+    if (seat === payload.spySeat) return { kind: 'spy', seat };
+    return { kind: 'player', seat, location: payload.location, role: payload.roleBySeat[seat - 1] };
+};

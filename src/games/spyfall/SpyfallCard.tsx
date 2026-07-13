@@ -6,11 +6,10 @@ import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import { FC } from 'react';
 import { BiSolidUserX } from 'react-icons/bi';
-import { SPYFALL_LOCATION_NAMES, type SpyfallRoom } from './domain';
+import { SPYFALL_LOCATION_NAMES, type SpyfallSeatView } from './domain';
 
 interface SpyfallCardProps {
-    payload: SpyfallRoom;
-    seat: number;
+    view: SpyfallSeatView;
 }
 
 const LocationList = () => (
@@ -27,9 +26,9 @@ const LocationList = () => (
 );
 
 /** This phone's secret Spyfall card: either "you are the spy" or location + role. */
-export const SpyfallCard: FC<SpyfallCardProps> = ({ payload, seat }) => {
+export const SpyfallCard: FC<SpyfallCardProps> = ({ view }) => {
     // More phones joined than seats dealt — this player has no assignment this round.
-    if (seat > payload.roleBySeat.length) {
+    if (view.kind === 'full') {
         return (
             <main className="flex min-h-screen items-center justify-center px-6 text-center">
                 <Surface className="max-w-sm p-8">
@@ -43,11 +42,11 @@ export const SpyfallCard: FC<SpyfallCardProps> = ({ payload, seat }) => {
         );
     }
 
-    const isSpy = seat === payload.spySeat;
+    const isSpy = view.kind === 'spy';
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
-            <Eyebrow className="mb-3">Jugador {seat}</Eyebrow>
+            <Eyebrow className="mb-3">Jugador {view.seat}</Eyebrow>
 
             <Surface
                 tone={isSpy ? 'plain' : 'panel'}
@@ -56,7 +55,7 @@ export const SpyfallCard: FC<SpyfallCardProps> = ({ payload, seat }) => {
                     isSpy && 'bg-rose-950/60 ring-rose-500/40',
                 )}
             >
-                {isSpy ? (
+                {view.kind === 'spy' ? (
                     <>
                         <BiSolidUserX className="text-rose-400" size={56} />
                         <h1 className="mt-3 text-3xl font-extrabold uppercase tracking-wide text-rose-300">
@@ -70,12 +69,12 @@ export const SpyfallCard: FC<SpyfallCardProps> = ({ payload, seat }) => {
                     <>
                         <Eyebrow>El lugar es</Eyebrow>
                         <h1 className="mt-1 text-3xl font-extrabold text-white">
-                            {payload.location}
+                            {view.location}
                         </h1>
                         <Surface tone="inset" radius="2xl" className="mt-5 px-5 py-3">
                             <Eyebrow>Tu rol</Eyebrow>
                             <p className="text-xl font-bold text-rose-200">
-                                {payload.roleBySeat[seat - 1]}
+                                {view.role}
                             </p>
                         </Surface>
                     </>

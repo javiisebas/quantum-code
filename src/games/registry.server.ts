@@ -1,12 +1,19 @@
 import { BOMBA_ID, bombaManifest, validateBombaPayload } from './bomba/manifest';
+import { projectCamaleon } from './camaleon/domain';
 import { CAMALEON_ID, camaleonManifest, validateCamaleonPayload } from './camaleon/manifest';
 import { CHISPAS_ID, chispasManifest, validateChispasPayload } from './chispas/manifest';
 import { CODENAMES_ID, codenamesManifest, validateCodenamesPayload } from './codenames/manifest';
 import { SINTONIA_ID, sintoniaManifest, validateSintoniaPayload } from './sintonia/manifest';
+import { projectSpyfall } from './spyfall/domain';
 import { SPYFALL_ID, spyfallManifest, validateSpyfallPayload } from './spyfall/manifest';
+import { projectUndercover } from './undercover/domain';
 import { UNDERCOVER_ID, undercoverManifest, validateUndercoverPayload } from './undercover/manifest';
+import { projectWerewolf } from './werewolf/domain';
 import { WEREWOLF_ID, werewolfManifest, validateWerewolfPayload } from './werewolf/manifest';
 import type { GameServerModule } from './types';
+
+/** Cast a game's typed seat projection to the registry's `unknown`-in/out slot. */
+type Projector = GameServerModule['projectForSeat'];
 
 /**
  * Server-side game registry: maps a game id to its Redis namespace and payload
@@ -30,6 +37,7 @@ const serverGames: Record<string, GameServerModule> = {
         manifest: camaleonManifest,
         namespace: CAMALEON_ID,
         validatePayload: validateCamaleonPayload,
+        projectForSeat: projectCamaleon as Projector,
     },
     [SINTONIA_ID]: {
         manifest: sintoniaManifest,
@@ -45,16 +53,19 @@ const serverGames: Record<string, GameServerModule> = {
         manifest: spyfallManifest,
         namespace: SPYFALL_ID,
         validatePayload: validateSpyfallPayload,
+        projectForSeat: projectSpyfall as Projector,
     },
     [UNDERCOVER_ID]: {
         manifest: undercoverManifest,
         namespace: UNDERCOVER_ID,
         validatePayload: validateUndercoverPayload,
+        projectForSeat: projectUndercover as Projector,
     },
     [WEREWOLF_ID]: {
         manifest: werewolfManifest,
         namespace: WEREWOLF_ID,
         validatePayload: validateWerewolfPayload,
+        projectForSeat: projectWerewolf as Projector,
     },
 };
 

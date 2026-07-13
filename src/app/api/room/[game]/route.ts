@@ -1,22 +1,26 @@
 import { getServerGame } from '@/games/registry.server';
 import { emitRoomEvent } from '@/platform/events/webhooks';
 import { parseCode } from '@/platform/room';
-import { deleteRoom, readRoom, writeRoomIfAbsent } from '@/platform/room/room-store';
+import { deleteRoom, readRoom, verifySeat, writeRoomIfAbsent } from '@/platform/room/room-store';
+import { SEAT_TOKEN_HEADER } from '@/platform/room/tokens';
 import { NextResponse, after } from 'next/server';
 
 /**
  * Generic room endpoint shared by every game: `/api/room/[game]`.
  *
- *   GET    ?code=      → the room's payload, or null when the code is unknown
- *   POST   {code,payload} → atomically create-if-absent; returns the authoritative payload
- *   DELETE ?code=      → release the room
+ *   GET    ?code= [&seat=] → the room's payload, or null when unknown. For per-player-secret
+ *                            games (a `projectForSeat`) it returns ONLY the caller's seat slice,
+ *                            gated by that seat's token, so no phone sees another seat's secret.
+ *   POST   {code,payload}  → atomically create-if-absent; returns { value, hostToken }
+ *   DELETE ?code=          → release the room
  *
- * The game id in the path selects the Redis namespace and the payload validator from
- * the server registry, so one route serves all games while each validates its own
- * payload shape.
+ * The game id in the path selects the Redis namespace, payload validator and seat projector
+ * from the server registry, so one route serves all games while each seals its own secrets.
  */
 
 type RouteContext = { params: Promise<{ game: string }> };
+
+const MAX_SEAT = 24; // matches the room-store seat ceiling.
 
 const unknownGame = (game: string) =>
     NextResponse.json({ error: `Unknown game: ${game}` }, { status: 404 });
@@ -24,17 +28,40 @@ const unknownGame = (game: string) =>
 const invalidCode = () =>
     NextResponse.json({ error: 'Invalid or missing code parameter' }, { status: 400 });
 
+const parseIntField = (raw: unknown): number | null => {
+    const n = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : NaN;
+    return Number.isInteger(n) ? n : null;
+};
+
 export async function GET(request: Request, { params }: RouteContext) {
     const { game } = await params;
     const mod = getServerGame(game);
     if (!mod) return unknownGame(game);
 
-    const code = parseCode(new URL(request.url).searchParams.get('code'));
+    const url = new URL(request.url);
+    const code = parseCode(url.searchParams.get('code'));
     if (code === null) return invalidCode();
 
     try {
         const payload = await readRoom(mod.namespace, code);
-        return NextResponse.json(payload ?? null);
+        if (payload === null) return NextResponse.json(null);
+
+        // Per-player-secret games: hand back ONLY this seat's projected slice, and only to the
+        // device that owns the seat. Shared games (Codenames) and live games (no projector)
+        // return the full payload — they carry no per-seat secret to leak.
+        if (mod.projectForSeat) {
+            const seat = parseIntField(url.searchParams.get('seat'));
+            if (seat === null || seat < 1 || seat > MAX_SEAT) {
+                return NextResponse.json({ error: 'Invalid or missing seat' }, { status: 400 });
+            }
+            const token = request.headers.get(SEAT_TOKEN_HEADER);
+            if (!token || !(await verifySeat(mod.namespace, code, seat, token))) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+            return NextResponse.json(mod.projectForSeat(payload, seat));
+        }
+
+        return NextResponse.json(payload);
     } catch (error: unknown) {
         console.error(`Failed to read ${game} room:`, error);
         return NextResponse.json({ error: 'Failed to read room' }, { status: 500 });

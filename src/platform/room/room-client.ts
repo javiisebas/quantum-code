@@ -7,18 +7,31 @@
  * get-then-create race.
  */
 
-import type { RoomCreation, SeatClaim } from './tokens';
+import { SEAT_TOKEN_HEADER, type RoomCreation, type SeatClaim } from './tokens';
 
 const roomUrl = (game: string, code: number): string =>
     `/api/room/${encodeURIComponent(game)}?code=${code}`;
 
-/** GET the payload for a code, or null when none exists yet. */
-export const fetchRoom = async <T>(game: string, code: number): Promise<T | null> => {
-    const response = await fetch(roomUrl(game, code));
+/**
+ * GET the payload for a code, or null when none exists yet. For per-player-secret games, pass
+ * this device's `seat` + `seatToken`: the server then returns ONLY this seat's projected slice
+ * (never the whole payload). Shared/live games ignore them and return the full payload.
+ */
+export const fetchRoom = async <T>(
+    game: string,
+    code: number,
+    seat?: number,
+    seatToken?: string,
+): Promise<T | null> => {
+    const url = seat != null ? `${roomUrl(game, code)}&seat=${seat}` : roomUrl(game, code);
+    const response = await fetch(
+        url,
+        seatToken ? { headers: { [SEAT_TOKEN_HEADER]: seatToken } } : undefined,
+    );
     if (!response.ok) {
         throw new Error(`Failed to fetch room: ${response.statusText}`);
     }
-    // The endpoint returns the payload object, or `null` when the code is unknown.
+    // The endpoint returns the payload/projection object, or `null` when the code is unknown.
     return (await response.json()) as T | null;
 };
 

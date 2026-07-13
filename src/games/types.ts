@@ -45,6 +45,14 @@ export interface GameServerModule {
     namespace: string;
     /** Validate an untrusted room payload before it is written to the store. */
     validatePayload: (payload: unknown) => boolean;
+    /**
+     * For per-player-secret games: project the FULL stored payload down to the slice a
+     * single `seat` may see, so `GET /api/room/[game]` never sends one phone another seat's
+     * secret. When present, the room read is seat-token gated and returns only this seat's
+     * view; when absent (shared games like Codenames, or live games), the read returns the
+     * full payload as before. Receives the stored payload as `unknown` — each game casts it.
+     */
+    projectForSeat?: (payload: unknown, seat: number) => unknown;
 }
 
 /**

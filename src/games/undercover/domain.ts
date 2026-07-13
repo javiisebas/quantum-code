@@ -91,3 +91,22 @@ export const buildUndercover = (count: number): UndercoverRoom => {
 
     return { wordBySeat, undercoverSeats };
 };
+
+/**
+ * The single-seat slice an Undercover phone is allowed to receive: only this seat's word
+ * (or the "table full" marker for a seat beyond the dealt count). It deliberately carries
+ * NO `undercoverSeats`, so no phone can tell who the impostors are.
+ */
+export type UndercoverSeatView =
+    | { kind: 'word'; seat: number; word: string }
+    | { kind: 'full'; seat: number };
+
+/**
+ * Project an Undercover room down to what `seat` (1-based) may see. Pure and server-side:
+ * only that seat's word crosses the wire — the list of undercover seats never leaves the
+ * server.
+ */
+export const projectUndercover = (payload: UndercoverRoom, seat: number): UndercoverSeatView => {
+    if (seat > payload.wordBySeat.length) return { kind: 'full', seat };
+    return { kind: 'word', seat, word: payload.wordBySeat[seat - 1] };
+};

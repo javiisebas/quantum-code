@@ -5,11 +5,10 @@ import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import { FC } from 'react';
 import { BiSolidMask } from 'react-icons/bi';
-import type { CamaleonRoom } from './domain';
+import type { CamaleonSeatView } from './domain';
 
 interface CamaleonCardProps {
-    payload: CamaleonRoom;
-    seat: number;
+    view: CamaleonSeatView;
 }
 
 /**
@@ -36,14 +35,14 @@ const WordGrid: FC<{ words: string[]; highlight: number | null }> = ({ words, hi
 );
 
 /** This phone's secret Camaleón card: either "you are the Chameleon" or the secret word. */
-export const CamaleonCard: FC<CamaleonCardProps> = ({ payload, seat }) => {
-    // Every seat is valid: it is either the Chameleon's seat or an ordinary player.
-    // Camaleón carries no per-seat array, so there is no "partida completa" guard.
-    const isChameleon = seat === payload.chameleonSeat;
+export const CamaleonCard: FC<CamaleonCardProps> = ({ view }) => {
+    // The view is already projected for this seat: the Chameleon or an ordinary player.
+    // Camaleón shares one board (no per-seat array), so there is no "partida completa" guard.
+    const isChameleon = view.kind === 'chameleon';
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
-            <Eyebrow className="mb-3">Jugador {seat}</Eyebrow>
+            <Eyebrow className="mb-3">Jugador {view.seat}</Eyebrow>
 
             <Surface
                 tone={isChameleon ? 'plain' : 'panel'}
@@ -66,7 +65,7 @@ export const CamaleonCard: FC<CamaleonCardProps> = ({ payload, seat }) => {
                     <>
                         <Eyebrow>Tu palabra</Eyebrow>
                         <h1 className="mt-1 text-3xl font-extrabold text-lime-300">
-                            {payload.grid[payload.secretIndex]}
+                            {view.grid[view.secretIndex]}
                         </h1>
                         <p className="mt-3 text-sm text-gray-300">
                             Di una palabra relacionada para demostrar que la conoces… sin que el
@@ -80,10 +79,10 @@ export const CamaleonCard: FC<CamaleonCardProps> = ({ payload, seat }) => {
                 <Eyebrow as="p" className="mb-1 block text-center">
                     Tema
                 </Eyebrow>
-                <p className="text-lg font-bold text-white">{payload.theme}</p>
+                <p className="text-lg font-bold text-white">{view.theme}</p>
                 <WordGrid
-                    words={payload.grid}
-                    highlight={isChameleon ? null : payload.secretIndex}
+                    words={view.grid}
+                    highlight={isChameleon ? null : view.secretIndex}
                 />
             </section>
         </main>

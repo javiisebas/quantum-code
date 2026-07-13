@@ -98,3 +98,21 @@ export const buildWerewolf = (count: number): WerewolfRoom => {
 
     return { roleBySeat: shuffle(dealt) };
 };
+
+/**
+ * The single-seat slice a Hombres Lobo phone is allowed to receive: only this seat's role
+ * key (or the "table full" marker for a seat beyond the dealt count). The card looks up
+ * WEREWOLF_ROLES for the label/description — no other seat's role is ever present.
+ */
+export type WerewolfSeatView =
+    | { kind: 'role'; seat: number; role: WerewolfRole }
+    | { kind: 'full'; seat: number };
+
+/**
+ * Project a Hombres Lobo room down to what `seat` (1-based) may see. Pure and server-side:
+ * only that seat's role key crosses the wire — every other seat's role stays on the server.
+ */
+export const projectWerewolf = (payload: WerewolfRoom, seat: number): WerewolfSeatView => {
+    if (seat > payload.roleBySeat.length) return { kind: 'full', seat };
+    return { kind: 'role', seat, role: payload.roleBySeat[seat - 1] };
+};

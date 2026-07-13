@@ -68,13 +68,9 @@ export function usePlayerRoom<T>({
 
         (async () => {
             try {
-                const data = await fetchRoom<T>(game, code);
-                if (cancelled) return;
-                if (!data) {
-                    setStatus('empty');
-                    return;
-                }
-
+                // Claim (or restore) the seat FIRST, so the room read can be seat-scoped: a
+                // per-player game then returns only THIS seat's projected slice (gated by its
+                // token) instead of the whole payload. Shared games (no seat) read the full room.
                 let claim: SeatClaim | null = null;
                 if (withSeat) {
                     const key = seatStorageKey(game, code);
@@ -87,6 +83,13 @@ export function usePlayerRoom<T>({
                         LocalStorageHelper.setLocalStorageItem(key, claim);
                     }
                     if (cancelled) return;
+                }
+
+                const data = await fetchRoom<T>(game, code, claim?.seat, claim?.token);
+                if (cancelled) return;
+                if (!data) {
+                    setStatus('empty');
+                    return;
                 }
 
                 setPayload(data);
