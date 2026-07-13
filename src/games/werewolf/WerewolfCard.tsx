@@ -6,16 +6,18 @@ import { Chip } from '@/platform/ui/Chip';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
 import { WEREWOLF_ROLES, type WerewolfSeatView } from './domain';
 import { werewolfManifest } from './manifest';
 
 interface WerewolfCardProps {
     view: WerewolfSeatView;
+    /** Extra top-bar actions — the host playing from their own phone keeps its controls here. */
+    actions?: ReactNode;
 }
 
 /** This phone's secret Hombres Lobo card: the role dealt to this seat. */
-export const WerewolfCard: FC<WerewolfCardProps> = ({ view }) => {
+export const WerewolfCard: FC<WerewolfCardProps> = ({ view, actions }) => {
     // More phones joined than seats dealt — this player has no assignment this round.
     if (view.kind === 'full') {
         return <RoundFullCard />;
@@ -25,7 +27,7 @@ export const WerewolfCard: FC<WerewolfCardProps> = ({ view }) => {
     const isWolf = info.team === 'lobos';
 
     return (
-        <SecretCardScreen manifest={werewolfManifest} seat={view.seat}>
+        <SecretCardScreen manifest={werewolfManifest} seat={view.seat} actions={actions}>
             <Surface
                 tone={isWolf ? 'plain' : 'panel'}
                 className={ClassnameHelper.join(

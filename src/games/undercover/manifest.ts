@@ -14,6 +14,7 @@ export const undercoverManifest: GameManifest = {
     players: '3–12',
     duration: '10 min',
     secrecy: 'per-player',
+    needsSharedScreen: false,
     howTo: [
         'Tu móvil te da una palabra, pero nunca te dice si eres impostor.',
         'Casi todos compartís la misma; los impostores tienen una parecida.',

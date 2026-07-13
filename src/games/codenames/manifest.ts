@@ -15,6 +15,9 @@ export const codenamesManifest: GameManifest = {
     players: '4+',
     duration: '15 min',
     secrecy: 'shared',
+    // The 25-word board IS the shared screen — the game is played by touching it
+    // (docs/host-also-plays.md, group 2).
+    needsSharedScreen: true,
     howTo: [
         'Un dispositivo hace de tablero compartido y muestra 25 palabras.',
         'Los espías ven en su móvil el mapa secreto con el color de cada palabra.',

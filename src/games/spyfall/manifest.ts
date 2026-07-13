@@ -14,6 +14,7 @@ export const spyfallManifest: GameManifest = {
     players: '3–12',
     duration: '10 min',
     secrecy: 'per-player',
+    needsSharedScreen: false,
     howTo: [
         'Tu móvil te dice el lugar donde estáis y tu rol allí… salvo si eres el espía.',
         'Por turnos, haceos preguntas sobre el lugar sin llegar a nombrarlo.',

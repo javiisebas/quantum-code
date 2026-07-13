@@ -13,6 +13,7 @@ export const camaleonManifest: GameManifest = {
     players: '3–12',
     duration: '8 min',
     secrecy: 'per-player',
+    needsSharedScreen: false,
     howTo: [
         'Todos veis en el móvil el mismo tema y su tablero de 16 palabras.',
         'Tu móvil marca la palabra secreta… salvo si eres el camaleón.',

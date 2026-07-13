@@ -14,6 +14,7 @@ export const werewolfManifest: GameManifest = {
     players: '4–16',
     duration: '20 min',
     secrecy: 'per-player',
+    needsSharedScreen: false,
     howTo: [
         'Tu móvil te reparte tu rol secreto: aldeano, lobo o un personaje con poder.',
         'El anfitrión narra la noche en voz alta: todos cerráis los ojos.',

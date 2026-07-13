@@ -34,6 +34,17 @@ export interface GameManifest {
     /** Secret-distribution model (drives the join/seat flow). */
     secrecy: GameSecrecy;
     /**
+     * Whether the game needs a screen EVERYONE can see, because that screen is an instrument
+     * of the game itself — Sintonía's dial, Código Secreto's 25-word board. When false, the
+     * phones carry all the information a player needs and the host device is only the
+     * engine/lobby, so a group of four phones and no TV can play.
+     *
+     * The catalogue states it before you choose («Solo móviles» / «Necesita una pantalla»):
+     * letting that group start a game they cannot actually play is the real failure this
+     * field exists to prevent. See docs/host-also-plays.md.
+     */
+    needsSharedScreen: boolean;
+    /**
      * How to play, as ordered steps — the content of the shared "¿Cómo se juega?" modal every
      * game now has. Rules used to be a single `hint` string dumped at the bottom of the lobby
      * (below the CTA, competing with it and pushing the screen past the fold), and only
