@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildWerewolf, WEREWOLF_ROLES, type WerewolfRole } from './domain';
+import { buildWerewolf, projectWerewolf, WEREWOLF_ROLES, type WerewolfRole } from './domain';
 
 /** Expected count of a given role for a table of `count` players, per the build rules. */
 const expected = (count: number): Record<WerewolfRole, number> => {
@@ -56,6 +56,47 @@ describe('buildWerewolf', () => {
                 expect(countOf('bruja')).toBe(want.bruja);
                 expect(countOf('cazador')).toBe(want.cazador);
                 expect(countOf('cupido')).toBe(want.cupido);
+            }
+        });
+    }
+});
+
+describe('seat projection (sealing)', () => {
+    const counts = [3, 4, 5, 6, 7, 8];
+
+    for (const count of counts) {
+        it(`seals every seat's view so no other seat's role leaks for ${count} players`, () => {
+            for (let run = 0; run < 200; run++) {
+                const room = buildWerewolf(count);
+
+                for (let seat = 1; seat <= count; seat++) {
+                    const view = projectWerewolf(room, seat);
+                    // Cast to a record so the "must NOT be present" checks can probe
+                    // fields the discriminated union would refuse to even type.
+                    const v = view as Record<string, unknown>;
+
+                    // Each in-range seat gets only its own role key.
+                    expect(view.kind).toBe('role');
+                    if (view.kind === 'role') {
+                        expect(view.role).toBe(room.roleBySeat[seat - 1]);
+                        // ...and it is a real key of the role table (nothing invented).
+                        expect(
+                            Object.prototype.hasOwnProperty.call(WEREWOLF_ROLES, view.role),
+                        ).toBe(true);
+                    }
+
+                    // THE SEAL: the view carries ONLY this seat's role — no all-seats
+                    // role table and no other-seat data of any kind.
+                    expect('roleBySeat' in v).toBe(false);
+                    expect(Object.keys(v).sort()).toEqual(['kind', 'role', 'seat']);
+                }
+
+                // A seat beyond the dealt table is the inert 'full' marker: no role.
+                const beyond = projectWerewolf(room, count + 1);
+                const b = beyond as Record<string, unknown>;
+                expect(beyond.kind).toBe('full');
+                expect('role' in b).toBe(false);
+                expect('roleBySeat' in b).toBe(false);
             }
         });
     }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildSpyfall, SPYFALL_LOCATIONS, SPYFALL_LOCATION_NAMES } from './domain';
+import { buildSpyfall, projectSpyfall, SPYFALL_LOCATIONS, SPYFALL_LOCATION_NAMES } from './domain';
 import { spyfallManifest, validateSpyfallPayload } from './manifest';
 
 describe('SPYFALL_LOCATIONS pool', () => {
@@ -105,6 +105,62 @@ describe('buildSpyfall', () => {
             // Over 200 runs the shuffle must move the spy around and vary the venue.
             expect(spySeatsSeen.size).toBeGreaterThan(1);
             expect(locationsSeen.size).toBeGreaterThan(1);
+        });
+    }
+});
+
+describe('seat projection (sealing)', () => {
+    // Span below, equal to and above a location's 5-role cycle, so a player's own
+    // role is checked against the actual dealt entry, not a coincidence.
+    const counts = [3, 4, 5, 6, 7, 8];
+
+    for (const count of counts) {
+        it(`seals every seat's view so no other seat's secret leaks for ${count} players`, () => {
+            // Accumulated so the RNG is proven to move the spy across seats.
+            const spySeatsSeen = new Set<number>();
+
+            for (let run = 0; run < 200; run++) {
+                const room = buildSpyfall(count);
+                spySeatsSeen.add(room.spySeat);
+
+                for (let seat = 1; seat <= count; seat++) {
+                    const view = projectSpyfall(room, seat);
+                    // Cast to a record so the "must NOT be present" checks can probe
+                    // fields the discriminated union would refuse to even type.
+                    const v = view as Record<string, unknown>;
+
+                    if (seat === room.spySeat) {
+                        // Exactly the spy's seat is dealt the 'spy' view...
+                        expect(view.kind).toBe('spy');
+                        // ...and the spy learns neither the place nor a cover role.
+                        expect('location' in v).toBe(false);
+                        expect('role' in v).toBe(false);
+                    } else {
+                        // Every other in-range seat is a plain 'player'.
+                        expect(view.kind).toBe('player');
+                        if (view.kind === 'player') {
+                            // A player sees the shared location and ONLY its own role.
+                            expect(view.location).toBe(room.location);
+                            expect(view.role).toBe(room.roleBySeat[seat - 1]);
+                        }
+                    }
+
+                    // THE SEAL: no seat's view — spy or player — ever names the spy...
+                    expect('spySeat' in v).toBe(false);
+                    // ...nor carries any all-seats role table exposing other seats.
+                    expect('roleBySeat' in v).toBe(false);
+                }
+
+                // A seat beyond the dealt table is the inert 'full' marker: no secrets.
+                const beyond = projectSpyfall(room, count + 1);
+                const b = beyond as Record<string, unknown>;
+                expect(beyond.kind).toBe('full');
+                expect('location' in b).toBe(false);
+                expect('role' in b).toBe(false);
+                expect('spySeat' in b).toBe(false);
+            }
+
+            expect(spySeatsSeen.size).toBeGreaterThan(1);
         });
     }
 });

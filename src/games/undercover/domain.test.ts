@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildUndercover, WORD_PAIRS } from './domain';
+import { buildUndercover, projectUndercover, WORD_PAIRS } from './domain';
 
 /** Expected number of impostors for a given player count. */
 const expectedUndercovers = (count: number): number => (count < 7 ? 1 : 2);
@@ -54,6 +54,51 @@ describe('buildUndercover', () => {
                 );
                 expect(pair).toBeDefined();
             }
+        });
+    }
+});
+
+describe('seat projection (sealing)', () => {
+    // Cover the 1-impostor (<7) and 2-impostor (>=7) regimes.
+    const counts = [3, 4, 5, 6, 7, 8];
+
+    for (const count of counts) {
+        it(`seals every seat's view so the impostor roster never leaks for ${count} players`, () => {
+            // Accumulated so the RNG is proven to move the impostors across seats.
+            const impostorSeatsSeen = new Set<number>();
+
+            for (let run = 0; run < 200; run++) {
+                const room = buildUndercover(count);
+                for (const impostor of room.undercoverSeats) impostorSeatsSeen.add(impostor);
+
+                for (let seat = 1; seat <= count; seat++) {
+                    const view = projectUndercover(room, seat);
+                    // Cast to a record so the "must NOT be present" checks can probe
+                    // fields the discriminated union would refuse to even type.
+                    const v = view as Record<string, unknown>;
+
+                    // Every in-range seat — impostor or civilian alike — gets only a word.
+                    expect(view.kind).toBe('word');
+                    if (view.kind === 'word') {
+                        expect(view.word).toBe(room.wordBySeat[seat - 1]);
+                    }
+
+                    // THE SEAL: the impostor roster never leaves the server, and the
+                    // impostor's own view is shape-identical to a civilian's — just a
+                    // word — so a phone cannot tell whether it holds an impostor.
+                    expect('undercoverSeats' in v).toBe(false);
+                    expect(Object.keys(v).sort()).toEqual(['kind', 'seat', 'word']);
+                }
+
+                // A seat beyond the dealt table is the inert 'full' marker: no word.
+                const beyond = projectUndercover(room, count + 1);
+                const b = beyond as Record<string, unknown>;
+                expect(beyond.kind).toBe('full');
+                expect('word' in b).toBe(false);
+                expect('undercoverSeats' in b).toBe(false);
+            }
+
+            expect(impostorSeatsSeen.size).toBeGreaterThan(1);
         });
     }
 });
