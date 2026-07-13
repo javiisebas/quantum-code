@@ -86,6 +86,20 @@ The catalogue, routing (`/host/<id>`, `/join/<id>`), the join flow, the `¿Cómo
   with the CTA. A disabled control says what it is waiting for ("Faltan 2 jugadores"), rather than being
   explained by a caption underneath it.
 
+### The brand mark has one source
+
+`src/app/icon.svg` — the dark tile with the purple spy eye — is the **only** hand-edited icon. Everything
+else is rasterized from it by `pnpm icons` and committed, so the tab, the installed PWA and the WhatsApp
+share card can never drift apart:
+
+| Generated                | Used as                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `src/app/favicon.ico`    | Tab icon fallback (16/32/48, from a chunkier variant — the corner dots and catchlight turn to mud below 32px) |
+| `src/app/apple-icon.png` | iOS home screen (180, square and full-bleed; iOS applies its own mask)                                        |
+| `src/app/og-glyph.png`   | The glyph inside `opengraph-image.tsx` (tile stripped — the card paints its own background)                   |
+
+Edit `icon.svg`, run `pnpm icons`, commit the output. Never hand-edit a generated file.
+
 ## Getting started
 
 Requires **Node 22+** and **pnpm 11+**.
@@ -101,22 +115,24 @@ store (dev only), so you can play locally on a single machine.
 
 ### Environment variables
 
-| Variable                   | Description                                        |
-| -------------------------- | -------------------------------------------------- |
-| `UPSTASH_REDIS_REST_URL`   | REST URL of your Upstash database                  |
-| `UPSTASH_REDIS_REST_TOKEN` | REST token of your Upstash database                |
-| `QUANTUM_WEBHOOK_URL`      | _(optional)_ POST target for room lifecycle events |
+| Variable                   | Description                                                                                                                                               |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UPSTASH_REDIS_REST_URL`   | REST URL of your Upstash database                                                                                                                         |
+| `UPSTASH_REDIS_REST_TOKEN` | REST token of your Upstash database                                                                                                                       |
+| `QUANTUM_WEBHOOK_URL`      | _(optional)_ POST target for room lifecycle events                                                                                                        |
+| `NEXT_PUBLIC_SITE_URL`     | _(optional)_ Overrides the base URL used for OG/canonical metadata. On Vercel this defaults to the production domain — set it only behind a custom domain |
 
 ## Scripts
 
-| Script           | Description                  |
-| ---------------- | ---------------------------- |
-| `pnpm dev`       | Start the dev server         |
-| `pnpm build`     | Production build             |
-| `pnpm lint`      | ESLint (Next.js flat config) |
-| `pnpm typecheck` | `tsc --noEmit`               |
-| `pnpm test`      | Vitest (domain + platform)   |
-| `pnpm format`    | Format with Prettier         |
+| Script           | Description                      |
+| ---------------- | -------------------------------- |
+| `pnpm dev`       | Start the dev server             |
+| `pnpm build`     | Production build                 |
+| `pnpm lint`      | ESLint (Next.js flat config)     |
+| `pnpm typecheck` | `tsc --noEmit`                   |
+| `pnpm test`      | Vitest (domain + platform)       |
+| `pnpm format`    | Format with Prettier             |
+| `pnpm icons`     | Regenerate icons from `icon.svg` |
 
 Continuous integration (audit, type check, lint, test, build) runs on every push and PR via
 [GitHub Actions](.github/workflows/ci.yml).

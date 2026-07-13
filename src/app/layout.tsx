@@ -11,11 +11,17 @@ const montserrat = Montserrat({
     variable: '--font-montserrat',
 });
 
-// Base URL for absolute metadata (OG/canonical). Prefers an explicit site URL, then
-// Vercel's deployment URL, falling back to localhost in dev.
+// Base URL for absolute metadata (OG/canonical).
+//
+// VERCEL_URL is the per-deployment hostname (quantum-arcade-a6hus81qd-….vercel.app),
+// which sits behind Deployment Protection — a share card built on it renders no image
+// in WhatsApp/Twitter. VERCEL_PROJECT_PRODUCTION_URL is the stable public domain, so
+// prefer it and let previews advertise the production card too.
+const vercelDomain = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+
 const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    (vercelDomain ? `https://${vercelDomain}` : 'http://localhost:3000');
 
 export const metadata: Metadata = {
     metadataBase: new URL(siteUrl),

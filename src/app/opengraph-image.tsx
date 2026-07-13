@@ -1,11 +1,15 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
 
 /**
  * Open Graph / social share image, generated at build time via ImageResponse.
  *
- * On-brand dark background with the purple spy "eye" glyph, the title, and a
- * Spanish tagline. Only satori-safe CSS is used (flexbox, solid colors,
- * gradients, border-radius); every multi-child container sets display: flex.
+ * The glyph is the real icon (rasterized from icon.svg by `pnpm icons`) rather
+ * than a CSS approximation, so the share card, the tab and the installed app all
+ * show the same mark. Everything around it sticks to the satori-safe CSS subset
+ * (flexbox, solid colors, gradients, border-radius); every multi-child container
+ * sets display: flex.
  */
 export const alt = 'Quantum Arcade — Juegos de fiesta';
 
@@ -16,7 +20,9 @@ export const size = {
 
 export const contentType = 'image/png';
 
-export default function OpengraphImage() {
+export default async function OpengraphImage() {
+    const glyph = await readFile(join(process.cwd(), 'src/app/og-glyph.png'));
+
     return new ImageResponse(
         <div
             style={{
@@ -30,42 +36,15 @@ export default function OpengraphImage() {
                 padding: '80px',
             }}
         >
-            {/* Eye / target glyph */}
-            <div
-                style={{
-                    width: 150,
-                    height: 150,
-                    borderRadius: '50%',
-                    border: '12px solid #7E22CE',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 48,
-                }}
-            >
-                <div
-                    style={{
-                        width: 88,
-                        height: 88,
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #C27AFF 0%, #7E22CE 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <div
-                        style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: '50%',
-                            background: '#111827',
-                        }}
-                    />
-                </div>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element -- satori rasterizes a plain <img>. */}
+            <img
+                width={240}
+                height={240}
+                alt=""
+                src={`data:image/png;base64,${glyph.toString('base64')}`}
+                style={{ marginBottom: 32 }}
+            />
 
-            {/* Title */}
             <div
                 style={{
                     display: 'flex',
@@ -78,7 +57,6 @@ export default function OpengraphImage() {
                 <span style={{ color: '#C27AFF', marginLeft: 24 }}>Arcade</span>
             </div>
 
-            {/* Spanish tagline */}
             <div
                 style={{
                     display: 'flex',
