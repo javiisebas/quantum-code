@@ -45,7 +45,14 @@ export function LobbyPanel({
     return (
         <Surface className="flex h-full max-h-full flex-col gap-4 p-5 sm:p-6 short:gap-3 short:p-4">
             <div className="flex shrink-0 items-baseline justify-between gap-3">
-                <Eyebrow as="h2">Jugadores</Eyebrow>
+                <div className="flex min-w-0 flex-col gap-0.5">
+                    <Eyebrow as="h2">Jugadores</Eyebrow>
+                    <p className="truncate text-xs text-gray-500">
+                        {names.length === 0
+                            ? 'Aparecen aquí al entrar'
+                            : 'Ya están dentro de la sala'}
+                    </p>
+                </div>
                 <Chip className={names.length >= min ? accentChip : undefined}>
                     <span className="font-mono tabular-nums">
                         {names.length} / {max}
@@ -65,7 +72,7 @@ export function LobbyPanel({
              * page, so a full roster can never push the CTA off-screen.
              */}
             <ul
-                className="grid min-h-0 flex-1 auto-rows-min grid-cols-2 gap-2 overflow-y-auto [align-content:safe_center]"
+                className="grid min-h-0 flex-1 auto-rows-min grid-cols-1 gap-2 overflow-y-auto [align-content:safe_center]"
                 aria-live="polite"
             >
                 {names.map((name, index) => (
@@ -73,18 +80,25 @@ export function LobbyPanel({
                         <Surface
                             tone="inset"
                             radius="xl"
-                            className="flex items-center gap-2 p-3 text-left"
+                            className="flex items-center gap-3 p-2.5 text-left short:p-2"
                         >
+                            {/* The seat number is how a player says "me" out loud once the round
+                                starts, so the lobby is where they learn it. It leads the row rather
+                                than floating at the far end of it, where a wide TV row left it
+                                stranded across a gap of nothing. */}
+                            <span className="w-4 shrink-0 text-center font-mono text-xs tabular-nums text-gray-500">
+                                {index + 1}
+                            </span>
                             <span
                                 aria-hidden="true"
                                 className={ClassnameHelper.join(
-                                    'flex size-6 shrink-0 items-center justify-center rounded-full text-[0.65rem] font-bold uppercase',
+                                    'flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold uppercase short:size-7',
                                     accentChip ?? 'bg-white/10 text-gray-200',
                                 )}
                             >
                                 {name.slice(0, 1)}
                             </span>
-                            <span className="truncate text-sm font-semibold text-white">
+                            <span className="min-w-0 flex-1 truncate font-semibold text-white">
                                 {name}
                             </span>
                         </Surface>
@@ -95,10 +109,13 @@ export function LobbyPanel({
                     <li key={`ghost-${index}`}>
                         <div
                             aria-hidden="true"
-                            className="flex items-center gap-2 rounded-xl border border-dashed border-white/15 p-3"
+                            className="flex items-center gap-3 rounded-xl border border-dashed border-white/15 p-2.5 short:p-2"
                         >
-                            <span className="size-6 shrink-0 rounded-full bg-white/5" />
-                            <span className="h-2 w-12 rounded-full bg-white/5" />
+                            <span className="w-4 shrink-0 text-center font-mono text-xs text-gray-600">
+                                {names.length + index + 1}
+                            </span>
+                            <span className="size-8 shrink-0 rounded-full bg-white/5 short:size-7" />
+                            <span className="h-2.5 w-24 rounded-full bg-white/5" />
                         </div>
                     </li>
                 ))}

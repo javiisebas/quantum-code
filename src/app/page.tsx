@@ -8,18 +8,63 @@ import { Screen } from '@/platform/ui/Screen';
 import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import Link from 'next/link';
-import { BiRightArrowAlt } from 'react-icons/bi';
+import { BiQr, BiRightArrowAlt } from 'react-icons/bi';
 
 /**
- * The arcade home. It is now ONE thing — the catalogue — and nothing else.
+ * The arcade home. Two doors and a catalogue, in that order.
  *
  * It used to be three stacked sections: a marketing hero, a "Soy jugador" card holding a picker
  * of every game plus a code field, and then the catalogue. So the person who came to *host* had
  * to scroll past a form they'd never use, and the person who came to *join* had to scroll to a
  * form and then answer a question (which game?) that they could get wrong — and that the server
  * can now answer on its own. Joining is a different job for a different person in a different
- * hurry: it got its own page (`/join`), reachable from a single line in the header.
+ * hurry: it got its own page (`/join`).
+ *
+ * That page then had to be REACHED, and for a while it was reached through a `size="sm"` button
+ * in the header — which is chrome, and reads as chrome: an afterthought tucked beside the
+ * wordmark. But half the people who ever open this page are holding a code somebody else's
+ * screen is showing them; joining isn't a utility link, it's one of exactly two things you can
+ * do here. So the two doors are now stated as a pair — "Soy jugador" (below) and "Soy anfitrión"
+ * (the catalogue) — and each is announced the same way, with an eyebrow and a heading.
  */
+const JoinDoor = () => (
+    <Surface className="relative flex flex-col gap-6 overflow-hidden p-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-7">
+        <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-16 -top-20 h-56 w-56 rounded-full bg-gradient-to-br from-purple-500/25 to-transparent blur-3xl"
+        />
+
+        <div className="relative flex items-center gap-4 sm:gap-5">
+            <Surface
+                tone="inset"
+                radius="2xl"
+                className="flex size-12 shrink-0 items-center justify-center text-purple-300 sm:size-14"
+            >
+                <BiQr size={26} />
+            </Surface>
+            <div className="min-w-0">
+                <Eyebrow className="text-purple-300">Soy jugador</Eyebrow>
+                <h2 className="mt-1 text-xl font-bold text-white sm:text-2xl">
+                    Únete con un código
+                </h2>
+                <p className="mt-1 text-sm leading-relaxed text-gray-400">
+                    Escanea el QR o escribe los 6 dígitos de la pantalla compartida.
+                </p>
+            </div>
+        </div>
+
+        <Button
+            as={Link}
+            href="/join"
+            variant="primary"
+            className="relative w-full shrink-0 sm:w-auto"
+            endContent={<BiRightArrowAlt size={20} />}
+        >
+            Tengo un código
+        </Button>
+    </Surface>
+);
+
 const GameCard = ({ game }: { game: GameManifest }) => {
     const accent = accentOf(game.accent);
     return (
@@ -63,37 +108,37 @@ const GameCard = ({ game }: { game: GameManifest }) => {
 export default function ArcadeHomePage() {
     return (
         <Screen width="xl" height="scroll" className="gap-8 pb-16 sm:gap-10">
-            <header className="flex h-12 shrink-0 items-center justify-between gap-4 sm:h-14">
+            <header className="flex h-12 shrink-0 items-center sm:h-14">
                 <Eyebrow className="tracking-[0.25em] text-purple-300">Quantum Arcade</Eyebrow>
-                {/* The player's door. One line, always in reach, never in the way. */}
-                <Button
-                    as={Link}
-                    href="/join"
-                    variant="secondary"
-                    size="sm"
-                    endContent={<BiRightArrowAlt size={18} />}
-                >
-                    Tengo un código
-                </Button>
             </header>
 
-            <div className="flex flex-col items-center pt-4 text-center sm:pt-8">
+            <div className="flex flex-col items-center pt-2 text-center sm:pt-6">
                 <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
                     Juegos de fiesta
                 </h1>
                 <p className="mt-4 max-w-xl text-base text-gray-300 sm:text-lg">
-                    Una pantalla para todos, un móvil para cada uno. Elige un juego y comparte el
-                    código.
+                    Una pantalla para todos, un móvil para cada uno. Sin instalar nada.
                 </p>
             </div>
 
-            <section
-                aria-label="Juegos"
-                className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            >
-                {gameManifests.map((game) => (
-                    <GameCard key={game.id} game={game} />
-                ))}
+            <JoinDoor />
+
+            <section aria-labelledby="catalogo">
+                <div className="mb-5 flex items-end justify-between gap-4">
+                    <div>
+                        <Eyebrow className="text-purple-300">Soy anfitrión</Eyebrow>
+                        <h2 id="catalogo" className="mt-1 text-xl font-bold text-white sm:text-2xl">
+                            Elige un juego
+                        </h2>
+                    </div>
+                    <Chip>{gameManifests.length} juegos</Chip>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {gameManifests.map((game) => (
+                        <GameCard key={game.id} game={game} />
+                    ))}
+                </div>
             </section>
         </Screen>
     );

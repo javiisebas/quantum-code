@@ -36,10 +36,12 @@ import { CHISPAS_ID, chispasManifest } from './manifest';
 
 const acc = accentOf(chispasManifest.accent);
 
+/** A points tally as a ranked row. The unit rides along so `1200` reads as `1200 pts` at a glance. */
 const entry = (score: Score): PodiumEntry => ({
     id: score.seat,
     name: score.name,
     score: score.score,
+    unit: 'pts',
 });
 
 /** Chispas host: gather players in the shared lobby, then drive the live game. */
@@ -364,6 +366,14 @@ function VoteStage({
     );
 }
 
+/**
+ * The round's payoff: who wrote what, and who was funniest. The list already cascaded; what it
+ * lacked was a WINNER you could spot without reading — the tint alone made you hunt for the
+ * accent row. So the winning answer(s) now carry the 🏆 in the rank slot every other row leaves
+ * empty, which is the same "medal in a column" language the podium uses two minutes later. The
+ * confetti is a `round` spark, not the final's full burst: it fires every round, and the podium
+ * has to stay the loudest thing in the game.
+ */
 function RevealStage({
     round,
     reveal,
@@ -380,12 +390,17 @@ function RevealStage({
     onNext: () => void;
 }) {
     const winners = new Set(winnerSeats);
+    // Nobody voted → there is no "most voted", so neither the trophy column nor the headline
+    // may claim one (`roundWinners` returns [] when the top answer has zero votes).
+    const hasWinner = winnerSeats.length > 0;
     return (
         <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-5">
-            {winnerSeats.length > 0 && (
-                <ConfettiBurst key={`reveal-${round}`} colors={acc.confetti} />
+            {hasWinner && (
+                <ConfettiBurst key={`reveal-${round}`} colors={acc.confetti} intensity="round" />
             )}
-            <Eyebrow className={ClassnameHelper.join('shrink-0', acc.text)}>Resultados</Eyebrow>
+            <Eyebrow className={ClassnameHelper.join('shrink-0', acc.text)}>
+                {hasWinner ? 'La más votada' : 'Resultados'}
+            </Eyebrow>
 
             <ul className="flex min-h-0 w-full flex-1 flex-col gap-3 overflow-y-auto [justify-content:safe_center]">
                 {reveal.map((answer, index) => {
@@ -396,7 +411,8 @@ function RevealStage({
                             className="shrink-0"
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.12 }}
+                            // Capped, so a full room of 12 answers still finishes in ~1s.
+                            transition={{ delay: Math.min(index, 7) * 0.1, duration: 0.3 }}
                         >
                             <Surface
                                 tone={won ? 'plain' : 'inset'}
@@ -406,8 +422,21 @@ function RevealStage({
                                     won && acc.highlight,
                                 )}
                             >
+                                {hasWinner && (
+                                    <span
+                                        aria-hidden="true"
+                                        className="flex w-7 shrink-0 justify-center text-2xl"
+                                    >
+                                        {won ? '🏆' : ''}
+                                    </span>
+                                )}
                                 <div className="flex flex-1 flex-col text-left">
-                                    <span className="text-lg font-semibold text-white">
+                                    <span
+                                        className={ClassnameHelper.join(
+                                            'font-semibold text-white',
+                                            won ? 'text-xl' : 'text-lg',
+                                        )}
+                                    >
                                         {answer.text}
                                     </span>
                                     <span

@@ -1,6 +1,7 @@
 'use client';
 
 import type { GameManifest } from '@/games/types';
+import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { HowToPlayButton } from '@/platform/ui/HowToPlay';
 import { RoomShare } from '@/platform/ui/RoomShare';
 import { Screen } from '@/platform/ui/Screen';
@@ -66,15 +67,25 @@ export function HostLobby({
              * itself. Without that, a short phone would CLIP the CTA rather than shrink to it.
              */}
             <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] items-stretch gap-4 py-2 lg:my-auto lg:max-h-[36rem] lg:grid-cols-2 lg:grid-rows-1 lg:gap-6 lg:py-4">
-                <Surface className="flex min-h-0 items-center justify-center p-5 sm:p-6 lg:p-8 short:p-4">
-                    <RoomShare
-                        code={code}
-                        gameName={manifest.name}
-                        // Small enough to leave room for the roster on a phone, big enough to scan
-                        // from a sofa on a TV — and smaller again on a short phone (SE-sized), where
-                        // the alternative is the code or the button falling off the bottom.
-                        qrClassName="max-w-[160px] sm:max-w-[200px] lg:max-w-[232px] short:max-w-[124px]"
-                    />
+                {/* Both halves are TITLED. Unlabelled, the split read as "a QR" next to "a list" and
+                    left the viewer to work out what the left one was for — the right one announced
+                    itself ("Jugadores") and the left one said nothing at all. */}
+                <Surface className="flex min-h-0 flex-col p-5 sm:p-6 lg:p-8 short:p-4">
+                    <div className="flex shrink-0 flex-col gap-0.5">
+                        <Eyebrow as="h2">Cómo entrar</Eyebrow>
+                        <p className="text-xs text-gray-500">Desde el móvil de cada jugador</p>
+                    </div>
+                    <div className="flex min-h-0 flex-1 items-center justify-center pt-4 short:pt-2">
+                        <RoomShare
+                            code={code}
+                            gameName={manifest.name}
+                            // Small enough to leave room for the roster on a phone, big enough to
+                            // scan from a sofa on a TV — and smaller again on a short phone
+                            // (SE-sized), where the alternative is the code or the button falling
+                            // off the bottom.
+                            qrClassName="max-w-[152px] sm:max-w-[190px] lg:max-w-[224px] short:max-w-[120px]"
+                        />
+                    </div>
                 </Surface>
 
                 <div className="flex min-h-0 flex-col">{children}</div>

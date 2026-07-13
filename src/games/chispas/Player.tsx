@@ -4,11 +4,14 @@ import { LocalStorageHelper } from '@/platform/persistence/local-storage';
 import { submitInput } from '@/platform/room/live-client';
 import { useLiveState } from '@/platform/room/use-live-room';
 import { Button } from '@/platform/ui/Button';
+import { Chip } from '@/platform/ui/Chip';
+import { ConfettiBurst } from '@/platform/ui/Confetti';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { RankCard } from '@/platform/ui/Podium';
 import { Surface } from '@/platform/ui/Surface';
 import { TextArea } from '@/platform/ui/TextInput';
 import { ClassnameHelper } from '@/platform/util/classnames';
+import { motion } from 'framer-motion';
 import { FormEvent, useEffect, useState } from 'react';
 import { BiCheckCircle } from 'react-icons/bi';
 import { accentOf } from '../_shared/accents';
@@ -257,40 +260,49 @@ function VotePhone({
     );
 }
 
+/**
+ * The round's result on my phone. Built from the same parts as `RankCard` (medallion + score
+ * badge), so the round card and the final card are recognisably the same object — and winning a
+ * round gets its own small celebration on the phone of the one person who probably isn't looking
+ * at the TV right then.
+ */
 function RevealPhone({ seat, state }: { seat: number; state: ChispasState }) {
     const won = (state.winnerSeats ?? []).includes(seat);
     const me = (state.scores ?? []).find((score) => score.seat === seat);
     return (
         <PhoneStage>
-            <Surface as="section" className="w-full max-w-sm p-8">
-                {won ? (
-                    <>
-                        <span className="text-5xl" aria-hidden="true">
-                            🎉
-                        </span>
-                        <p
-                            className={ClassnameHelper.join(
-                                'mt-3 text-2xl font-extrabold',
-                                acc.text,
-                            )}
-                        >
-                            ¡Ganaste la ronda!
-                        </p>
-                    </>
-                ) : (
-                    <p className="text-lg font-semibold text-white">Ronda terminada</p>
-                )}
-                <p className="mt-2 text-sm text-gray-400">Mira la pantalla principal 📺</p>
-                {me && (
-                    <p className="mt-4 text-sm text-gray-300">
-                        Llevas{' '}
-                        <span className={ClassnameHelper.join('font-bold', acc.text)}>
-                            {me.score}
-                        </span>{' '}
-                        puntos
+            {won && <ConfettiBurst colors={acc.confetti} intensity="round" />}
+            <motion.div
+                className="w-full max-w-sm"
+                initial={{ opacity: 0, scale: 0.92, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 240, damping: 20 }}
+            >
+                <Surface
+                    as="section"
+                    className="flex flex-col items-center gap-4 p-8 text-center short:gap-3 short:p-6"
+                >
+                    <span
+                        aria-hidden="true"
+                        className={ClassnameHelper.join(
+                            'flex h-20 w-20 items-center justify-center rounded-full text-4xl ring-1 ring-inset',
+                            won ? acc.highlight : 'bg-white/5 ring-white/10',
+                        )}
+                    >
+                        {won ? '🏆' : '⚡'}
+                    </span>
+                    <p
+                        className={ClassnameHelper.join(
+                            'text-2xl font-extrabold',
+                            won ? acc.text : 'text-white',
+                        )}
+                    >
+                        {won ? '¡Ganaste la ronda!' : 'Ronda terminada'}
                     </p>
-                )}
-            </Surface>
+                    {me && <Chip className={won ? acc.chip : undefined}>{me.score} puntos</Chip>}
+                    <p className="text-sm text-gray-400">Mira la pantalla principal 📺</p>
+                </Surface>
+            </motion.div>
         </PhoneStage>
     );
 }
@@ -301,7 +313,12 @@ function FinalPhone({ seat, state }: { seat: number; state: ChispasState }) {
     const me = scores[rank - 1];
     return (
         <PhoneStage>
-            <RankCard rank={rank} fallbackEmoji="🎈" caption={me && `${me.score} puntos`} />
+            <RankCard
+                rank={rank}
+                fallbackEmoji="🎈"
+                accent={acc}
+                caption={me && `${me.score} puntos`}
+            />
         </PhoneStage>
     );
 }

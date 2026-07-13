@@ -3,6 +3,7 @@
 import { submitInput } from '@/platform/room/live-client';
 import { useLiveState } from '@/platform/room/use-live-room';
 import { Button } from '@/platform/ui/Button';
+import { Chip } from '@/platform/ui/Chip';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { RankCard } from '@/platform/ui/Podium';
 import { Surface } from '@/platform/ui/Surface';
@@ -159,7 +160,11 @@ function WaitingPhone({ seat, state }: { seat: number; state: BombaState }) {
     );
 }
 
-/** The bomb blew: show whether it caught me and my running strike count. */
+/**
+ * The bomb blew: whether it caught me, and my running strike count. The personal half of the
+ * host's `ExplosionStage`, built from the same parts as `RankCard` (medallion + score badge) so
+ * a phone's between-round card and its final card are visibly the same object, one round apart.
+ */
 function ExplosionPhone({ seat, state }: { seat: number; state: BombaState }) {
     const caughtMe = state.lastExploded === seat;
     const explodedName =
@@ -167,28 +172,38 @@ function ExplosionPhone({ seat, state }: { seat: number; state: BombaState }) {
     const me = (state.scores ?? []).find((score) => score.seat === seat);
     return (
         <PhoneStage>
-            <span className="text-6xl" aria-hidden="true">
-                💥
-            </span>
-            {caughtMe ? (
-                <p className={ClassnameHelper.join('text-2xl font-extrabold', acc.text)}>
-                    ¡Te ha explotado a ti!
-                </p>
-            ) : (
-                <p className="text-xl font-semibold text-white">
-                    Le explotó a <span className={acc.text}>{explodedName}</span>
-                </p>
-            )}
-            {me && (
-                <p className="text-sm text-gray-300">
-                    Llevas{' '}
-                    <span className={ClassnameHelper.join('font-bold', acc.text)}>
-                        💣 {me.strikes}
-                    </span>{' '}
-                    {me.strikes === 1 ? 'bombazo' : 'bombazos'}
-                </p>
-            )}
-            <p className="text-sm text-gray-400">Mira la pantalla principal 📺</p>
+            <Surface
+                as="section"
+                className="flex w-full max-w-sm flex-col items-center gap-4 p-8 text-center"
+            >
+                <motion.span
+                    aria-hidden="true"
+                    className={ClassnameHelper.join(
+                        'flex h-20 w-20 items-center justify-center rounded-full text-4xl ring-1 ring-inset',
+                        caughtMe ? acc.highlight : 'bg-white/5 ring-white/10',
+                    )}
+                    initial={{ scale: 0.5, rotate: -10 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+                >
+                    💥
+                </motion.span>
+                {caughtMe ? (
+                    <p className={ClassnameHelper.join('text-2xl font-extrabold', acc.text)}>
+                        ¡Te ha explotado a ti!
+                    </p>
+                ) : (
+                    <p className="text-xl font-semibold text-white">
+                        Le explotó a <span className={acc.text}>{explodedName}</span>
+                    </p>
+                )}
+                {me && (
+                    <Chip className={caughtMe ? acc.chip : undefined}>
+                        💣 {me.strikes} {me.strikes === 1 ? 'bombazo' : 'bombazos'}
+                    </Chip>
+                )}
+                <p className="text-sm text-gray-400">Mira la pantalla principal 📺</p>
+            </Surface>
         </PhoneStage>
     );
 }
@@ -202,7 +217,8 @@ function FinalPhone({ seat, state }: { seat: number; state: BombaState }) {
             <RankCard
                 rank={rank}
                 fallbackEmoji="💣"
-                caption={me && `${me.strikes} ${me.strikes === 1 ? 'bombazo' : 'bombazos'}`}
+                accent={acc}
+                caption={me && `💣 ${me.strikes} ${me.strikes === 1 ? 'bombazo' : 'bombazos'}`}
             />
         </PhoneStage>
     );

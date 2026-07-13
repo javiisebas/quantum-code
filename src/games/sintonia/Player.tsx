@@ -1,9 +1,11 @@
 'use client';
 
 import { useLiveState, usePrivateState } from '@/platform/room/use-live-room';
+import { Chip } from '@/platform/ui/Chip';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { RankCard } from '@/platform/ui/Podium';
 import { ClassnameHelper } from '@/platform/util/classnames';
+import { motion } from 'framer-motion';
 import { accentOf } from '../_shared/accents';
 import { LivePlayerShell } from '../_shared/live/LivePlayerShell';
 import { LiveWaiting, PhoneStage } from '../_shared/live/PhoneStage';
@@ -64,6 +66,7 @@ function SintoniaPhone({
 
     if (state.phase === 'reveal') {
         const me = (state.scores ?? []).find((score) => score.seat === seat);
+        const points = state.points ?? 0;
         return (
             <PhoneStage>
                 <div className="w-full max-w-sm">
@@ -73,18 +76,31 @@ function SintoniaPhone({
                         dial={state.dial ?? null}
                     />
                 </div>
-                <p className="text-lg font-semibold text-white">
-                    {state.points === 4 ? '¡En el blanco! 🎯' : `+${state.points ?? 0} puntos`}
-                </p>
-                {me && (
-                    <p className="text-sm text-gray-400">
-                        Llevas{' '}
-                        <span className={ClassnameHelper.join('font-bold', acc.text)}>
-                            {me.score}
-                        </span>{' '}
-                        puntos
+                {/* The same medallion the shared screen just showed, so both halves agree. */}
+                <motion.div
+                    className="flex flex-col items-center gap-3"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 280, damping: 18, delay: 0.1 }}
+                >
+                    <span
+                        className={ClassnameHelper.join(
+                            'flex h-16 w-16 items-center justify-center rounded-full text-2xl font-extrabold ring-1 ring-inset',
+                            acc.highlight,
+                            acc.text,
+                        )}
+                    >
+                        +{points}
+                    </span>
+                    <p className="text-xl font-extrabold text-white">
+                        {points === 4
+                            ? '¡En el blanco! 🎯'
+                            : points === 1
+                              ? '1 punto'
+                              : `${points} puntos`}
                     </p>
-                )}
+                </motion.div>
+                {me && <Chip>Llevas {me.score} puntos</Chip>}
                 <p className="text-sm text-gray-400">Mira la pantalla principal 📺</p>
             </PhoneStage>
         );
@@ -136,7 +152,12 @@ function FinalPhone({ seat, state }: { seat: number; state: SintoniaState }) {
     const me = scores[rank - 1];
     return (
         <PhoneStage>
-            <RankCard rank={rank} fallbackEmoji="📡" caption={me && `${me.score} puntos`} />
+            <RankCard
+                rank={rank}
+                fallbackEmoji="📡"
+                accent={acc}
+                caption={me && `${me.score} puntos`}
+            />
         </PhoneStage>
     );
 }

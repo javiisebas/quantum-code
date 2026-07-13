@@ -1,6 +1,7 @@
 'use client';
 
 import { usePublishedState, useLiveInputs } from '@/platform/room/use-live-room';
+import { Chip } from '@/platform/ui/Chip';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { Podium, PodiumEntry, ScoreChips } from '@/platform/ui/Podium';
 import { Surface } from '@/platform/ui/Surface';
@@ -175,7 +176,7 @@ function BombaBoard({
                 <Podium
                     accent={acc}
                     label="Quien menos explotó"
-                    caption={champion && strikeLabel(champion.strikes)}
+                    caption={champion && `💣 ${strikeLabel(champion.strikes)}`}
                     entries={scores.map(entry)}
                     onRestart={restart}
                 />
@@ -216,6 +217,17 @@ function PlayingStage({ category, holderName }: { category: string; holderName: 
     );
 }
 
+/**
+ * The between-round payoff, and the moment the whole round was building to: the fuse ran out on
+ * SOMEONE. It gets ~5 seconds of everyone's attention (`EXPLOSION_PAUSE_MS`) before the next
+ * round starts, so it is staged as a beat rather than listed as a fact:
+ *
+ *  - a shockwave — the accent `highlight` disc blown outwards under the 💥 — so the hit lands;
+ *  - the victim as the headline, and the strike as a badge that pops in a beat later;
+ *  - the standings underneath, unanimated, because five seconds is all the room gets to read them;
+ *  - a bar draining over exactly the pause, so the group can SEE the next round coming instead of
+ *    wondering whether the screen is stuck.
+ */
 function ExplosionStage({
     explodedName,
     scores,
@@ -226,29 +238,67 @@ function ExplosionStage({
     isLast: boolean;
 }) {
     return (
-        <div className="flex w-full flex-col items-center gap-6 text-center short:gap-4">
-            <motion.div
-                aria-hidden="true"
-                className="text-8xl short:text-6xl"
-                initial={{ scale: 0.4, rotate: -12 }}
-                animate={{ scale: [0.4, 1.25, 1], rotate: [-12, 6, 0] }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-            >
-                💥
-            </motion.div>
+        <div className="flex w-full flex-col items-center gap-5 text-center short:gap-4">
+            <div className="relative flex h-28 w-28 items-center justify-center short:h-20 short:w-20">
+                <motion.span
+                    aria-hidden="true"
+                    className={ClassnameHelper.join('absolute inset-0 rounded-full', acc.highlight)}
+                    initial={{ scale: 0.35, opacity: 0.9 }}
+                    animate={{ scale: 2, opacity: 0 }}
+                    transition={{ duration: 0.9, ease: 'easeOut' }}
+                />
+                <motion.span
+                    aria-hidden="true"
+                    className="text-8xl short:text-6xl"
+                    initial={{ scale: 0.4, rotate: -12 }}
+                    animate={{ scale: [0.4, 1.25, 1], rotate: [-12, 6, 0] }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                >
+                    💥
+                </motion.span>
+            </div>
+
             <div>
-                <p className="text-3xl font-extrabold text-white">¡BOOM!</p>
+                <p className="text-3xl font-extrabold text-white short:text-2xl">¡BOOM!</p>
                 <p className={ClassnameHelper.join('mt-1 text-xl font-bold', acc.text)}>
                     {explodedName} se ha quedado con la bomba
                 </p>
-                <p className="mt-1 text-sm text-gray-400">+1 bombazo</p>
             </div>
+
+            <motion.div
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 16, delay: 0.35 }}
+            >
+                <Chip className={acc.chip}>💣 +1 bombazo</Chip>
+            </motion.div>
 
             <ScoreChips entries={scores.map(entry)} accentChip={acc.chip} />
 
-            <p className="text-sm text-gray-500">
-                {isLast ? 'Calculando la clasificación final…' : 'Preparando la siguiente ronda…'}
-            </p>
+            <div className="flex w-full max-w-xs flex-col items-center gap-2">
+                <p className="text-sm text-gray-500">
+                    {isLast
+                        ? 'Calculando la clasificación final…'
+                        : 'Preparando la siguiente ronda…'}
+                </p>
+                {/*
+                 * `bg-current` takes the accent from `acc.text` — the bar is the game's colour
+                 * without inventing a token for it. It drains for exactly the pause the host
+                 * effect above waits; under reduced motion it simply stays full, which says
+                 * nothing false (the copy above already says what is happening).
+                 */}
+                <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+                    <motion.div
+                        className={ClassnameHelper.join(
+                            'h-full origin-left rounded-full bg-current',
+                            acc.text,
+                        )}
+                        initial={{ scaleX: 1 }}
+                        animate={{ scaleX: 0 }}
+                        transition={{ duration: EXPLOSION_PAUSE_MS / 1000, ease: 'linear' }}
+                    />
+                </div>
+            </div>
         </div>
     );
 }

@@ -8,6 +8,7 @@ import { Podium, PodiumEntry, ScoreChips } from '@/platform/ui/Podium';
 import { RangeInput } from '@/platform/ui/RangeInput';
 import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
+import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import { accentOf } from '../_shared/accents';
 import { LiveBoard } from '../_shared/live/LiveBoard';
@@ -29,10 +30,12 @@ import { SINTONIA_ID, sintoniaManifest } from './manifest';
 
 const acc = accentOf(sintoniaManifest.accent);
 
+/** A points tally as a ranked row. The unit rides along so `12` reads as `12 pts` at a glance. */
 const entry = (score: Score): PodiumEntry => ({
     id: score.seat,
     name: score.name,
     score: score.score,
+    unit: 'pts',
 });
 
 /** Sintonía host: gather players in the lobby, then drive the spectrum game. */
@@ -265,6 +268,13 @@ function GuessStage({
     );
 }
 
+/**
+ * The round's payoff: where the dial actually landed against the secret band, and what it was
+ * worth. The score is the news, so it is staged like one — the points spring in inside the same
+ * accent medallion the podium crowns its champion with, rather than being a `+4` in a sentence.
+ * The bullseye keeps its confetti, but as a `round` spark: it fires every time somebody nails it,
+ * and it must not spend the celebration the final podium is saving up for.
+ */
 function RevealStage({
     spectrum,
     target,
@@ -287,14 +297,42 @@ function RevealStage({
     const label = points === 4 ? '¡En el blanco!' : points > 0 ? '¡Muy cerca!' : '¡Uy, lejos!';
     return (
         <div className="flex w-full flex-col items-center gap-5 short:gap-4">
-            {points === 4 && <ConfettiBurst key={`bull-${target}-${dial}`} colors={acc.confetti} />}
+            {points === 4 && (
+                <ConfettiBurst
+                    key={`bull-${target}-${dial}`}
+                    colors={acc.confetti}
+                    intensity="round"
+                />
+            )}
             <SpectrumBar spectrum={spectrum} target={target} dial={dial} />
-            <div className="text-center">
-                <p className="text-2xl font-extrabold text-white">{label}</p>
-                <p className={ClassnameHelper.join('mt-1 text-lg font-bold', acc.text)}>
-                    +{points} {points === 1 ? 'punto' : 'puntos'} para {psychic.name}
-                </p>
-            </div>
+
+            <motion.div
+                className="flex flex-col items-center gap-3 text-center short:gap-2"
+                initial={{ opacity: 0, scale: 0.8, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 280, damping: 18, delay: 0.15 }}
+            >
+                <span
+                    className={ClassnameHelper.join(
+                        'flex h-16 w-16 items-center justify-center rounded-full text-2xl font-extrabold ring-1 ring-inset',
+                        'short:h-14 short:w-14 short:text-xl',
+                        acc.highlight,
+                        acc.text,
+                    )}
+                >
+                    +{points}
+                </span>
+                <div>
+                    <p className="text-2xl font-extrabold text-white short:text-xl">{label}</p>
+                    <p className="mt-1 text-sm text-gray-400">
+                        {points === 1 ? '1 punto' : `${points} puntos`} para{' '}
+                        <span className={ClassnameHelper.join('font-semibold', acc.text)}>
+                            {psychic.name}
+                        </span>
+                    </p>
+                </div>
+            </motion.div>
+
             <ScoreChips entries={scores.map(entry)} accentChip={acc.chip} />
             <Button
                 variant="accent"
