@@ -13,15 +13,15 @@ We aim to acknowledge reports within 72 hours.
 
 This project defends its dependency chain in depth. No single control is a point of failure:
 
-| Layer | Control | Where |
-| --- | --- | --- |
-| **Cooling-off window** | `minimumReleaseAge: 4320` (3 days) — a freshly-compromised release cannot enter the lockfile before it is caught and yanked | [`pnpm-workspace.yaml`](pnpm-workspace.yaml) |
-| **Reproducible installs** | `pnpm install --frozen-lockfile` in CI and Vercel — builds install exactly the reviewed lockfile, never a drifting resolution | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
-| **CI audit gate** | `pnpm audit --audit-level=high` fails the build on any known high/critical advisory | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
-| **Automated alerts + fixes** | Dependabot alerts and automated security PRs are enabled at the repo level | GitHub repo settings |
-| **Scheduled updates** | Dependabot opens weekly grouped update PRs for npm deps and CI actions | [`.github/dependabot.yml`](.github/dependabot.yml) |
-| **Pinned CI actions** | GitHub Actions are pinned to full commit SHAs, not mutable tags | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
-| **Vetted build scripts** | Only explicitly allow-listed packages may run install scripts (`allowBuilds`) | [`pnpm-workspace.yaml`](pnpm-workspace.yaml) |
+| Layer                        | Control                                                                                                                       | Where                                                  |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **Cooling-off window**       | `minimumReleaseAge: 4320` (3 days) — a freshly-compromised release cannot enter the lockfile before it is caught and yanked   | [`pnpm-workspace.yaml`](pnpm-workspace.yaml)           |
+| **Reproducible installs**    | `pnpm install --frozen-lockfile` in CI and Vercel — builds install exactly the reviewed lockfile, never a drifting resolution | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+| **CI audit gate**            | `pnpm audit --audit-level=high` fails the build on any known high/critical advisory                                           | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+| **Automated alerts + fixes** | Dependabot alerts and automated security PRs are enabled at the repo level                                                    | GitHub repo settings                                   |
+| **Scheduled updates**        | Dependabot opens weekly grouped update PRs for npm deps and CI actions                                                        | [`.github/dependabot.yml`](.github/dependabot.yml)     |
+| **Pinned CI actions**        | GitHub Actions are pinned to full commit SHAs, not mutable tags                                                               | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+| **Vetted build scripts**     | Only explicitly allow-listed packages may run install scripts (`allowBuilds`)                                                 | [`pnpm-workspace.yaml`](pnpm-workspace.yaml)           |
 
 ### Urgent security patch newer than the cooling-off window
 

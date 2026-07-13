@@ -1,28 +1,14 @@
-import { readBoard } from '@/app/api/roles/services/board-store';
-import { parseCode } from '@/domain';
-import { SpyBoard } from './components/SpyBoard';
-import { SpyJoinGame } from './components/SpyJoinGame';
+import { redirect } from 'next/navigation';
 
-interface SpyPageProps {
+/**
+ * Back-compat for the original single-game URL. A code is now resolved by the platform, so an
+ * old `/spy?code=NNNNNN` link goes to the short join link and lands in whatever game owns it.
+ */
+export default async function LegacySpyRedirect({
+    searchParams,
+}: {
     searchParams: Promise<{ code?: string }>;
-}
-
-export default async function SpyPage({ searchParams }: SpyPageProps) {
-    const params = await searchParams;
-    const code = parseCode(params.code ?? null);
-
-    // Reject junk codes up front — no Redis round-trip for invalid input.
-    if (code === null) {
-        return <SpyJoinGame />;
-    }
-
-    try {
-        const board = await readBoard(code);
-
-        if (!board?.roles.length) return <SpyJoinGame />;
-
-        return <SpyBoard roles={board.roles} words={board.words} />;
-    } catch {
-        return <SpyJoinGame />;
-    }
+}) {
+    const { code } = await searchParams;
+    redirect(code ? `/j/${encodeURIComponent(code)}` : '/join');
 }

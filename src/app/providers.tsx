@@ -1,6 +1,6 @@
 'use client';
 
-import { ModalProvider } from '@/contexts/ModalContext';
+import { ModalProvider } from '@/platform/ui/modal-context';
 import { HeroUIProvider } from '@heroui/react';
 import { MotionConfig } from 'framer-motion';
 

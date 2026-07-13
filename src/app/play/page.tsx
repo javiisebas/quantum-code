@@ -1,9 +1,6 @@
-import { GameBoard } from './components/GameBoard';
+import { redirect } from 'next/navigation';
 
-export default function PlayPage() {
-    return (
-        <div className="relative flex items-center justify-center w-full h-screen overflow-hidden">
-            <GameBoard />
-        </div>
-    );
+/** Back-compat: the old single-game host URL now lives at `/host/codenames`. */
+export default function LegacyPlayRedirect() {
+    redirect('/host/codenames');
 }

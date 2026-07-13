@@ -1,8 +1,8 @@
-import { GameState, gameReducer, initialGameState } from '@/contexts/game-state';
-import { NoTeamEnum } from '@/enum/no-team.enum';
-import { RoleEnum } from '@/enum/role.enum';
-import { GameStatusEnum } from '@/enum/game-status.enum';
-import { TeamEnum } from '@/enum/team.enum';
+import { GameState, gameReducer, initialGameState } from '@/games/codenames/game-state';
+import { NoTeamEnum } from '@/games/codenames/enums/no-team.enum';
+import { RoleEnum } from '@/games/codenames/enums/role.enum';
+import { GameStatusEnum } from '@/games/codenames/enums/game-status.enum';
+import { TeamEnum } from '@/games/codenames/enums/team.enum';
 import { describe, expect, it } from 'vitest';
 
 // Small handcrafted board (order matters for the index-based assertions):
@@ -101,15 +101,27 @@ describe('gameReducer — REVEAL_ALL / NEW_GAME', () => {
         const next = gameReducer(makeState({ status: GameStatusEnum.LOST }), {
             type: 'NEW_GAME',
             code: 123456,
+            hostToken: 'host-token',
         });
         expect(next.status).toBe(GameStatusEnum.PLAYING);
         expect(next.code).toBe(123456);
+        // The host capability rides the new game: releasing this room later (end of game, "Nueva
+        // partida") is host-authoritative, so losing the token here would strand the old board.
+        expect(next.hostToken).toBe('host-token');
         expect(next.currentTurn).toBe(TeamEnum.RED); // STARTING_TEAM
         expect(next.hasTeamWon).toBeNull();
         expect(next.loading).toBe(true);
         expect(next.words).toEqual([]);
         expect(next.roles).toEqual([]);
         expect(next.revealedRoles.every((r) => r === false)).toBe(true);
+    });
+
+    it('adopts a re-minted host token when a lapsed room is re-created', () => {
+        const next = gameReducer(makeState(), {
+            type: 'ADOPT_HOST_TOKEN',
+            hostToken: 'fresh-token',
+        });
+        expect(next.hostToken).toBe('fresh-token');
     });
 
     it('BOARD_LOADED fills roles + words and clears loading', () => {

@@ -1,9 +1,9 @@
 import './globals.css';
 
-import { ClassnameHelper } from '@/helpers/clean-classname.helper';
+import { ClassnameHelper } from '@/platform/util/classnames';
 import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
-import ModalComponent from './components/ui/Modal';
+import ModalComponent from '@/platform/ui/Modal';
 import { RootProviders } from './providers';
 
 const montserrat = Montserrat({
@@ -11,14 +11,24 @@ const montserrat = Montserrat({
     variable: '--font-montserrat',
 });
 
+// Base URL for absolute metadata (OG/canonical). Prefers an explicit site URL, then
+// Vercel's deployment URL, falling back to localhost in dev.
+const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
 export const metadata: Metadata = {
-    title: 'Quantum Code',
+    metadataBase: new URL(siteUrl),
+    title: {
+        default: 'Quantum Arcade — Juegos de fiesta',
+        template: '%s · Quantum Arcade',
+    },
     description:
-        'Juego de espías tipo Codenames: descifra el código, supera a tus rivales y lleva a tu equipo a la victoria.',
-    applicationName: 'Quantum Code',
+        'Juegos de fiesta para una pantalla y muchos móviles: Código Secreto, ¿Dónde está el espía?, Impostor, Hombres Lobo, El Camaleón, Chispas y Sintonía. Comparte un código y a jugar.',
+    applicationName: 'Quantum Arcade',
     appleWebApp: {
         capable: true,
-        title: 'Quantum Code',
+        title: 'Quantum Arcade',
         statusBarStyle: 'black-translucent',
     },
 };
@@ -36,7 +46,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="es" className={ClassnameHelper.join('dark', montserrat.variable)}>
-            <body className="antialiased min-h-screen relative isolate overflow-hidden bg-gray-900">
+            <body className="antialiased min-h-screen relative isolate overflow-x-hidden bg-gray-900">
                 <svg
                     aria-hidden="true"
                     className="absolute inset-0 -z-10 size-full stroke-gray-800 [mask-image:radial-gradient(150%_150%_at_top_right,white,transparent)]"
