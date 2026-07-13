@@ -24,7 +24,7 @@ export const metadata: Metadata = {
         template: '%s · Quantum Arcade',
     },
     description:
-        'Juegos de fiesta para una pantalla y muchos móviles: Código Secreto, ¿Dónde está el espía?, Impostor y Hombres Lobo. Comparte un código y a jugar.',
+        'Juegos de fiesta para una pantalla y muchos móviles: Código Secreto, ¿Dónde está el espía?, Impostor, Hombres Lobo, El Camaleón, Chispas y Sintonía. Comparte un código y a jugar.',
     applicationName: 'Quantum Arcade',
     appleWebApp: {
         capable: true,

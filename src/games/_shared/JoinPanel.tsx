@@ -1,15 +1,14 @@
 'use client';
 
 import { gameManifests } from '@/games/registry';
-import { parseJoinTarget } from '@/platform/room/join-target';
 import { Button } from '@/platform/ui/Button';
 import { CodeInput } from '@/platform/ui/CodeInput';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { QrScannerOverlay } from '@/platform/ui/QrScannerOverlay';
 import { ClassnameHelper } from '@/platform/util/classnames';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { BiQr } from 'react-icons/bi';
+import { useJoinFlow } from './use-join-flow';
 
 /**
  * The reusable "pick a game + enter the code" form body — used by the generic
@@ -25,47 +24,21 @@ export function JoinPanel({
     autoFocus?: boolean;
     className?: string;
 }) {
-    const router = useRouter();
+    // The picked game is local (it drives the picker UI); the code/scan flow around it
+    // is shared with `JoinForm` via `useJoinFlow`, keyed on the current pick.
     const [gameId, setGameId] = useState(gameManifests[0]?.id ?? '');
-    const [code, setCode] = useState('');
-    const [scanning, setScanning] = useState(false);
-    const [scanError, setScanError] = useState(false);
-
-    const valid = code.length === 6 && gameId !== '';
-
-    const routeTo = (game: string, joinCode: number | string) =>
-        router.push(`/join/${game}?code=${joinCode}`);
-
-    /** From the "Unirse" button — routes the picked game with the typed code. */
-    const submit = () => {
-        if (valid) routeTo(gameId, code);
-    };
-
-    /** From `CodeInput.onComplete` — the freshly-completed digits arrive as an arg. */
-    const submitIfValid = (digits: string) => {
-        if (digits.length === 6 && gameId) routeTo(gameId, digits);
-    };
-
-    const handleCode = (digits: string) => {
-        setScanError(false);
-        setCode(digits);
-    };
-
-    const handleDetect = (text: string) => {
-        const target = parseJoinTarget(text, gameId);
-        if (target) {
-            setScanning(false);
-            routeTo(target.game, target.code);
-        } else {
-            // Keep the scanner open so the player can re-aim; surface a note underneath.
-            setScanError(true);
-        }
-    };
-
-    const openScanner = () => {
-        setScanError(false);
-        setScanning(true);
-    };
+    const {
+        code,
+        scanning,
+        scanError,
+        valid,
+        handleCode,
+        handleDetect,
+        submit,
+        submitIfValid,
+        openScanner,
+        closeScanner,
+    } = useJoinFlow(gameId);
 
     return (
         <div className={ClassnameHelper.join('flex flex-col gap-5', className)}>
@@ -123,9 +96,7 @@ export function JoinPanel({
                 </p>
             )}
 
-            {scanning && (
-                <QrScannerOverlay onDetect={handleDetect} onClose={() => setScanning(false)} />
-            )}
+            {scanning && <QrScannerOverlay onDetect={handleDetect} onClose={closeScanner} />}
         </div>
     );
 }

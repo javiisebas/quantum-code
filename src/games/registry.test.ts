@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { gameLoaderIds, getGameLoader } from './game-loaders';
 import { gameManifests, getManifest } from './registry';
 import { getServerGame } from './registry.server';
 
@@ -41,8 +42,30 @@ describe('game registry', () => {
         expect(mod!.validatePayload('nope')).toBe(false);
     });
 
+    it.each(gameManifests)('game "$id" has a client loader', (manifest) => {
+        // Guards the other half of "adding a game is safe": a manifest with a
+        // server module but no entry in `game-loaders.tsx` passes every other test
+        // yet 500s at `/host/<id>`. Resolve it the same way the app routes do.
+        const loader = getGameLoader(manifest.id);
+        expect(loader).not.toBeNull();
+        expect(loader).toHaveProperty('Host');
+        expect(loader).toHaveProperty('Player');
+        // `next/dynamic` yields a forwardRef component object, never undefined.
+        expect(loader!.Host).toBeTruthy();
+        expect(loader!.Player).toBeTruthy();
+    });
+
+    it('client loaders and manifests are in exact one-to-one correspondence', () => {
+        // Bidirectional: catches both a missing loader (game 500s) and an orphan
+        // loader (typo'd key, or one left behind after a game was removed).
+        const manifestIds = new Set(gameManifests.map((m) => m.id));
+        const loaderIds = new Set(gameLoaderIds);
+        expect(loaderIds).toEqual(manifestIds);
+    });
+
     it('returns null for unknown games', () => {
         expect(getManifest('does-not-exist')).toBeNull();
         expect(getServerGame('does-not-exist')).toBeNull();
+        expect(getGameLoader('does-not-exist')).toBeNull();
     });
 });

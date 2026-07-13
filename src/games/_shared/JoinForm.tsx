@@ -1,13 +1,12 @@
 'use client';
 
-import { parseJoinTarget } from '@/platform/room/join-target';
 import { Button } from '@/platform/ui/Button';
 import { CodeInput } from '@/platform/ui/CodeInput';
 import { QrScannerOverlay } from '@/platform/ui/QrScannerOverlay';
 import { Surface } from '@/platform/ui/Surface';
-import { useRouter } from 'next/navigation';
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import { BiQr } from 'react-icons/bi';
+import { useJoinFlow } from './use-join-flow';
 
 /**
  * Shared "enter the code" panel for a single game's player view — the empty state
@@ -17,44 +16,18 @@ import { BiQr } from 'react-icons/bi';
  * `/join` page layers a game picker on top of the same visual language).
  */
 export const JoinForm: FC<{ game: string; gameName: string }> = ({ game, gameName }) => {
-    const router = useRouter();
-    const [code, setCode] = useState('');
-    const [scanning, setScanning] = useState(false);
-    const [scanError, setScanError] = useState(false);
-
-    const routeTo = (targetGame: string, joinCode: number | string) =>
-        router.push(`/join/${targetGame}?code=${joinCode}`);
-
-    /** From the "Unirse" button — routes this game with the typed code. */
-    const submit = () => {
-        if (code.length === 6) routeTo(game, code);
-    };
-
-    /** From `CodeInput.onComplete` — the freshly-completed digits arrive as an arg. */
-    const submitIfValid = (digits: string) => {
-        if (digits.length === 6) routeTo(game, digits);
-    };
-
-    const handleCode = (digits: string) => {
-        setScanError(false);
-        setCode(digits);
-    };
-
-    const handleDetect = (text: string) => {
-        const target = parseJoinTarget(text, game);
-        if (target) {
-            setScanning(false);
-            routeTo(target.game, target.code);
-        } else {
-            // Keep the scanner open so the player can re-aim; surface a note underneath.
-            setScanError(true);
-        }
-    };
-
-    const openScanner = () => {
-        setScanError(false);
-        setScanning(true);
-    };
+    const {
+        code,
+        scanning,
+        scanError,
+        valid,
+        handleCode,
+        handleDetect,
+        submit,
+        submitIfValid,
+        openScanner,
+        closeScanner,
+    } = useJoinFlow(game);
 
     return (
         <main className="flex min-h-screen items-center justify-center px-6 py-12">
@@ -70,12 +43,7 @@ export const JoinForm: FC<{ game: string; gameName: string }> = ({ game, gameNam
                         onComplete={submitIfValid}
                         autoFocus
                     />
-                    <Button
-                        variant="primary"
-                        fullWidth
-                        isDisabled={code.length !== 6}
-                        onPress={submit}
-                    >
+                    <Button variant="primary" fullWidth isDisabled={!valid} onPress={submit}>
                         Unirse
                     </Button>
                     <Button
@@ -93,9 +61,7 @@ export const JoinForm: FC<{ game: string; gameName: string }> = ({ game, gameNam
                     )}
                 </div>
             </Surface>
-            {scanning && (
-                <QrScannerOverlay onDetect={handleDetect} onClose={() => setScanning(false)} />
-            )}
+            {scanning && <QrScannerOverlay onDetect={handleDetect} onClose={closeScanner} />}
         </main>
     );
 };

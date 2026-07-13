@@ -26,6 +26,18 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'acce
 const FOCUS =
     'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500';
 
+/**
+ * One coherent disabled look for every variant. HeroUI's default is only
+ * `opacity-disabled` (~0.5), which on a light accent (yellow/lime/amber) reads as a
+ * washed-out solid rather than clearly "off" — a contrast/a11y problem on the dark bg
+ * (e.g. the live lobby's "Empezar" CTA). Instead we drop the accent entirely for a
+ * muted neutral surface and restore full opacity. Applied last in the class list; the
+ * `data-[disabled=true]:` variants also outrank HeroUI's internal `opacity-disabled`
+ * by specificity, so they win regardless of stylesheet order.
+ */
+const DISABLED =
+    'data-[disabled=true]:cursor-not-allowed data-[disabled=true]:bg-white/5 data-[disabled=true]:text-white/40 data-[disabled=true]:shadow-none data-[disabled=true]:opacity-100';
+
 const VARIANT: Record<ButtonVariant, string> = {
     primary: `bg-purple-600 font-semibold text-white shadow-lg shadow-purple-950/40 hover:bg-purple-500 ${FOCUS}`,
     accent: `font-semibold text-white shadow-lg shadow-black/20 ${FOCUS}`,
@@ -71,17 +83,11 @@ export const Button: FC<ButtonProps> = ({
             variant === 'accent' && accentClass,
             fullWidth && 'w-full',
             className,
+            // Disabled treatment wins over the variant fill (and HeroUI's own default).
+            DISABLED,
         )}
         {...props}
     />
-);
-
-/**
- * Back-compat alias — `PrimaryButton` was the only exported button before the
- * variant system. Existing call sites keep working; new code should use `<Button>`.
- */
-export const PrimaryButton: FC<Omit<ButtonProps, 'variant'>> = (props) => (
-    <Button variant="primary" {...props} />
 );
 
 /**

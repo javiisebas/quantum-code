@@ -209,7 +209,7 @@ function VotePhone({ code, seat, state }: { code: number; seat: number; state: C
                                 className={ClassnameHelper.join(
                                     'w-full rounded-2xl px-4 py-4 text-left text-lg font-semibold ring-1 ring-inset transition',
                                     isChosen
-                                        ? 'bg-yellow-500/20 text-yellow-100 ring-yellow-400/60'
+                                        ? ClassnameHelper.join(acc.chip, 'ring-yellow-400/60')
                                         : 'bg-white/5 text-white ring-white/10',
                                     isOwn && 'opacity-40',
                                     !locked && !isOwn && 'active:scale-[0.99] hover:bg-white/10',
