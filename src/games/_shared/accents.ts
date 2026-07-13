@@ -46,6 +46,34 @@ export const ACCENTS: Record<string, AccentClasses> = {
         glow: 'from-amber-500/20',
         chip: 'bg-amber-400/15 text-amber-200',
     },
+    lime: {
+        solidButton: 'bg-lime-600 hover:bg-lime-500',
+        text: 'text-lime-300',
+        ringHover: 'hover:ring-lime-400/60',
+        glow: 'from-lime-500/20',
+        chip: 'bg-lime-400/15 text-lime-200',
+    },
+    yellow: {
+        solidButton: 'bg-yellow-500 hover:bg-yellow-400',
+        text: 'text-yellow-300',
+        ringHover: 'hover:ring-yellow-400/60',
+        glow: 'from-yellow-500/20',
+        chip: 'bg-yellow-400/15 text-yellow-200',
+    },
+    cyan: {
+        solidButton: 'bg-cyan-600 hover:bg-cyan-500',
+        text: 'text-cyan-300',
+        ringHover: 'hover:ring-cyan-400/60',
+        glow: 'from-cyan-500/20',
+        chip: 'bg-cyan-400/15 text-cyan-200',
+    },
+    orange: {
+        solidButton: 'bg-orange-600 hover:bg-orange-500',
+        text: 'text-orange-300',
+        ringHover: 'hover:ring-orange-400/60',
+        glow: 'from-orange-500/20',
+        chip: 'bg-orange-400/15 text-orange-200',
+    },
 };
 
 /** Resolve an accent's classes by token, falling back to purple. */

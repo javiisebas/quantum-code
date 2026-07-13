@@ -1,0 +1,370 @@
+/** A Camaleón grid: a theme plus exactly 16 related words shown on the host's 4×4 board. */
+export interface ChameleonTopic {
+    /** Short theme label shown above the grid, e.g. "Películas". */
+    theme: string;
+    /** Exactly 16 words for the 4×4 grid — all clearly belonging to the theme. */
+    words: string[];
+}
+
+export const CHAMELEON_TOPICS: ChameleonTopic[] = [
+    {
+        theme: 'Animales',
+        words: [
+            'Perro', 'Gato', 'León', 'Tigre',
+            'Elefante', 'Jirafa', 'Mono', 'Caballo',
+            'Vaca', 'Cerdo', 'Oveja', 'Conejo',
+            'Zorro', 'Lobo', 'Oso', 'Ardilla',
+        ],
+    },
+    {
+        theme: 'Comida rápida',
+        words: [
+            'Hamburguesa', 'Pizza', 'Perrito', 'Kebab',
+            'Patatas', 'Nuggets', 'Burrito', 'Taco',
+            'Sándwich', 'Bocadillo', 'Empanada', 'Croqueta',
+            'Pollo Frito', 'Aros Cebolla', 'Wrap', 'Nachos',
+        ],
+    },
+    {
+        theme: 'Frutas',
+        words: [
+            'Manzana', 'Plátano', 'Naranja', 'Pera',
+            'Uva', 'Fresa', 'Sandía', 'Melón',
+            'Kiwi', 'Piña', 'Mango', 'Cereza',
+            'Melocotón', 'Ciruela', 'Limón', 'Mandarina',
+        ],
+    },
+    {
+        theme: 'Deportes',
+        words: [
+            'Fútbol', 'Baloncesto', 'Tenis', 'Natación',
+            'Ciclismo', 'Boxeo', 'Golf', 'Rugby',
+            'Voleibol', 'Balonmano', 'Atletismo', 'Esquí',
+            'Surf', 'Pádel', 'Béisbol', 'Hockey',
+        ],
+    },
+    {
+        theme: 'Películas',
+        words: [
+            'Titanic', 'Avatar', 'Matrix', 'Gladiator',
+            'Frozen', 'Shrek', 'Coco', 'Up',
+            'Joker', 'Rocky', 'Alien', 'Tiburón',
+            'Grease', 'Cars', 'Amélie', 'Terminator',
+        ],
+    },
+    {
+        theme: 'Series',
+        words: [
+            'Friends', 'Lost', 'Vikingos', 'Élite',
+            'Dark', 'Narcos', 'Sherlock', 'Fargo',
+            'Chernobyl', 'Euphoria', 'Westworld', 'Fleabag',
+            'Peaky Blinders', 'Stranger Things', 'Breaking Bad', 'The Office',
+        ],
+    },
+    {
+        theme: 'Cantantes',
+        words: [
+            'Rosalía', 'Shakira', 'Beyoncé', 'Rihanna',
+            'Adele', 'Madonna', 'Bad Bunny', 'Quevedo',
+            'Aitana', 'Alejandro Sanz', 'Bisbal', 'Bustamante',
+            'Enrique Iglesias', 'Manuel Carrasco', 'Pablo Alborán', 'C Tangana',
+        ],
+    },
+    {
+        theme: 'Instrumentos',
+        words: [
+            'Guitarra', 'Piano', 'Violín', 'Batería',
+            'Flauta', 'Trompeta', 'Saxofón', 'Bajo',
+            'Arpa', 'Acordeón', 'Tambor', 'Clarinete',
+            'Ukelele', 'Violonchelo', 'Trombón', 'Pandereta',
+        ],
+    },
+    {
+        theme: 'Partes del cuerpo',
+        words: [
+            'Cabeza', 'Brazo', 'Pierna', 'Mano',
+            'Pie', 'Nariz', 'Boca', 'Oreja',
+            'Ojo', 'Rodilla', 'Codo', 'Hombro',
+            'Cuello', 'Espalda', 'Dedo', 'Tobillo',
+        ],
+    },
+    {
+        theme: 'En la cocina',
+        words: [
+            'Sartén', 'Cuchillo', 'Tenedor', 'Cuchara',
+            'Plato', 'Vaso', 'Olla', 'Horno',
+            'Nevera', 'Microondas', 'Batidora', 'Cazo',
+            'Tabla', 'Colador', 'Delantal', 'Cucharón',
+        ],
+    },
+    {
+        theme: 'En la playa',
+        words: [
+            'Arena', 'Sombrilla', 'Toalla', 'Bañador',
+            'Ola', 'Chiringuito', 'Chanclas', 'Cubo',
+            'Pala', 'Flotador', 'Gaviota', 'Concha',
+            'Bikini', 'Hamaca', 'Crema Solar', 'Gafas Sol',
+        ],
+    },
+    {
+        theme: 'Profesiones',
+        words: [
+            'Médico', 'Profesor', 'Bombero', 'Policía',
+            'Cocinero', 'Abogado', 'Enfermero', 'Fontanero',
+            'Cartero', 'Peluquero', 'Camarero', 'Electricista',
+            'Piloto', 'Panadero', 'Jardinero', 'Mecánico',
+        ],
+    },
+    {
+        theme: 'Países',
+        words: [
+            'España', 'Francia', 'Italia', 'Alemania',
+            'Portugal', 'Japón', 'China', 'Brasil',
+            'México', 'Egipto', 'Canadá', 'India',
+            'Rusia', 'Argentina', 'Marruecos', 'Australia',
+        ],
+    },
+    {
+        theme: 'Ciudades de España',
+        words: [
+            'Madrid', 'Barcelona', 'Valencia', 'Sevilla',
+            'Bilbao', 'Málaga', 'Granada', 'Zaragoza',
+            'Toledo', 'Córdoba', 'Salamanca', 'Santander',
+            'Gijón', 'Murcia', 'Alicante', 'Vigo',
+        ],
+    },
+    {
+        theme: 'Bebidas',
+        words: [
+            'Agua', 'Cerveza', 'Vino', 'Café',
+            'Zumo', 'Refresco', 'Batido', 'Té',
+            'Cola', 'Limonada', 'Horchata', 'Sangría',
+            'Mojito', 'Sidra', 'Champán', 'Tinto Verano',
+        ],
+    },
+    {
+        theme: 'Colores',
+        words: [
+            'Rojo', 'Azul', 'Verde', 'Amarillo',
+            'Naranja', 'Morado', 'Rosa', 'Negro',
+            'Blanco', 'Gris', 'Marrón', 'Violeta',
+            'Turquesa', 'Beige', 'Dorado', 'Plateado',
+        ],
+    },
+    {
+        theme: 'Superhéroes',
+        words: [
+            'Superman', 'Batman', 'Spiderman', 'Hulk',
+            'Thor', 'Ironman', 'Flash', 'Aquaman',
+            'Wolverine', 'Robin', 'Capitán América', 'Viuda Negra',
+            'Antman', 'Deadpool', 'Linterna Verde', 'Pantera Negra',
+        ],
+    },
+    {
+        theme: 'Videojuegos',
+        words: [
+            'Mario', 'Zelda', 'Tetris', 'Minecraft',
+            'Fortnite', 'Pokémon', 'Sonic', 'Pac-Man',
+            'Fifa', 'Sims', 'Roblox', 'Halo',
+            'Doom', 'Overwatch', 'Kirby', 'Candy Crush',
+        ],
+    },
+    {
+        theme: 'Redes sociales',
+        words: [
+            'Instagram', 'TikTok', 'Twitter', 'Facebook',
+            'YouTube', 'WhatsApp', 'Snapchat', 'Twitch',
+            'LinkedIn', 'Pinterest', 'Reddit', 'Telegram',
+            'Discord', 'Tumblr', 'Threads', 'BeReal',
+        ],
+    },
+    {
+        theme: 'Marcas de coche',
+        words: [
+            'Seat', 'Renault', 'Ford', 'Toyota',
+            'Audi', 'BMW', 'Mercedes', 'Volkswagen',
+            'Peugeot', 'Citroën', 'Fiat', 'Nissan',
+            'Honda', 'Ferrari', 'Tesla', 'Volvo',
+        ],
+    },
+    {
+        theme: 'En el baño',
+        words: [
+            'Toalla', 'Jabón', 'Champú', 'Espejo',
+            'Ducha', 'Bañera', 'Váter', 'Cepillo',
+            'Pasta Dientes', 'Peine', 'Secador', 'Papel',
+            'Gel', 'Esponja', 'Grifo', 'Alfombrilla',
+        ],
+    },
+    {
+        theme: 'Herramientas',
+        words: [
+            'Martillo', 'Destornillador', 'Llave', 'Sierra',
+            'Taladro', 'Alicates', 'Clavo', 'Tornillo',
+            'Nivel', 'Cinta Métrica', 'Lima', 'Tuerca',
+            'Broca', 'Cincel', 'Lija', 'Metro',
+        ],
+    },
+    {
+        theme: 'Ropa',
+        words: [
+            'Camiseta', 'Pantalón', 'Vestido', 'Falda',
+            'Camisa', 'Jersey', 'Abrigo', 'Chaqueta',
+            'Calcetines', 'Zapatos', 'Bufanda', 'Gorro',
+            'Vaqueros', 'Sudadera', 'Cinturón', 'Guantes',
+        ],
+    },
+    {
+        theme: 'En el gimnasio',
+        words: [
+            'Mancuerna', 'Cinta', 'Pesas', 'Bicicleta',
+            'Colchoneta', 'Banco', 'Barra', 'Cuerda',
+            'Toalla', 'Botella', 'Máquina', 'Sentadilla',
+            'Flexión', 'Zumba', 'Espejo', 'Vestuario',
+        ],
+    },
+    {
+        theme: 'Postres',
+        words: [
+            'Tarta', 'Flan', 'Helado', 'Natillas',
+            'Brownie', 'Gofre', 'Churros', 'Tiramisú',
+            'Mousse', 'Cheesecake', 'Donut', 'Galleta',
+            'Cupcake', 'Macedonia', 'Bizcocho', 'Crepe',
+        ],
+    },
+    {
+        theme: 'Verduras',
+        words: [
+            'Tomate', 'Lechuga', 'Zanahoria', 'Cebolla',
+            'Pimiento', 'Calabacín', 'Berenjena', 'Brócoli',
+            'Espinaca', 'Patata', 'Pepino', 'Ajo',
+            'Puerro', 'Coliflor', 'Acelga', 'Judía Verde',
+        ],
+    },
+    {
+        theme: 'Transporte',
+        words: [
+            'Coche', 'Bicicleta', 'Moto', 'Autobús',
+            'Tren', 'Avión', 'Barco', 'Metro',
+            'Tranvía', 'Taxi', 'Patinete', 'Camión',
+            'Helicóptero', 'Furgoneta', 'Globo', 'Ferry',
+        ],
+    },
+    {
+        theme: 'En una boda',
+        words: [
+            'Novia', 'Novio', 'Anillo', 'Tarta',
+            'Ramo', 'Iglesia', 'Vestido', 'Cura',
+            'Invitados', 'Padrino', 'Brindis', 'Banquete',
+            'Baile', 'Velo', 'Alianzas', 'Fotógrafo',
+        ],
+    },
+    {
+        theme: 'Emociones',
+        words: [
+            'Alegría', 'Tristeza', 'Miedo', 'Rabia',
+            'Sorpresa', 'Asco', 'Amor', 'Envidia',
+            'Orgullo', 'Vergüenza', 'Nervios', 'Calma',
+            'Ilusión', 'Aburrimiento', 'Culpa', 'Cariño',
+        ],
+    },
+    {
+        theme: 'En el cole',
+        words: [
+            'Pizarra', 'Tiza', 'Libreta', 'Lápiz',
+            'Goma', 'Mochila', 'Pupitre', 'Recreo',
+            'Profesor', 'Examen', 'Regla', 'Bolígrafo',
+            'Sacapuntas', 'Estuche', 'Deberes', 'Timbre',
+        ],
+    },
+    {
+        theme: 'En la oficina',
+        words: [
+            'Ordenador', 'Silla', 'Mesa', 'Impresora',
+            'Grapadora', 'Bolígrafo', 'Teléfono', 'Cuaderno',
+            'Archivador', 'Post-it', 'Café', 'Fotocopiadora',
+            'Ratón', 'Teclado', 'Carpeta', 'Clip',
+        ],
+    },
+    {
+        theme: 'Fiestas y festivales',
+        words: [
+            'Carnaval', 'Halloween', 'Navidad', 'Nochevieja',
+            'Reyes', 'Tomatina', 'Sanfermines', 'Feria',
+            'Fallas', 'San Juan', 'Semana Santa', 'Pilar',
+            'Cumpleaños', 'Coachella', 'Primavera Sound', 'Año Nuevo',
+        ],
+    },
+    {
+        theme: 'Juegos de mesa',
+        words: [
+            'Parchís', 'Monopoly', 'Ajedrez', 'Damas',
+            'Oca', 'Trivial', 'Cluedo', 'Risk',
+            'Jenga', 'Dominó', 'Uno', 'Catan',
+            'Pictionary', 'Twister', 'Tabú', 'Dobble',
+        ],
+    },
+    {
+        theme: 'Animales marinos',
+        words: [
+            'Tiburón', 'Delfín', 'Ballena', 'Pulpo',
+            'Cangrejo', 'Medusa', 'Estrella', 'Foca',
+            'Pingüino', 'Tortuga', 'Gamba', 'Calamar',
+            'Caballito', 'Morena', 'Orca', 'Erizo',
+        ],
+    },
+    {
+        theme: 'En el súper',
+        words: [
+            'Carro', 'Cesta', 'Caja', 'Cajero',
+            'Pasillo', 'Estante', 'Leche', 'Pan',
+            'Huevos', 'Oferta', 'Ticket', 'Bolsa',
+            'Balanza', 'Nevera', 'Frutería', 'Cola',
+        ],
+    },
+    {
+        theme: 'Nostalgia noventera',
+        words: [
+            'Tamagotchi', 'Nokia', 'MSN', 'Tuenti',
+            'Walkman', 'Discman', 'Game Boy', 'Diskette',
+            'VHS', 'Casete', 'Polaroid', 'Fotolog',
+            'Blockbuster', 'Beeper', 'Módem', 'CD-ROM',
+        ],
+    },
+    {
+        theme: 'El espacio',
+        words: [
+            'Mercurio', 'Venus', 'Tierra', 'Marte',
+            'Júpiter', 'Saturno', 'Urano', 'Neptuno',
+            'Sol', 'Luna', 'Cometa', 'Estrella',
+            'Galaxia', 'Asteroide', 'Cohete', 'Astronauta',
+        ],
+    },
+    {
+        theme: 'Bailes',
+        words: [
+            'Salsa', 'Bachata', 'Tango', 'Flamenco',
+            'Vals', 'Reguetón', 'Twerk', 'Ballet',
+            'Merengue', 'Rumba', 'Sevillanas', 'Hip Hop',
+            'Zumba', 'Pasodoble', 'Samba', 'Twist',
+        ],
+    },
+    {
+        theme: 'Cosas que dan miedo',
+        words: [
+            'Fantasma', 'Araña', 'Oscuridad', 'Payaso',
+            'Bruja', 'Vampiro', 'Zombi', 'Esqueleto',
+            'Serpiente', 'Tormenta', 'Momia', 'Murciélago',
+            'Cementerio', 'Calavera', 'Monstruo', 'Telaraña',
+        ],
+    },
+    {
+        theme: 'Flores y plantas',
+        words: [
+            'Rosa', 'Tulipán', 'Girasol', 'Margarita',
+            'Clavel', 'Orquídea', 'Cactus', 'Amapola',
+            'Lavanda', 'Jazmín', 'Hortensia', 'Geranio',
+            'Helecho', 'Bonsái', 'Lirio', 'Petunia',
+        ],
+    },
+];

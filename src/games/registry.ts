@@ -1,3 +1,5 @@
+import { camaleonManifest } from './camaleon/manifest';
+import { chispasManifest } from './chispas/manifest';
 import { codenamesManifest } from './codenames/manifest';
 import { spyfallManifest } from './spyfall/manifest';
 import { undercoverManifest } from './undercover/manifest';
@@ -15,6 +17,8 @@ import type { GameManifest } from './types';
  */
 export const gameManifests: GameManifest[] = [
     codenamesManifest,
+    chispasManifest,
+    camaleonManifest,
     spyfallManifest,
     undercoverManifest,
     werewolfManifest,
