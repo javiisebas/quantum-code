@@ -50,6 +50,8 @@ export interface AnswerView {
  */
 export interface ChispasState {
     phase: ChispasPhase;
+    /** Per-game generation (bumped by "Jugar otra vez"), namespaces the input buckets. */
+    gen: number;
     round: number;
     totalRounds: number;
     prompt: string;
@@ -76,10 +78,15 @@ export interface Score {
 // buckets keyed by round so answers and votes never collide across phases/rounds.
 // ---------------------------------------------------------------------------
 
-/** Input bucket where phones write `{ text }` for a round's answer. */
-export const answerRound = (round: number): number => 100 + round;
+/**
+ * Input buckets, namespaced by a per-game generation so "Jugar otra vez" (which reuses the
+ * SAME room and therefore repeats round numbers 1..N) never reads the previous game's answers
+ * or votes. `gen` increments each restart; kept < 9 so `gen*1000 + …` stays under the input
+ * route's round ceiling.
+ */
+export const answerRound = (gen: number, round: number): number => (gen % 9) * 1000 + 100 + round;
 /** Input bucket where phones write `{ choice }` (an answer id) for a round's vote. */
-export const voteRound = (round: number): number => 200 + round;
+export const voteRound = (gen: number, round: number): number => (gen % 9) * 1000 + 200 + round;
 
 const shuffle = <T>(items: T[]): T[] => {
     const copy = items.slice();

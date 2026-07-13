@@ -78,12 +78,16 @@ const initGame = (): HostGame => ({
 
 function ChispasGame({ code, players }: { code: number; players: LivePlayer[] }) {
     const [game, setGame] = useState<HostGame>(initGame);
+    // Per-game generation: bumped by "Jugar otra vez" so a replay in the SAME room never
+    // reads the previous game's answers/votes (round numbers repeat across replays).
+    const [gen, setGen] = useState(0);
 
     // Publish only a public projection — during 'vote' answers are anonymized. Memoized so
     // it changes (and re-publishes) only on real transitions, not on every input poll.
     const publicState = useMemo<ChispasState>(
         () => ({
             phase: game.phase,
+            gen,
             round: game.round,
             totalRounds: TOTAL_ROUNDS,
             prompt: game.prompts[game.round - 1] ?? '',
@@ -99,7 +103,7 @@ function ChispasGame({ code, players }: { code: number; players: LivePlayer[] })
                     ? scoreboard(players, game.scores)
                     : undefined,
         }),
-        [game, players],
+        [game, players, gen],
     );
     usePublishedState({ game: CHISPAS_ID, code, state: publicState });
 
@@ -107,13 +111,13 @@ function ChispasGame({ code, players }: { code: number; players: LivePlayer[] })
     const answerInputs = useLiveInputs<{ text?: string }>({
         game: CHISPAS_ID,
         code,
-        round: answerRound(game.round),
+        round: answerRound(gen, game.round),
         active: game.phase === 'answer',
     });
     const voteInputs = useLiveInputs<{ choice?: number }>({
         game: CHISPAS_ID,
         code,
-        round: voteRound(game.round),
+        round: voteRound(gen, game.round),
         active: game.phase === 'vote',
     });
 
@@ -143,7 +147,10 @@ function ChispasGame({ code, players }: { code: number; players: LivePlayer[] })
                 : { ...g, phase: 'final' },
         );
 
-    const restart = () => setGame(initGame());
+    const restart = () => {
+        setGen((g) => g + 1);
+        setGame(initGame());
+    };
 
     return (
         <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-5 py-8">

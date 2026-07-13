@@ -18,8 +18,10 @@ import { CHISPAS_ID, chispasManifest } from './manifest';
 const acc = accentOf(chispasManifest.accent);
 const MAX_ANSWER = 100;
 
-const ansKey = (code: number, round: number) => `quantum:chispas:${code}:ans:${round}`;
-const voteKey = (code: number, round: number) => `quantum:chispas:${code}:vote:${round}`;
+const ansKey = (code: number, gen: number, round: number) =>
+    `quantum:chispas:${code}:${gen}:ans:${round}`;
+const voteKey = (code: number, gen: number, round: number) =>
+    `quantum:chispas:${code}:${gen}:vote:${round}`;
 
 /** Chispas phone: join + name, then render the live phase for this player. */
 export function ChispasPlayer({ code }: { code: number | null }) {
@@ -91,7 +93,9 @@ function AnswerPhone({ code, seat, state }: { code: number; seat: number; state:
 
     // Reset per round; restore a previously-sent answer if the phone reloaded.
     useEffect(() => {
-        const prior = LocalStorageHelper.getLocalStorageItem<string>(ansKey(code, state.round));
+        const prior = LocalStorageHelper.getLocalStorageItem<string>(
+            ansKey(code, state.gen, state.round),
+        );
         if (prior) {
             setDraft(prior);
             setSent(true);
@@ -99,18 +103,18 @@ function AnswerPhone({ code, seat, state }: { code: number; seat: number; state:
             setDraft('');
             setSent(false);
         }
-    }, [code, state.round]);
+    }, [code, state.gen, state.round]);
 
     const trimmed = draft.trim().slice(0, MAX_ANSWER);
 
     const submit = async (event: FormEvent) => {
         event.preventDefault();
         if (trimmed.length === 0 || sent) return;
-        LocalStorageHelper.setLocalStorageItem(ansKey(code, state.round), trimmed);
+        LocalStorageHelper.setLocalStorageItem(ansKey(code, state.gen, state.round), trimmed);
         setSent(true);
-        await submitInput(CHISPAS_ID, code, answerRound(state.round), seat, { text: trimmed }).catch(
-            () => {},
-        );
+        await submitInput(CHISPAS_ID, code, answerRound(state.gen, state.round), seat, {
+            text: trimmed,
+        }).catch(() => {});
     };
 
     if (sent) {
@@ -169,17 +173,21 @@ function VotePhone({ code, seat, state }: { code: number; seat: number; state: C
     const [ownText, setOwnText] = useState<string | null>(null);
 
     useEffect(() => {
-        setVotedId(LocalStorageHelper.getLocalStorageItem<number>(voteKey(code, state.round)));
-        setOwnText(LocalStorageHelper.getLocalStorageItem<string>(ansKey(code, state.round)));
-    }, [code, state.round]);
+        setVotedId(
+            LocalStorageHelper.getLocalStorageItem<number>(voteKey(code, state.gen, state.round)),
+        );
+        setOwnText(
+            LocalStorageHelper.getLocalStorageItem<string>(ansKey(code, state.gen, state.round)),
+        );
+    }, [code, state.gen, state.round]);
 
     const castVote = async (id: number) => {
         if (votedId !== null) return;
-        LocalStorageHelper.setLocalStorageItem(voteKey(code, state.round), id);
+        LocalStorageHelper.setLocalStorageItem(voteKey(code, state.gen, state.round), id);
         setVotedId(id);
-        await submitInput(CHISPAS_ID, code, voteRound(state.round), seat, { choice: id }).catch(
-            () => {},
-        );
+        await submitInput(CHISPAS_ID, code, voteRound(state.gen, state.round), seat, {
+            choice: id,
+        }).catch(() => {});
     };
 
     return (
