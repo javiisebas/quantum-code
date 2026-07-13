@@ -14,6 +14,9 @@ export const bombaManifest: GameManifest = {
     players: '3–12',
     duration: '10 min',
     secrecy: 'per-player',
+    // The phones already show the category, the holder and «¡Pasar!»; the shared screen is
+    // redundant information (docs/host-also-plays.md, group 1).
+    needsSharedScreen: false,
     howTo: [
         'La pantalla principal muestra una categoría y quién tiene la bomba.',
         'Cuando te toque, di en alto algo de la categoría y pulsa «¡Pasar!» en tu móvil.',

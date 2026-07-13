@@ -14,6 +14,9 @@ export const chispasManifest: GameManifest = {
     players: '3–10',
     duration: '15 min',
     secrecy: 'per-player',
+    // Prompts, answers and votes all happen on the phones; the shared screen only mirrors
+    // them (docs/host-also-plays.md, group 1).
+    needsSharedScreen: false,
     howTo: [
         'Cada ronda, la pantalla principal muestra un reto para todos.',
         'Escribe en tu móvil la respuesta más graciosa que se te ocurra.',

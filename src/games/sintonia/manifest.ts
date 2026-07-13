@@ -14,6 +14,10 @@ export const sintoniaManifest: GameManifest = {
     players: '3–10',
     duration: '15 min',
     secrecy: 'per-player',
+    // The dial IS the shared screen: the group moves it together while the psychic watches.
+    // Until that instrument is redesigned onto the phones, this game honestly needs a
+    // screen apart (docs/host-also-plays.md, group 2).
+    needsSharedScreen: true,
     howTo: [
         'Cada ronda, un jugador es el psíquico y ve en su móvil la zona objetivo.',
         'Da UNA sola pista en alto para situarla entre los dos extremos del espectro.',

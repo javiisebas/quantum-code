@@ -9,7 +9,7 @@ import { Surface } from '@/platform/ui/Surface';
 import { TopBar } from '@/platform/ui/TopBar';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import Link from 'next/link';
-import { BiQr, BiRightArrowAlt } from 'react-icons/bi';
+import { BiMobileAlt, BiQr, BiRightArrowAlt, BiTv } from 'react-icons/bi';
 
 /**
  * The arcade home. Two doors and a catalogue, in that order.
@@ -102,6 +102,23 @@ const GameCard = ({ game }: { game: GameManifest }) => {
                         {game.players} jugadores
                     </Chip>
                     <Chip>{game.duration}</Chip>
+                    {/* What screens this game needs, stated BEFORE you choose: a group of four
+                        phones and no TV must not discover mid-lobby that the game can't be
+                        played. «Necesita pantalla» is the warning, so it is the tinted one. */}
+                    {game.needsSharedScreen ? (
+                        <Chip
+                            tone="bare"
+                            className="bg-amber-500/10 text-amber-300 ring-1 ring-inset ring-amber-500/30"
+                        >
+                            <BiTv size={13} aria-hidden="true" />
+                            Necesita pantalla
+                        </Chip>
+                    ) : (
+                        <Chip>
+                            <BiMobileAlt size={13} aria-hidden="true" />
+                            Solo móviles
+                        </Chip>
+                    )}
                 </div>
             </Surface>
         </Link>

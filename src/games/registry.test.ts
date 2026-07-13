@@ -27,6 +27,9 @@ describe('game registry', () => {
         expect(manifest.minPlayers).toBeGreaterThanOrEqual(1);
         expect(manifest.maxPlayers).toBeGreaterThanOrEqual(manifest.minPlayers);
         expect(['shared', 'per-player']).toContain(manifest.secrecy);
+        // The catalogue promises screens before you choose («Solo móviles» / «Necesita
+        // pantalla»); a manifest without the answer would render a silent, lying card.
+        expect(typeof manifest.needsSharedScreen).toBe('boolean');
         expect(getManifest(manifest.id)).toBe(manifest);
     });
 
