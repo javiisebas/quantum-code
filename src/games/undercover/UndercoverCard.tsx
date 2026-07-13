@@ -30,8 +30,7 @@ export const UndercoverCard: FC<UndercoverCardProps> = ({ view, actions }) => {
                 <Eyebrow>Tu palabra</Eyebrow>
                 <h1 className="mt-1 text-3xl font-extrabold text-emerald-300">{view.word}</h1>
                 <p className="mt-4 text-sm text-gray-300">
-                    Descríbela con una sola palabra en cada ronda y desenmascara al impostor sin
-                    delatarte.
+                    Descríbela en alto con una sola palabra cuando llegue tu turno.
                 </p>
             </Surface>
         </SecretCardScreen>

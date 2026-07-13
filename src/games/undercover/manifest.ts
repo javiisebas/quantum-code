@@ -6,7 +6,7 @@ export const undercoverManifest: GameManifest = {
     id: UNDERCOVER_ID,
     name: 'Impostor',
     tagline:
-        'Casi todos comparten una palabra secreta… los impostores reciben una parecida. Descúbrelos.',
+        'Ni siquiera tú sabes si eres el impostor. Todos recibís una palabra: la tuya puede ser la buena… o la parecida.',
     emoji: '🎭',
     accent: 'emerald',
     minPlayers: 3,
