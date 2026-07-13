@@ -1,5 +1,7 @@
 'use client';
 
+import { Eyebrow } from '@/platform/ui/Eyebrow';
+import { Surface } from '@/platform/ui/Surface';
 import { ModalBody, ModalHeader } from '@heroui/react';
 import { FC } from 'react';
 
@@ -9,11 +11,13 @@ interface LegendItem {
     description: string;
 }
 
+// Dots mirror the revealed-card palette in `get-card-color.ts` so the legend and the
+// board always agree.
 const LEGEND: LegendItem[] = [
-    { dot: 'bg-sky-400', label: 'Equipo azul', description: '6 cartas por descubrir.' },
-    { dot: 'bg-rose-400', label: 'Equipo rojo', description: '7 cartas por descubrir.' },
-    { dot: 'bg-orange-200', label: 'Neutral', description: 'Sin efecto, pierdes el turno.' },
-    { dot: 'bg-black', label: 'Asesino', description: 'Si lo revelas, pierdes al instante.' },
+    { dot: 'bg-sky-500', label: 'Equipo azul', description: '6 cartas por descubrir.' },
+    { dot: 'bg-rose-500', label: 'Equipo rojo', description: '7 cartas por descubrir.' },
+    { dot: 'bg-stone-300', label: 'Neutral', description: 'Sin efecto, pierdes el turno.' },
+    { dot: 'bg-gray-950', label: 'Asesino', description: 'Si lo revelas, pierdes al instante.' },
 ];
 
 const STEPS: string[] = [
@@ -33,7 +37,7 @@ export const ModalHowToPlayContent: FC = () => {
                 <ol className="flex flex-col gap-3">
                     {STEPS.map((step, index) => (
                         <li key={index} className="flex gap-3 text-sm text-gray-200">
-                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple-700 text-xs font-semibold text-white">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple-600 text-xs font-semibold text-white">
                                 {index + 1}
                             </span>
                             <span className="leading-relaxed">{step}</span>
@@ -41,10 +45,8 @@ export const ModalHowToPlayContent: FC = () => {
                     ))}
                 </ol>
 
-                <div className="flex flex-col gap-2 rounded-xl bg-white/5 p-4">
-                    <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-                        Los colores
-                    </span>
+                <Surface tone="inset" radius="xl" className="flex flex-col gap-2 p-4">
+                    <Eyebrow>Los colores</Eyebrow>
                     {LEGEND.map((item) => (
                         <div key={item.label} className="flex items-center gap-3 text-sm">
                             <span
@@ -55,7 +57,7 @@ export const ModalHowToPlayContent: FC = () => {
                             <span className="text-gray-400">{item.description}</span>
                         </div>
                     ))}
-                </div>
+                </Surface>
             </ModalBody>
         </div>
     );

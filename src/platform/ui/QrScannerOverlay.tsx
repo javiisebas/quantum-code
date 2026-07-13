@@ -308,7 +308,12 @@ export function QrScannerOverlay({ onDetect, onClose }: QrScannerOverlayProps) {
 
     const showVideo = status === 'requesting' || status === 'scanning';
 
-    return (
+    // Portal to <body>: the overlay is `position: fixed`, but an ancestor with
+    // `backdrop-filter`/`transform` (e.g. a frosted `Surface` card) would become its
+    // containing block and confine it. Portalling out guarantees a true full-screen scanner.
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
         <div
             role="dialog"
             aria-modal="true"
@@ -415,6 +420,7 @@ export function QrScannerOverlay({ onDetect, onClose }: QrScannerOverlayProps) {
                     </Surface>
                 </div>
             )}
-        </div>
+        </div>,
+        document.body,
     );
 }
