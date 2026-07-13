@@ -1,8 +1,8 @@
 'use client';
 
 import type { GameManifest } from '@/games/types';
-import { Button } from '@/platform/ui/Button';
 import { useModal } from '@/platform/ui/modal-context';
+import { TopBarAction } from '@/platform/ui/TopBar';
 import { ModalBody, ModalHeader } from '@heroui/react';
 import { BiHelpCircle } from 'react-icons/bi';
 
@@ -53,31 +53,20 @@ export function HowToPlayModal({ manifest }: { manifest: GameManifest }) {
 /**
  * The `¿Cómo se juega?` affordance every game screen puts in its top bar.
  *
- * It is a BUTTON — `secondary`, like every other alternative action in the arcade — and its label
- * is never hidden. It used to be a `ghost`/`sm` control whose text disappeared below `sm:`, which
- * left a phone showing a bare `?` glyph: a control that reads as a text link on a laptop and as
- * decoration on a phone. Rules are the one thing a new player actually needs, so the affordance
- * says what it is at every width, and the `TopBar` title truncates around it (that is what a title
- * is for — an action does not shrink to make room for a name people can already see).
+ * It is a `<TopBarAction>`: a labelled `secondary` button on `sm+`, an icon key below it. The
+ * label went from full question → "Reglas" → icon as the bar earned more actions («Sala» when the
+ * host plays): even shortened, two labelled buttons truncated the game's own name to "¿D…" at
+ * 375px — the bar was spending its width telling you what the buttons do instead of what you are
+ * looking at. As an icon KEY (the same chip as the home key, `aria-label`ed) it reads as chrome,
+ * not decoration, and the name people came to see survives.
  */
 export function HowToPlayButton({ manifest }: { manifest: GameManifest }) {
     const { openModal } = useModal();
     return (
-        <Button
-            variant="secondary"
-            size="md"
-            startContent={<BiHelpCircle size={18} />}
+        <TopBarAction
+            icon={<BiHelpCircle size={18} />}
+            label="¿Cómo se juega?"
             onPress={() => openModal(<HowToPlayModal manifest={manifest} />)}
-            aria-label="¿Cómo se juega?"
-        >
-            {/*
-             * The label SHORTENS on a phone; it never disappears. At 375px the full question ate
-             * ~170px of a 375px bar and truncated the game's own name down to "La Bo…" — so the
-             * bar was spending its width telling you what the button does instead of what you are
-             * looking at. "Reglas" is the same button, said shorter.
-             */}
-            <span className="sm:hidden">Reglas</span>
-            <span className="hidden sm:inline">¿Cómo se juega?</span>
-        </Button>
+        />
     );
 }
