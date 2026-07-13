@@ -29,6 +29,10 @@ const gameLoaders: Record<string, GameLoader> = {
         Host: dynamic(() => import('./sintonia/Host').then((m) => m.SintoniaHost)),
         Player: dynamic(() => import('./sintonia/Player').then((m) => m.SintoniaPlayer)),
     },
+    bomba: {
+        Host: dynamic(() => import('./bomba/Host').then((m) => m.BombaHost)),
+        Player: dynamic(() => import('./bomba/Player').then((m) => m.BombaPlayer)),
+    },
     spyfall: {
         Host: dynamic(() => import('./spyfall/Host').then((m) => m.SpyfallHost)),
         Player: dynamic(() => import('./spyfall/Player').then((m) => m.SpyfallPlayer)),
@@ -46,3 +50,10 @@ const gameLoaders: Record<string, GameLoader> = {
 
 /** Resolve a game's lazy Host/Player screens by id, or null when unknown. */
 export const getGameLoader = (id: string): GameLoader | null => gameLoaders[id] ?? null;
+
+/**
+ * The set of game ids that have a client loader. Exposed so tests can assert
+ * loader↔manifest parity by comparing key sets — reading `Object.keys` never
+ * invokes the lazy imports, so no game component tree is rendered or bundled.
+ */
+export const gameLoaderIds: string[] = Object.keys(gameLoaders);

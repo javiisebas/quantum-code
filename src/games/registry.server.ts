@@ -1,3 +1,4 @@
+import { BOMBA_ID, bombaManifest, validateBombaPayload } from './bomba/manifest';
 import { CAMALEON_ID, camaleonManifest, validateCamaleonPayload } from './camaleon/manifest';
 import { CHISPAS_ID, chispasManifest, validateChispasPayload } from './chispas/manifest';
 import { CODENAMES_ID, codenamesManifest, validateCodenamesPayload } from './codenames/manifest';
@@ -34,6 +35,11 @@ const serverGames: Record<string, GameServerModule> = {
         manifest: sintoniaManifest,
         namespace: SINTONIA_ID,
         validatePayload: validateSintoniaPayload,
+    },
+    [BOMBA_ID]: {
+        manifest: bombaManifest,
+        namespace: BOMBA_ID,
+        validatePayload: validateBombaPayload,
     },
     [SPYFALL_ID]: {
         manifest: spyfallManifest,
