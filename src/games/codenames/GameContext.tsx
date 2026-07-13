@@ -65,7 +65,7 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
     const loadBoard = useCallback(
         async (code: number, options?: { share?: boolean }) => {
             try {
-                const board = await createRoom<Board>(CODENAMES_ID, code, generateBoard());
+                const { value: board } = await createRoom<Board>(CODENAMES_ID, code, generateBoard());
                 dispatch({ type: 'BOARD_LOADED', roles: board.roles, words: board.words });
                 if (options?.share)
                     openModal(

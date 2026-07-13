@@ -5,6 +5,7 @@ import { usePlayerRoom } from '@/platform/room/use-player-room';
 import { submitInput } from '@/platform/room/live-client';
 import { useHeartbeat } from '@/platform/room/use-presence';
 import { Button } from '@/platform/ui/Button';
+import { ErrorBoundary } from '@/platform/ui/ErrorBoundary';
 import { Surface } from '@/platform/ui/Surface';
 import { Spinner } from '@heroui/react';
 import { FormEvent, ReactNode, useEffect, useState } from 'react';
@@ -27,11 +28,20 @@ interface LivePlayerShellProps {
     game: string;
     gameName: string;
     code: number | null;
-    children: (session: { code: number; seat: number; name: string }) => ReactNode;
+    children: (session: {
+        code: number;
+        seat: number;
+        name: string;
+        seatToken: string;
+    }) => ReactNode;
 }
 
 export function LivePlayerShell({ game, gameName, code, children }: LivePlayerShellProps) {
-    const { status, seat } = usePlayerRoom<LiveRoomPayload>({ game, code, withSeat: true });
+    const { status, seat, seatToken } = usePlayerRoom<LiveRoomPayload>({
+        game,
+        code,
+        withSeat: true,
+    });
     useHeartbeat({ game, code });
 
     const [name, setName] = useState('');
@@ -44,11 +54,11 @@ export function LivePlayerShell({ game, gameName, code, children }: LivePlayerSh
         setNameLoaded(true);
     }, []);
 
-    // Register (or refresh) this seat's name in the roster whenever we have all three.
+    // Register (or refresh) this seat's name in the roster whenever we have all four.
     useEffect(() => {
-        if (code === null || seat === null || name.length === 0) return;
-        void submitInput(game, code, ROSTER_ROUND, seat, { name }).catch(() => {});
-    }, [game, code, seat, name]);
+        if (code === null || seat === null || !seatToken || name.length === 0) return;
+        void submitInput(game, code, ROSTER_ROUND, seat, { name }, seatToken).catch(() => {});
+    }, [game, code, seat, seatToken, name]);
 
     if (code === null) {
         return <JoinForm game={game} gameName={gameName} />;
@@ -62,8 +72,8 @@ export function LivePlayerShell({ game, gameName, code, children }: LivePlayerSh
         );
     }
 
-    // Unknown/expired code → let the player re-enter one.
-    if (status === 'empty' || seat === null) {
+    // Unknown/expired code (or no seat token yet) → let the player re-enter one.
+    if (status === 'empty' || seat === null || seatToken === null) {
         return <JoinForm game={game} gameName={gameName} />;
     }
 
@@ -71,7 +81,7 @@ export function LivePlayerShell({ game, gameName, code, children }: LivePlayerSh
         return <NameForm gameName={gameName} onSubmit={setName} />;
     }
 
-    return <>{children({ code, seat, name })}</>;
+    return <ErrorBoundary>{children({ code, seat, name, seatToken })}</ErrorBoundary>;
 }
 
 /** One-time name entry. Persists the name globally so the player only types it once. */

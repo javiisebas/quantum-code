@@ -27,8 +27,8 @@ const voteKey = (code: number, gen: number, round: number) =>
 export function ChispasPlayer({ code }: { code: number | null }) {
     return (
         <LivePlayerShell game={CHISPAS_ID} gameName={chispasManifest.name} code={code}>
-            {({ code: roomCode, seat, name }) => (
-                <ChispasPhone code={roomCode} seat={seat} name={name} />
+            {({ code: roomCode, seat, name, seatToken }) => (
+                <ChispasPhone code={roomCode} seat={seat} name={name} seatToken={seatToken} />
             )}
         </LivePlayerShell>
     );
@@ -44,7 +44,17 @@ function CenteredCard({ children }: { children: ReactNode }) {
     );
 }
 
-function ChispasPhone({ code, seat, name }: { code: number; seat: number; name: string }) {
+function ChispasPhone({
+    code,
+    seat,
+    name,
+    seatToken,
+}: {
+    code: number;
+    seat: number;
+    name: string;
+    seatToken: string;
+}) {
     const state = useLiveState<ChispasState>({ game: CHISPAS_ID, code });
 
     // Joined, but the host hasn't started (or advanced to) a published phase yet.
@@ -77,9 +87,9 @@ function ChispasPhone({ code, seat, name }: { code: number; seat: number; name: 
 
     switch (state.phase) {
         case 'answer':
-            return <AnswerPhone code={code} seat={seat} state={state} />;
+            return <AnswerPhone code={code} seat={seat} seatToken={seatToken} state={state} />;
         case 'vote':
-            return <VotePhone code={code} seat={seat} state={state} />;
+            return <VotePhone code={code} seat={seat} seatToken={seatToken} state={state} />;
         case 'reveal':
             return <RevealPhone seat={seat} state={state} />;
         case 'final':
@@ -87,7 +97,17 @@ function ChispasPhone({ code, seat, name }: { code: number; seat: number; name: 
     }
 }
 
-function AnswerPhone({ code, seat, state }: { code: number; seat: number; state: ChispasState }) {
+function AnswerPhone({
+    code,
+    seat,
+    seatToken,
+    state,
+}: {
+    code: number;
+    seat: number;
+    seatToken: string;
+    state: ChispasState;
+}) {
     const [draft, setDraft] = useState('');
     const [sent, setSent] = useState(false);
 
@@ -112,9 +132,14 @@ function AnswerPhone({ code, seat, state }: { code: number; seat: number; state:
         if (trimmed.length === 0 || sent) return;
         LocalStorageHelper.setLocalStorageItem(ansKey(code, state.gen, state.round), trimmed);
         setSent(true);
-        await submitInput(CHISPAS_ID, code, answerRound(state.gen, state.round), seat, {
-            text: trimmed,
-        }).catch(() => {});
+        await submitInput(
+            CHISPAS_ID,
+            code,
+            answerRound(state.gen, state.round),
+            seat,
+            { text: trimmed },
+            seatToken,
+        ).catch(() => {});
     };
 
     if (sent) {
@@ -167,7 +192,17 @@ function AnswerPhone({ code, seat, state }: { code: number; seat: number; state:
     );
 }
 
-function VotePhone({ code, seat, state }: { code: number; seat: number; state: ChispasState }) {
+function VotePhone({
+    code,
+    seat,
+    seatToken,
+    state,
+}: {
+    code: number;
+    seat: number;
+    seatToken: string;
+    state: ChispasState;
+}) {
     const answers: AnswerView[] = state.answers ?? [];
     const [votedId, setVotedId] = useState<number | null>(null);
     const [ownText, setOwnText] = useState<string | null>(null);
@@ -185,9 +220,14 @@ function VotePhone({ code, seat, state }: { code: number; seat: number; state: C
         if (votedId !== null) return;
         LocalStorageHelper.setLocalStorageItem(voteKey(code, state.gen, state.round), id);
         setVotedId(id);
-        await submitInput(CHISPAS_ID, code, voteRound(state.gen, state.round), seat, {
-            choice: id,
-        }).catch(() => {});
+        await submitInput(
+            CHISPAS_ID,
+            code,
+            voteRound(state.gen, state.round),
+            seat,
+            { choice: id },
+            seatToken,
+        ).catch(() => {});
     };
 
     return (

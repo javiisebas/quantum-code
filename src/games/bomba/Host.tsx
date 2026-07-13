@@ -45,12 +45,22 @@ export function BombaHost() {
             maxPlayers={bombaManifest.maxPlayers}
             hint="Por turnos, di algo de la categoría en alto y pasa la bomba en tu móvil antes de que explote."
         >
-            {({ code, players }) => <BombaBoard code={code} players={players} />}
+            {({ code, players, hostToken }) => (
+                <BombaBoard code={code} players={players} hostToken={hostToken} />
+            )}
         </LiveLobby>
     );
 }
 
-function BombaBoard({ code, players }: { code: number; players: LivePlayer[] }) {
+function BombaBoard({
+    code,
+    players,
+    hostToken,
+}: {
+    code: number;
+    players: LivePlayer[];
+    hostToken: string;
+}) {
     // One round per player, floored at 5 so even a trio gets a full, well-separated game: each
     // round is exactly one explosion (one strike), so this scales the length to the group and
     // gives the "fewest strikes" ranking enough signal, all inside the ~10 min budget. Fewest
@@ -84,7 +94,7 @@ function BombaBoard({ code, players }: { code: number; players: LivePlayer[] }) 
         }),
         [game, players, gen, totalRounds],
     );
-    usePublishedState({ game: BOMBA_ID, code, state: publicState });
+    usePublishedState({ game: BOMBA_ID, code, state: publicState, hostToken });
 
     // Arm the round's HIDDEN fuse. The duration lives only in this closure — never in React
     // state, never a ref that publishes — so it cannot leak. Keyed on phase alone: every round
@@ -114,6 +124,7 @@ function BombaBoard({ code, players }: { code: number; players: LivePlayer[] }) 
         code,
         round: passRound(gen, game.round),
         active: game.phase === 'playing',
+        hostToken,
     });
 
     // Advance the bomb exactly once per tap. The holder's token must equal the CURRENT pass

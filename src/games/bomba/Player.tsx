@@ -20,8 +20,8 @@ const acc = accentOf(bombaManifest.accent);
 export function BombaPlayer({ code }: { code: number | null }) {
     return (
         <LivePlayerShell game={BOMBA_ID} gameName={bombaManifest.name} code={code}>
-            {({ code: roomCode, seat, name }) => (
-                <BombaPhone code={roomCode} seat={seat} name={name} />
+            {({ code: roomCode, seat, name, seatToken }) => (
+                <BombaPhone code={roomCode} seat={seat} name={name} seatToken={seatToken} />
             )}
         </LivePlayerShell>
     );
@@ -35,7 +35,17 @@ function Card({ children }: { children: ReactNode }) {
     );
 }
 
-function BombaPhone({ code, seat, name }: { code: number; seat: number; name: string }) {
+function BombaPhone({
+    code,
+    seat,
+    name,
+    seatToken,
+}: {
+    code: number;
+    seat: number;
+    name: string;
+    seatToken: string;
+}) {
     const state = useLiveState<BombaState>({ game: BOMBA_ID, code });
 
     // Joined, but the host hasn't started (or published a phase) yet.
@@ -80,14 +90,24 @@ function BombaPhone({ code, seat, name }: { code: number; seat: number; name: st
 
     // playing
     return state.holderSeat === seat ? (
-        <HolderPhone code={code} seat={seat} state={state} />
+        <HolderPhone code={code} seat={seat} seatToken={seatToken} state={state} />
     ) : (
         <WaitingPhone seat={seat} state={state} />
     );
 }
 
 /** It's my turn: I'm holding the bomb — say an answer out loud, then pass it fast. */
-function HolderPhone({ code, seat, state }: { code: number; seat: number; state: BombaState }) {
+function HolderPhone({
+    code,
+    seat,
+    seatToken,
+    state,
+}: {
+    code: number;
+    seat: number;
+    seatToken: string;
+    state: BombaState;
+}) {
     // Track the pass counter I've already responded to, so one tap = one send. When the host
     // advances the bomb `state.pass` moves on and (having passed) I'm no longer the holder; if
     // it ever comes back to me it's a NEW pass number, so the button re-enables on its own.
@@ -97,9 +117,14 @@ function HolderPhone({ code, seat, state }: { code: number; seat: number; state:
     const pass = async () => {
         if (alreadyPassed) return;
         setPassedPass(state.pass);
-        await submitInput(BOMBA_ID, code, passRound(state.gen, state.round), seat, {
-            token: state.pass,
-        }).catch(() => {});
+        await submitInput(
+            BOMBA_ID,
+            code,
+            passRound(state.gen, state.round),
+            seat,
+            { token: state.pass },
+            seatToken,
+        ).catch(() => {});
     };
 
     return (

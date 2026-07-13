@@ -8,7 +8,15 @@ delete process.env.UPSTASH_REDIS_REST_TOKEN;
 delete process.env.UPSTASH_REDIS_KV_REST_API_URL;
 delete process.env.UPSTASH_REDIS_KV_REST_API_TOKEN;
 
-import { clearState, putInput, readInputs, readState, writeState } from './live-store';
+import {
+    clearState,
+    putInput,
+    putPrivate,
+    readInputs,
+    readPrivate,
+    readState,
+    writeState,
+} from './live-store';
 
 /**
  * Live-store behaviour on the in-memory backend. Covers the invariants live games rely on:
@@ -79,5 +87,32 @@ describe('live-store (in-memory backend)', () => {
 
     it('reads empty inputs for a round with no submissions', async () => {
         expect(await readInputs('lt-empty', 100107, 1)).toEqual({});
+    });
+
+    describe('per-seat private channel (host → one seat)', () => {
+        it('a seat reads only its own private value', async () => {
+            const ns = 'lt-priv';
+            const code = 100108;
+            await putPrivate(ns, code, 1, 2, { target: 73 });
+            expect(await readPrivate<{ target: number }>(ns, code, 1, 2)).toEqual({ target: 73 });
+            // A seat with no private value written gets null (never another seat's secret).
+            expect(await readPrivate(ns, code, 1, 1)).toBeNull();
+        });
+
+        it('isolates private values by round and namespace, and overwrites in place', async () => {
+            const code = 100109;
+            await putPrivate('lt-p-x', code, 1, 1, 'x-r1');
+            await putPrivate('lt-p-x', code, 2, 1, 'x-r2');
+            await putPrivate('lt-p-y', code, 1, 1, 'y-r1');
+            expect(await readPrivate('lt-p-x', code, 1, 1)).toBe('x-r1');
+            expect(await readPrivate('lt-p-x', code, 2, 1)).toBe('x-r2');
+            expect(await readPrivate('lt-p-y', code, 1, 1)).toBe('y-r1');
+            await putPrivate('lt-p-x', code, 1, 1, 'x-r1-new');
+            expect(await readPrivate('lt-p-x', code, 1, 1)).toBe('x-r1-new');
+        });
+
+        it('reads null for an unwritten private slot', async () => {
+            expect(await readPrivate('lt-p-empty', 100110, 1, 1)).toBeNull();
+        });
     });
 });

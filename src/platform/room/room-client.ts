@@ -7,6 +7,8 @@
  * get-then-create race.
  */
 
+import type { RoomCreation, SeatClaim } from './tokens';
+
 const roomUrl = (game: string, code: number): string =>
     `/api/room/${encodeURIComponent(game)}?code=${code}`;
 
@@ -21,11 +23,16 @@ export const fetchRoom = async <T>(game: string, code: number): Promise<T | null
 };
 
 /**
- * POST a candidate payload for a code. The server creates it atomically if absent
- * and responds with the AUTHORITATIVE payload (the pre-existing one if another
- * client already created it). Returns whatever the server considers canonical.
+ * POST a candidate payload for a code. The server creates it atomically if absent and
+ * responds with the AUTHORITATIVE payload plus the host token — but the token is present
+ * ONLY when THIS call created the room (null when it already existed), so only the true
+ * host ever holds it. Returns `{ value, hostToken }`.
  */
-export const createRoom = async <T>(game: string, code: number, payload: T): Promise<T> => {
+export const createRoom = async <T>(
+    game: string,
+    code: number,
+    payload: T,
+): Promise<RoomCreation<T>> => {
     const response = await fetch(`/api/room/${encodeURIComponent(game)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,7 +43,7 @@ export const createRoom = async <T>(game: string, code: number, payload: T): Pro
         throw new Error(`Failed to save room: ${response.statusText}`);
     }
 
-    return (await response.json()) as T;
+    return (await response.json()) as RoomCreation<T>;
 };
 
 /** DELETE the room for a code. Treats a 404 (already gone) as success. */
@@ -52,8 +59,12 @@ export const deleteRoom = async (game: string, code: number): Promise<void> => {
     }
 };
 
-/** Claim the next 1-based seat in a room (for per-player-secret games). */
-export const claimSeat = async (game: string, code: number): Promise<number> => {
+/**
+ * Claim the next 1-based seat in a room (for per-player-secret and live games). Returns the
+ * seat plus the secret token that proves ownership of it — the caller persists both together
+ * and presents the token to submit that seat's input or read its sealed/private data.
+ */
+export const claimSeat = async (game: string, code: number): Promise<SeatClaim> => {
     const response = await fetch(`/api/room/${encodeURIComponent(game)}/seat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,6 +75,5 @@ export const claimSeat = async (game: string, code: number): Promise<number> => 
         throw new Error(`Failed to claim seat: ${response.statusText}`);
     }
 
-    const { seat } = (await response.json()) as { seat: number };
-    return seat;
+    return (await response.json()) as SeatClaim;
 };

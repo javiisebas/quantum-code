@@ -1,6 +1,6 @@
 'use client';
 
-import { usePublishedState } from '@/platform/room/use-live-room';
+import { usePublishedPrivate, usePublishedState } from '@/platform/room/use-live-room';
 import { Button } from '@/platform/ui/Button';
 import { Chip } from '@/platform/ui/Chip';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
@@ -41,7 +41,9 @@ export function SintoniaHost() {
             maxPlayers={sintoniaManifest.maxPlayers}
             hint="Por turnos, uno ve el objetivo y da una pista; el resto mueve el dial."
         >
-            {({ code, players }) => <SintoniaGame code={code} players={players} />}
+            {({ code, players, hostToken }) => (
+                <SintoniaGame code={code} players={players} hostToken={hostToken} />
+            )}
         </LiveLobby>
     );
 }
@@ -67,7 +69,15 @@ const initGame = (rounds: number): HostGame => {
     };
 };
 
-function SintoniaGame({ code, players }: { code: number; players: LivePlayer[] }) {
+function SintoniaGame({
+    code,
+    players,
+    hostToken,
+}: {
+    code: number;
+    players: LivePlayer[];
+    hostToken: string;
+}) {
     const totalRounds = players.length;
     const [game, setGame] = useState<HostGame>(() => initGame(totalRounds));
     const [dial, setDial] = useState(50);
@@ -83,7 +93,7 @@ function SintoniaGame({ code, players }: { code: number; players: LivePlayer[] }
             totalRounds,
             spectrum,
             psychic,
-            target,
+            target: game.phase === 'reveal' ? target : undefined,
             dial: game.phase === 'reveal' ? game.reveal?.dial : undefined,
             points: game.phase === 'reveal' ? game.reveal?.points : undefined,
             scores:
@@ -93,7 +103,17 @@ function SintoniaGame({ code, players }: { code: number; players: LivePlayer[] }
         }),
         [game, players, totalRounds, psychic, spectrum, target],
     );
-    usePublishedState({ game: SINTONIA_ID, code, state: publicState });
+    usePublishedState({ game: SINTONIA_ID, code, state: publicState, hostToken });
+    // The psychic privately receives the target during clue/guess over the per-seat channel
+    // (each round has its own slot); null outside clue/guess so it isn't re-published at reveal.
+    usePublishedPrivate({
+        game: SINTONIA_ID,
+        code,
+        round: game.round,
+        seat: psychic.seat,
+        value: game.phase === 'clue' || game.phase === 'guess' ? target : null,
+        hostToken,
+    });
 
     const toGuess = () => {
         setDial(50);

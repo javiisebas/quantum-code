@@ -68,15 +68,16 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     try {
         // Atomic create-if-absent. Return the AUTHORITATIVE payload (whoever won the
-        // race), so the host and every joined phone converge on the same room.
-        const { value, created } = await writeRoomIfAbsent(mod.namespace, code, payload);
+        // race), so the host and every joined phone converge on the same room, plus the
+        // minted host token (null unless THIS call created the room — see RoomCreation).
+        const { value, created, hostToken } = await writeRoomIfAbsent(mod.namespace, code, payload);
         // Fire the webhook exactly once, only when this call actually created the room,
         // and as post-response work so a slow/failing hook never blocks the response
         // (and isn't dropped when the serverless function freezes on return).
         if (created) {
             after(() => emitRoomEvent({ type: 'room.created', game, code }));
         }
-        return NextResponse.json(value);
+        return NextResponse.json({ value, hostToken });
     } catch (error: unknown) {
         console.error(`Failed to save ${game} room:`, error);
         return NextResponse.json({ error: 'Failed to save room' }, { status: 500 });

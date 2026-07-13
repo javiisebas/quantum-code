@@ -26,9 +26,10 @@ export interface Score {
 
 /**
  * Public game snapshot the host publishes and phones poll. `target` is the secret zone
- * center: phones reveal it ONLY to the psychic during clue/guess (same client-side secrecy
- * model as Codenames' colour map), and to everyone at reveal. The host screen never shows
- * the target before reveal.
+ * center: during clue/guess it is delivered ONLY to the psychic over the per-seat private
+ * channel and is absent from this public state, so no other phone can read it; it enters
+ * the public snapshot only at reveal, when everyone is meant to see it. The host screen
+ * never shows the target before reveal.
  */
 export interface SintoniaState {
     phase: SintoniaPhase;
@@ -36,8 +37,8 @@ export interface SintoniaState {
     totalRounds: number;
     spectrum: Spectrum;
     psychic: LivePlayer;
-    /** 0–100, the centre of the target zone. */
-    target: number;
+    /** 0–100, the centre of the target zone. Public only at reveal (private to the psychic before). */
+    target?: number;
     /** 'reveal': where the team's dial landed. */
     dial?: number;
     /** 'reveal': points the psychic scored this round. */

@@ -46,7 +46,9 @@ export function ChispasHost() {
             maxPlayers={chispasManifest.maxPlayers}
             hint="Cada uno responde en su móvil y luego votáis al más gracioso."
         >
-            {({ code, players }) => <ChispasGame code={code} players={players} />}
+            {({ code, players, hostToken }) => (
+                <ChispasGame code={code} players={players} hostToken={hostToken} />
+            )}
         </LiveLobby>
     );
 }
@@ -76,7 +78,15 @@ const initGame = (): HostGame => ({
     winnerSeats: [],
 });
 
-function ChispasGame({ code, players }: { code: number; players: LivePlayer[] }) {
+function ChispasGame({
+    code,
+    players,
+    hostToken,
+}: {
+    code: number;
+    players: LivePlayer[];
+    hostToken: string;
+}) {
     const [game, setGame] = useState<HostGame>(initGame);
     // Per-game generation: bumped by "Jugar otra vez" so a replay in the SAME room never
     // reads the previous game's answers/votes (round numbers repeat across replays).
@@ -105,7 +115,7 @@ function ChispasGame({ code, players }: { code: number; players: LivePlayer[] })
         }),
         [game, players, gen],
     );
-    usePublishedState({ game: CHISPAS_ID, code, state: publicState });
+    usePublishedState({ game: CHISPAS_ID, code, state: publicState, hostToken });
 
     // Poll the relevant input bucket for the current phase.
     const answerInputs = useLiveInputs<{ text?: string }>({
@@ -113,12 +123,14 @@ function ChispasGame({ code, players }: { code: number; players: LivePlayer[] })
         code,
         round: answerRound(gen, game.round),
         active: game.phase === 'answer',
+        hostToken,
     });
     const voteInputs = useLiveInputs<{ choice?: number }>({
         game: CHISPAS_ID,
         code,
         round: voteRound(gen, game.round),
         active: game.phase === 'vote',
+        hostToken,
     });
 
     const answered = players.filter((p) => (answerInputs[p.seat]?.text ?? '').trim().length > 0);

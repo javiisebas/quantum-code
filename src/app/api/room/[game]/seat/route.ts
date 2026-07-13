@@ -40,8 +40,11 @@ export async function POST(request: Request, { params }: RouteContext) {
     }
 
     try {
-        const seat = await claimSeat(mod.namespace, code);
-        return NextResponse.json({ seat });
+        // Return the full claim ({ seat, token }): the token is how THIS device later proves
+        // it owns the seat (submitting its input, reading its private slice). No token is
+        // required to claim — claiming is exactly how a device first obtains one.
+        const claim = await claimSeat(mod.namespace, code);
+        return NextResponse.json(claim);
     } catch (error: unknown) {
         console.error(`Failed to claim seat in ${game} room:`, error);
         return NextResponse.json({ error: 'Failed to claim seat' }, { status: 500 });

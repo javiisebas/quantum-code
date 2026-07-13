@@ -1,12 +1,16 @@
 /**
- * Browser HTTP client for the live-game channel (`/api/room/[game]/state` + `/input`).
+ * Browser HTTP client for the live-game channel (`/api/room/[game]/state` + `/input` +
+ * `/private`).
  *
- * The host publishes public state; phones poll it and submit their own per-seat input.
- * Named distinctly from the server-side `live-store` functions (fetch/publish/submit) to
- * keep the two halves unambiguous. Consumed by the `use-live-room` hooks.
+ * The host publishes public state and reads every seat's input; phones poll the public state
+ * and submit their own per-seat input. Host-only calls carry the room's host token; a phone's
+ * calls carry its seat token, so the server hands each secret only to who may see it. Named
+ * distinctly from the server-side `live-store` functions to keep the two halves unambiguous.
+ * Consumed by the `use-live-room` hooks.
  */
 
 import type { StateDoc } from './live-store';
+import { HOST_TOKEN_HEADER, SEAT_TOKEN_HEADER } from './tokens';
 
 /** GET the room's public live state, or null when nothing has been published yet. */
 export const fetchState = async <S>(game: string, code: number): Promise<StateDoc<S> | null> => {
@@ -21,26 +25,28 @@ export const publishState = async <S>(
     code: number,
     rev: number,
     state: S,
+    hostToken: string,
 ): Promise<void> => {
     const res = await fetch(`/api/room/${encodeURIComponent(game)}/state`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', [HOST_TOKEN_HEADER]: hostToken },
         body: JSON.stringify({ code, rev, state }),
     });
     if (!res.ok) throw new Error(`Failed to publish state: ${res.statusText}`);
 };
 
-/** POST this seat's input for a round. */
+/** POST this seat's input for a round (proves seat ownership with the seat token). */
 export const submitInput = async <V>(
     game: string,
     code: number,
     round: number,
     seat: number,
     value: V,
+    seatToken: string,
 ): Promise<void> => {
     const res = await fetch(`/api/room/${encodeURIComponent(game)}/input`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', [SEAT_TOKEN_HEADER]: seatToken },
         body: JSON.stringify({ code, round, seat, value }),
     });
     if (!res.ok) throw new Error(`Failed to submit input: ${res.statusText}`);
@@ -51,9 +57,11 @@ export const fetchInputs = async <V>(
     game: string,
     code: number,
     round: number,
+    hostToken: string,
 ): Promise<Record<number, V>> => {
     const res = await fetch(
         `/api/room/${encodeURIComponent(game)}/input?code=${code}&round=${round}`,
+        { headers: { [HOST_TOKEN_HEADER]: hostToken } },
     );
     if (!res.ok) throw new Error(`Failed to fetch inputs: ${res.statusText}`);
     const { inputs } = (await res.json()) as { inputs: Record<string, V> };
@@ -61,4 +69,38 @@ export const fetchInputs = async <V>(
     const out: Record<number, V> = {};
     for (const [seat, value] of Object.entries(inputs ?? {})) out[Number(seat)] = value;
     return out;
+};
+
+/** PUT one seat's PRIVATE value for a round (host only) — a secret shown to exactly one phone. */
+export const publishPrivate = async <V>(
+    game: string,
+    code: number,
+    round: number,
+    seat: number,
+    value: V,
+    hostToken: string,
+): Promise<void> => {
+    const res = await fetch(`/api/room/${encodeURIComponent(game)}/private`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', [HOST_TOKEN_HEADER]: hostToken },
+        body: JSON.stringify({ code, round, seat, value }),
+    });
+    if (!res.ok) throw new Error(`Failed to publish private: ${res.statusText}`);
+};
+
+/** GET this seat's own private value for a round (proves seat ownership), or null. */
+export const fetchPrivate = async <V>(
+    game: string,
+    code: number,
+    round: number,
+    seat: number,
+    seatToken: string,
+): Promise<V | null> => {
+    const res = await fetch(
+        `/api/room/${encodeURIComponent(game)}/private?code=${code}&round=${round}&seat=${seat}`,
+        { headers: { [SEAT_TOKEN_HEADER]: seatToken } },
+    );
+    if (!res.ok) throw new Error(`Failed to fetch private: ${res.statusText}`);
+    const { value } = (await res.json()) as { value: V | null };
+    return value ?? null;
 };

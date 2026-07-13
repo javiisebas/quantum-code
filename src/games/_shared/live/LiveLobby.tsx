@@ -44,8 +44,8 @@ interface LiveLobbyProps {
     maxPlayers: number;
     /** Optional one-line rules reminder shown under the roster. */
     hint?: string;
-    /** Rendered once the host starts, with the room code and the roster snapshot. */
-    children: (session: { code: number; players: LivePlayer[] }) => ReactNode;
+    /** Rendered once the host starts, with the room code, host token and roster snapshot. */
+    children: (session: { code: number; players: LivePlayer[]; hostToken: string }) => ReactNode;
 }
 
 type Phase = 'creating' | 'lobby' | 'started' | 'error';
@@ -65,15 +65,18 @@ export function LiveLobby({
     const acc = accentOf(accent);
     const [phase, setPhase] = useState<Phase>('creating');
     const [code, setCode] = useState<number | null>(null);
+    const [hostToken, setHostToken] = useState<string | null>(null);
     const [startedPlayers, setStartedPlayers] = useState<LivePlayer[]>([]);
 
     const startNewRoom = useCallback(async () => {
         setPhase('creating');
         const fresh = generateCode();
         try {
-            await createRoom(game, fresh, LIVE_ROOM_PAYLOAD);
-            LocalStorageHelper.setLocalStorageItem(storageKey(game), { code: fresh });
+            const { hostToken: token } = await createRoom(game, fresh, LIVE_ROOM_PAYLOAD);
+            // Persist the host capability with the code so a reload resumes as the host.
+            LocalStorageHelper.setLocalStorageItem(storageKey(game), { code: fresh, hostToken: token });
             setCode(fresh);
+            setHostToken(token);
             setPhase('lobby');
         } catch {
             setPhase('error');
@@ -86,11 +89,17 @@ export function LiveLobby({
     useEffect(() => {
         if (bootedRef.current) return;
         bootedRef.current = true;
-        const persisted = LocalStorageHelper.getLocalStorageItem<{ code: number }>(storageKey(game));
-        if (persisted?.code) {
+        const persisted = LocalStorageHelper.getLocalStorageItem<{
+            code: number;
+            hostToken?: string;
+        }>(storageKey(game));
+        // Resume only with a stored host token (a pre-token entry can't act as host → fresh room).
+        if (persisted?.code && persisted.hostToken) {
             setCode(persisted.code);
+            setHostToken(persisted.hostToken);
             setPhase('lobby');
-            // Re-ensure the room exists (TTL may have lapsed); SET NX is a no-op otherwise.
+            // Re-ensure the room exists (TTL may have lapsed); SET NX is a no-op otherwise, and
+            // the re-create returns no token (created:false) — we keep the persisted one.
             createRoom(game, persisted.code, LIVE_ROOM_PAYLOAD).catch(() => {});
         } else {
             void startNewRoom();
@@ -103,6 +112,7 @@ export function LiveLobby({
         code,
         round: ROSTER_ROUND,
         active: phase === 'lobby',
+        hostToken,
     });
     const players = useMemo(() => rosterFromInputs(rosterInputs), [rosterInputs]);
 
@@ -130,8 +140,8 @@ export function LiveLobby({
         );
     }
 
-    if (phase === 'started' && code !== null) {
-        return <>{children({ code, players: startedPlayers })}</>;
+    if (phase === 'started' && code !== null && hostToken !== null) {
+        return <>{children({ code, players: startedPlayers, hostToken })}</>;
     }
 
     // lobby

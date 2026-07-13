@@ -1,17 +1,20 @@
 import { getServerGame } from '@/games/registry.server';
 import { parseCode } from '@/platform/room';
 import { readState, writeState } from '@/platform/room/live-store';
+import { verifyHost } from '@/platform/room/room-store';
+import { HOST_TOKEN_HEADER } from '@/platform/room/tokens';
 import { NextResponse } from 'next/server';
 
 /**
  * Live public state for phase-based games: `/api/room/[game]/state`.
  *
  *   GET ?code=            → the room's `{ rev, state }` document, or null when unpublished
- *   PUT { code, rev, state } → publish the room's public state (host-authoritative)
+ *   PUT { code, rev, state } → publish the room's public state (host token required)
  *
  * `state` is the game's own public snapshot; the server treats it as opaque JSON and only
- * guards its shape and size (only the same-origin host writes it, so per-game validation
- * lives in the game's reducer rather than here). Phones poll GET to render the game.
+ * guards its shape and size (the host token enforces that only the room's host writes it, so
+ * per-game validation lives in the game's reducer rather than here). Phones poll GET — which
+ * stays public — to render the game.
  */
 
 type RouteContext = { params: Promise<{ game: string }> };
@@ -65,7 +68,8 @@ export async function PUT(request: Request, { params }: RouteContext) {
         typeof rev !== 'number' ||
         !Number.isFinite(rev) ||
         typeof state !== 'object' ||
-        state === null
+        state === null ||
+        Array.isArray(state)
     ) {
         return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
@@ -73,7 +77,14 @@ export async function PUT(request: Request, { params }: RouteContext) {
         return NextResponse.json({ error: 'State too large' }, { status: 413 });
     }
 
+    // All request validation passed; now enforce that the caller is the room's host. Read the
+    // token here (never throws) but run the check + write together in the try below.
+    const token = request.headers.get(HOST_TOKEN_HEADER);
+
     try {
+        if (!token || !(await verifyHost(mod.namespace, code, token))) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
         await writeState(mod.namespace, code, { rev, state });
         return NextResponse.json({ ok: true });
     } catch (error: unknown) {

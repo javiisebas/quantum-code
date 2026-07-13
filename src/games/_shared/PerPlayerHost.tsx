@@ -98,7 +98,7 @@ export function PerPlayerHost<T>({
             const code = generateCode();
             const candidate = buildRef.current(players);
             try {
-                const payload = await createRoom<T>(game, code, candidate);
+                const { value: payload } = await createRoom<T>(game, code, candidate);
                 LocalStorageHelper.setLocalStorageItem<PersistedRound<T>>(storageKey(game), {
                     code,
                     count: players,

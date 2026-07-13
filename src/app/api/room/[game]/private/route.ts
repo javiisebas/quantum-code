@@ -1,28 +1,28 @@
 import { getServerGame } from '@/games/registry.server';
 import { parseCode } from '@/platform/room';
-import { putInput, readInputs } from '@/platform/room/live-store';
+import { putPrivate, readPrivate } from '@/platform/room/live-store';
 import { verifyHost, verifySeat } from '@/platform/room/room-store';
 import { HOST_TOKEN_HEADER, SEAT_TOKEN_HEADER } from '@/platform/room/tokens';
 import { NextResponse } from 'next/server';
 
 /**
- * Per-seat player input for live games: `/api/room/[game]/input`.
+ * Per-seat PRIVATE channel for live games: `/api/room/[game]/private`.
  *
- *   POST { code, round, seat, value } → write THIS seat's input for a round (that seat's token)
- *   GET  ?code=&round=                → { inputs: { [seat]: value } } (host token; folds these in)
+ *   PUT { code, round, seat, value } → host writes THIS seat's secret slice (host token)
+ *   GET  ?code=&round=&seat=          → { value } — that seat reads ONLY its own (seat token)
  *
- * Each phone writes only its own seat's field (see live-store), so concurrent submissions
- * never race, and each seat's token is what enforces a phone can only write ITS own field
- * while only the host may read them all. `round` is any host-chosen bucket (0 = name roster,
- * 1..n = game rounds). `value` is opaque JSON, only bounded in size here; the host's reducer
- * interprets it.
+ * The mirror image of `input`: there each phone writes its own field and the host reads all;
+ * here the HOST writes a secret slice per seat (e.g. Sintonía's target for the psychic) and
+ * each phone reads ONLY its own field. Writes require the host token; a read requires that
+ * seat's token, so a secret the game must show to exactly one player never rides the public
+ * state document. `round` is any host-chosen bucket; `value` is opaque JSON, bounded in size.
  */
 
 type RouteContext = { params: Promise<{ game: string }> };
 
 const MAX_SEAT = 24; // matches the room-store seat ceiling.
 const MAX_ROUND = 10_000; // generous upper bound so a junk round never keys a huge space.
-const MAX_VALUE_BYTES = 16 * 1024; // a single answer/vote/name — small.
+const MAX_VALUE_BYTES = 16 * 1024; // a single secret slice — small.
 
 const unknownGame = (game: string) =>
     NextResponse.json({ error: `Unknown game: ${game}` }, { status: 404 });
@@ -32,7 +32,7 @@ const parseIntField = (raw: unknown): number | null => {
     return Number.isInteger(n) ? n : null;
 };
 
-export async function POST(request: Request, { params }: RouteContext) {
+export async function PUT(request: Request, { params }: RouteContext) {
     const { game } = await params;
     const mod = getServerGame(game);
     if (!mod) return unknownGame(game);
@@ -68,18 +68,18 @@ export async function POST(request: Request, { params }: RouteContext) {
         return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
-    // Payload is well-formed; now enforce that the caller owns this seat before storing.
-    const token = request.headers.get(SEAT_TOKEN_HEADER);
+    // Payload is well-formed; only the room's host may author a seat's private slice.
+    const token = request.headers.get(HOST_TOKEN_HEADER);
 
     try {
-        if (!token || !(await verifySeat(mod.namespace, code, seat, token))) {
+        if (!token || !(await verifyHost(mod.namespace, code, token))) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        await putInput(mod.namespace, code, round, seat, value);
+        await putPrivate(mod.namespace, code, round, seat, value);
         return NextResponse.json({ ok: true });
     } catch (error: unknown) {
-        console.error(`Failed to write ${game} input:`, error);
-        return NextResponse.json({ error: 'Failed to write input' }, { status: 500 });
+        console.error(`Failed to write ${game} private state:`, error);
+        return NextResponse.json({ error: 'Failed to write private state' }, { status: 500 });
     }
 }
 
@@ -91,23 +91,32 @@ export async function GET(request: Request, { params }: RouteContext) {
     const url = new URL(request.url);
     const code = parseCode(url.searchParams.get('code'));
     const round = parseIntField(url.searchParams.get('round'));
-    if (code === null || round === null || round < 0 || round > MAX_ROUND) {
-        return NextResponse.json({ error: 'Invalid or missing code/round' }, { status: 400 });
+    const seat = parseIntField(url.searchParams.get('seat'));
+    if (
+        code === null ||
+        round === null ||
+        round < 0 ||
+        round > MAX_ROUND ||
+        seat === null ||
+        seat < 1 ||
+        seat > MAX_SEAT
+    ) {
+        return NextResponse.json({ error: 'Invalid or missing code/round/seat' }, { status: 400 });
     }
 
-    // Reading every seat's input is a host-only capability; require the host token.
-    const token = request.headers.get(HOST_TOKEN_HEADER);
+    // A seat's private slice is readable only by the device that owns that seat.
+    const token = request.headers.get(SEAT_TOKEN_HEADER);
 
     try {
-        // A genuine auth FAILURE (verifyHost → false) is a real 401 — never a silent empty read.
-        // Only a transient store error (a throw below) falls back to the resilient `{inputs:{}}`.
-        if (!token || !(await verifyHost(mod.namespace, code, token))) {
+        // A genuine auth FAILURE (verifySeat → false) is a real 401; only a transient store
+        // error (a throw below) falls back to the resilient `{ value: null }`, like input GET.
+        if (!token || !(await verifySeat(mod.namespace, code, seat, token))) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const inputs = await readInputs(mod.namespace, code, round);
-        return NextResponse.json({ inputs });
+        const value = await readPrivate(mod.namespace, code, round, seat);
+        return NextResponse.json({ value });
     } catch (error: unknown) {
-        console.error(`Failed to read ${game} inputs:`, error);
-        return NextResponse.json({ inputs: {} });
+        console.error(`Failed to read ${game} private state:`, error);
+        return NextResponse.json({ value: null });
     }
 }

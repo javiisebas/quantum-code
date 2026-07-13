@@ -2,6 +2,7 @@
 
 import { usePlayerRoom } from '@/platform/room/use-player-room';
 import { useHeartbeat } from '@/platform/room/use-presence';
+import { ErrorBoundary } from '@/platform/ui/ErrorBoundary';
 import { Spinner } from '@heroui/react';
 import { ReactNode } from 'react';
 import { JoinForm } from './JoinForm';
@@ -33,7 +34,7 @@ export function PlayerShell<T>({ game, gameName, code, children }: PlayerShellPr
     }
 
     if (status === 'ready' && payload && seat !== null) {
-        return <>{children(payload, seat)}</>;
+        return <ErrorBoundary>{children(payload, seat)}</ErrorBoundary>;
     }
 
     return <JoinForm game={game} gameName={gameName} />;

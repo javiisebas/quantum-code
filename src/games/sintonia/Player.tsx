@@ -1,6 +1,6 @@
 'use client';
 
-import { useLiveState } from '@/platform/room/use-live-room';
+import { useLiveState, usePrivateState } from '@/platform/room/use-live-room';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
@@ -18,8 +18,8 @@ const acc = accentOf(sintoniaManifest.accent);
 export function SintoniaPlayer({ code }: { code: number | null }) {
     return (
         <LivePlayerShell game={SINTONIA_ID} gameName={sintoniaManifest.name} code={code}>
-            {({ code: roomCode, seat, name }) => (
-                <SintoniaPhone code={roomCode} seat={seat} name={name} />
+            {({ code: roomCode, seat, name, seatToken }) => (
+                <SintoniaPhone code={roomCode} seat={seat} name={name} seatToken={seatToken} />
             )}
         </LivePlayerShell>
     );
@@ -33,8 +33,32 @@ function Card({ children }: { children: ReactNode }) {
     );
 }
 
-function SintoniaPhone({ code, seat, name }: { code: number; seat: number; name: string }) {
+function SintoniaPhone({
+    code,
+    seat,
+    name,
+    seatToken,
+}: {
+    code: number;
+    seat: number;
+    name: string;
+    seatToken: string;
+}) {
     const state = useLiveState<SintoniaState>({ game: SINTONIA_ID, code });
+    // The psychic's secret target arrives over the per-seat private channel (never in public
+    // state before reveal). Called unconditionally, gated by `active` so only the psychic phone
+    // polls mid-round; `state` can be null on first render, hence the guards.
+    const privateTarget = usePrivateState<number>({
+        game: SINTONIA_ID,
+        code,
+        round: state?.round ?? 0,
+        seat,
+        seatToken,
+        active:
+            !!state &&
+            state.psychic.seat === seat &&
+            (state.phase === 'clue' || state.phase === 'guess'),
+    });
 
     if (!state) {
         return (
@@ -90,7 +114,7 @@ function SintoniaPhone({ code, seat, name }: { code: number; seat: number; name:
             <Card>
                 <Eyebrow className={acc.text}>Eres el psíquico 🔮</Eyebrow>
                 <div className="w-full max-w-sm">
-                    <SpectrumBar spectrum={state.spectrum} target={state.target} />
+                    <SpectrumBar spectrum={state.spectrum} target={privateTarget ?? undefined} />
                 </div>
                 {state.phase === 'clue' ? (
                     <p className="max-w-xs text-sm text-gray-300">
