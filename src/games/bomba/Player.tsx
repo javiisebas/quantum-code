@@ -122,8 +122,9 @@ function HolderPhone({
             <Button
                 variant="accent"
                 accentClass={acc.solidButton}
+                size="hero"
                 fullWidth
-                className="h-24 max-w-sm shrink-0 text-3xl font-extrabold short:h-20"
+                className="max-w-sm shrink-0"
                 onPress={pass}
                 isDisabled={alreadyPassed}
             >

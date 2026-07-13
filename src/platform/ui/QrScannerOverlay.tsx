@@ -401,7 +401,8 @@ export function QrScannerOverlay({ onDetect, onClose }: QrScannerOverlayProps) {
                                 mano.
                             </p>
                         </div>
-                        <Button variant="secondary" fullWidth onPress={handleClose}>
+                        {/* The only way out of this card, so it is its primary action. */}
+                        <Button variant="primary" fullWidth onPress={handleClose}>
                             Cerrar
                         </Button>
                     </Surface>
@@ -422,7 +423,7 @@ export function QrScannerOverlay({ onDetect, onClose }: QrScannerOverlayProps) {
                                 Escribe el código a mano para unirte a la sala.
                             </p>
                         </div>
-                        <Button variant="secondary" fullWidth onPress={handleClose}>
+                        <Button variant="primary" fullWidth onPress={handleClose}>
                             Cerrar
                         </Button>
                     </Surface>

@@ -11,10 +11,15 @@ import { ElementType, HTMLAttributes, ReactNode } from 'react';
  *  - `tone="plain"`   → structure only (radius/ring), caller supplies its own background
  *                       (e.g. a game's tinted "you are the spy" card).
  */
-type SurfaceTone = 'panel' | 'inset' | 'plain';
+type SurfaceTone = 'panel' | 'solid' | 'inset' | 'plain';
 
 const TONE: Record<SurfaceTone, string> = {
     panel: 'bg-gray-900/80 ring-1 ring-inset ring-white/10 backdrop-blur-sm',
+    // Fully opaque — for a panel that sits ON TOP of content it must stay legible against, without
+    // dimming or blurring what's behind it (the Codenames verdict over a revealed board: the board
+    // is the reveal, so hiding it to make the card readable trades away the thing people lean in
+    // to see). Frosted glass only works over the app's dark background.
+    solid: 'bg-gray-900 ring-1 ring-inset ring-white/10',
     inset: 'bg-white/5 ring-1 ring-inset ring-white/10',
     plain: 'ring-1 ring-inset ring-white/10',
 };

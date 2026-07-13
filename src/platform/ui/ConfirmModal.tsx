@@ -17,10 +17,10 @@ interface ConfirmModalProps {
 }
 
 /**
- * Shared confirmation modal. One component so every confirm dialog has an identical
- * footer — both buttons the SAME size (`lg`) and alignment — instead of each modal
- * hand-rolling a footer where the cancel button ended up a different size than the
- * primary action.
+ * Shared confirmation modal. One component so every confirm dialog has an identical footer: both
+ * buttons the same size, the same alignment, and — since "cancelar" is simply the alternative to
+ * the confirm — the same `secondary` treatment every other alternative in the arcade gets. It was
+ * a `ghost` text link, which made a modal's two options look like two different kinds of thing.
  */
 export const ConfirmModal: FC<ConfirmModalProps> = ({
     title,
@@ -40,7 +40,7 @@ export const ConfirmModal: FC<ConfirmModalProps> = ({
                 <p className="text-sm leading-relaxed text-gray-300">{message}</p>
             </ModalBody>
             <ModalFooter className="gap-2">
-                <Button variant="ghost" onPress={closeModal}>
+                <Button variant="secondary" onPress={closeModal}>
                     {cancelLabel}
                 </Button>
                 <Button

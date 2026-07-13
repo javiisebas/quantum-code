@@ -2,6 +2,7 @@
 
 import { Component, ReactNode } from 'react';
 import { Button } from './Button';
+import { Screen, ScreenBody } from './Screen';
 import { Surface } from './Surface';
 
 interface Props {
@@ -39,23 +40,28 @@ export class ErrorBoundary extends Component<Props, State> {
     render(): ReactNode {
         if (!this.state.hasError) return this.props.children;
         if (this.props.fallback) return this.props.fallback;
+        // The same shell, the same `card` column and the same dead-end contract as `RoomError`:
+        // one viewport, one card, and no top bar — the exit IS the content.
         return (
-            <main className="flex min-h-screen items-center justify-center px-6 text-center">
-                <Surface className="w-full max-w-sm p-8">
-                    <span className="text-4xl" aria-hidden="true">
-                        😵‍💫
-                    </span>
-                    <h1 className="mt-3 text-xl font-bold text-white">Algo ha fallado</h1>
-                    <p className="mt-2 text-sm text-gray-400">
-                        La partida ha tenido un problema. Vuelve a cargar para reconectar.
-                    </p>
-                    <div className="mt-5 flex justify-center">
-                        <Button variant="secondary" onPress={this.reset}>
-                            Recargar
-                        </Button>
-                    </div>
-                </Surface>
-            </main>
+            <Screen>
+                <ScreenBody className="text-center">
+                    <Surface className="w-full p-8">
+                        <span className="text-4xl" aria-hidden="true">
+                            😵‍💫
+                        </span>
+                        <h1 className="mt-3 text-xl font-bold text-white">Algo ha fallado</h1>
+                        <p className="mt-2 text-sm text-gray-400">
+                            La partida ha tenido un problema. Vuelve a cargar para reconectar.
+                        </p>
+                        {/* The only action on the screen, so it is the screen's primary. */}
+                        <div className="mt-5 flex justify-center">
+                            <Button variant="primary" onPress={this.reset}>
+                                Recargar
+                            </Button>
+                        </div>
+                    </Surface>
+                </ScreenBody>
+            </Screen>
         );
     }
 }

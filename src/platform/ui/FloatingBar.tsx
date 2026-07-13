@@ -1,18 +1,18 @@
 'use client';
 
-import { ClassnameHelper } from '@/platform/util/classnames';
+import { IconButton } from '@/platform/ui/Button';
 import { Tooltip } from '@heroui/react';
 import { forwardRef, ReactNode } from 'react';
 
 /**
- * Chrome for the game's floating control clusters (board HUD, dock, spy menu).
+ * Chrome for the game's floating control clusters (Codenames' board HUD, dock and spy menu).
  *
- * These bars are a distinct pattern from a standalone round `IconButton` (see
- * `Button.tsx`): they're squared, tooltip-labelled, and grouped inside one glass bar,
- * "Apple-dock" style. Keeping their button (`BarButton`), separator (`BarDivider`) and
- * bar surface (`FLOATING_BAR`) here — under their own name — is what lets every floating
- * cluster share the exact same shape while staying clearly separate from the generic
- * icon button used elsewhere (steppers, scanner close…).
+ * The BAR is what's special here — squared, glass, "Apple-dock" style — not the buttons in it.
+ * The buttons are the app's one `<IconButton>` wearing its `bar` surface, so a dock key and the
+ * TopBar's home key are now literally the same control with the same focus ring, hover and press.
+ * (They used to be two hand-rolled recipes that had drifted apart.) What `BarButton` still owns is
+ * the one thing a dock genuinely needs and no other icon button does: a TOOLTIP, because an
+ * icon-only action is only legitimate when something names it.
  */
 
 /** The shared "glass bar" surface for every floating control cluster. */
@@ -48,20 +48,15 @@ export const BarButton = forwardRef<HTMLButtonElement, BarButtonProps>(function 
                     'rounded-lg bg-gray-950/95 px-2.5 py-1 text-xs font-medium text-white shadow-xl ring-1 ring-white/10',
             }}
         >
-            <button
+            <IconButton
                 ref={ref}
-                type="button"
+                surface="bar"
+                tone={danger ? 'danger' : 'default'}
                 aria-label={label}
-                onClick={onPress}
-                className={ClassnameHelper.join(
-                    'flex h-11 w-11 items-center justify-center rounded-xl text-gray-300 transition-all duration-200',
-                    'hover:-translate-y-0.5 hover:bg-white/10 hover:text-white active:scale-90',
-                    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40',
-                    danger && 'hover:bg-rose-500/15 hover:text-rose-300',
-                )}
+                onPress={onPress}
             >
                 {icon}
-            </button>
+            </IconButton>
         </Tooltip>
     );
 });

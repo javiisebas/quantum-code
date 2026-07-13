@@ -1,7 +1,6 @@
 'use client';
 
 import { deleteRoom, openRoom, resumeRoom } from '@/platform/room/room-client';
-import { ShareModal } from '@/platform/ui/ShareModal';
 import {
     Board,
     generateBoard,
@@ -10,7 +9,7 @@ import {
     TeamEnum,
     TeamProgress,
 } from '@/games/codenames/domain';
-import { CODENAMES_ID, codenamesManifest } from '@/games/codenames/manifest';
+import { CODENAMES_ID } from '@/games/codenames/manifest';
 import { GameStatusEnum } from '@/games/codenames/enums/game-status.enum';
 import { LocalStorageHelper } from '@/platform/persistence/local-storage';
 import {
@@ -31,7 +30,6 @@ import {
     isTerminal,
     PersistedGame,
 } from './game-state';
-import { useModal } from '@/platform/ui/modal-context';
 
 interface GameContextType {
     code: number;
@@ -61,7 +59,6 @@ const LOAD_ERROR_MESSAGE =
 
 export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
     const [state, dispatch] = useReducer(gameReducer, initialGameState);
-    const { openModal } = useModal();
 
     // Always-current snapshot of state for stable callbacks that must read the
     // latest code/status without being re-created (and re-triggering effects).
@@ -82,20 +79,19 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
 
     // Start a brand-new game. The SERVER mints the code — it is the only side that can see every
     // game's reservations, and a code now has to name exactly one room across the whole arcade.
-    const createNewGame = useCallback(
-        async (options?: { share?: boolean }) => {
-            try {
-                const { code, value: board } = await openRoom<Board>(CODENAMES_ID, generateBoard());
-                dispatch({ type: 'NEW_GAME', code });
-                dispatch({ type: 'BOARD_LOADED', roles: board.roles, words: board.words });
-                if (options?.share)
-                    openModal(<ShareModal code={code} gameName={codenamesManifest.name} />);
-            } catch {
-                dispatch({ type: 'LOAD_ERROR', message: LOAD_ERROR_MESSAGE });
-            }
-        },
-        [openModal],
-    );
+    // No share modal is popped here any more: a fresh game now lands in the same `<HostLobby>` as
+    // every other game, and the lobby IS the way in (QR + code, side by side with who has arrived).
+    // The modal only ever fired for a BRAND-NEW game anyway, so a host who reloaded got no way in
+    // at all unless they went hunting in the dock.
+    const createNewGame = useCallback(async () => {
+        try {
+            const { code, value: board } = await openRoom<Board>(CODENAMES_ID, generateBoard());
+            dispatch({ type: 'NEW_GAME', code });
+            dispatch({ type: 'BOARD_LOADED', roles: board.roles, words: board.words });
+        } catch {
+            dispatch({ type: 'LOAD_ERROR', message: LOAD_ERROR_MESSAGE });
+        }
+    }, []);
 
     // Bootstrap once: resume a persisted game, or start a new one. Guarded so React
     // StrictMode's double-invoke in dev can't create two games / double-fetch.
@@ -122,7 +118,7 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
                 }).catch(() => {});
             }
         } else {
-            createNewGame({ share: true });
+            createNewGame();
         }
     }, [loadBoard, createNewGame]);
 
@@ -201,7 +197,7 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
         if (code && status === GameStatusEnum.PLAYING) {
             deleteRoom(CODENAMES_ID, code).catch(() => {});
         }
-        createNewGame({ share: true });
+        createNewGame();
     }, [createNewGame]);
 
     const progress = useMemo(

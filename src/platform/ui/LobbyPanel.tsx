@@ -27,6 +27,8 @@ export function LobbyPanel({
     accentChip,
     action,
     footer,
+    label = 'Jugadores',
+    caption,
 }: {
     /** Players currently in the room, in join order. */
     names: string[];
@@ -38,6 +40,14 @@ export function LobbyPanel({
     action: ReactNode;
     /** Optional secondary action row under the CTA. */
     footer?: ReactNode;
+    /**
+     * What the people in this list ARE. Nearly always players — but Codenames' phones are
+     * spymasters reading one shared map, not seats in a round, and calling them "Jugadores" would
+     * be a lie the lobby tells to look uniform.
+     */
+    label?: string;
+    /** One line under the label saying what they're here for. */
+    caption?: string;
 }) {
     const missing = Math.max(0, min - names.length);
     const full = names.length >= max;
@@ -46,11 +56,12 @@ export function LobbyPanel({
         <Surface className="flex h-full max-h-full flex-col gap-4 p-5 sm:p-6 short:gap-3 short:p-4">
             <div className="flex shrink-0 items-baseline justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-0.5">
-                    <Eyebrow as="h2">Jugadores</Eyebrow>
+                    <Eyebrow as="h2">{label}</Eyebrow>
                     <p className="truncate text-xs text-gray-500">
-                        {names.length === 0
-                            ? 'Aparecen aquí al entrar'
-                            : 'Ya están dentro de la sala'}
+                        {caption ??
+                            (names.length === 0
+                                ? 'Aparecen aquí al entrar'
+                                : 'Ya están dentro de la sala')}
                     </p>
                 </div>
                 <Chip className={names.length >= min ? accentChip : undefined}>

@@ -79,6 +79,9 @@ export const GameBoardMenu: FC = () => {
                         message="Se generará un código nuevo y se perderá la partida actual. ¿Empezar de nuevo?"
                         confirmLabel="Empezar de nuevo"
                         confirmIcon={<BiRefresh size={18} />}
+                        // The one irreversible action in the arcade: it throws the current game
+                        // away. The dock key is already red on hover; its confirm says so too.
+                        destructive
                         onConfirm={resetGame}
                     />,
                 ),

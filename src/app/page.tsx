@@ -1,11 +1,12 @@
 import { accentOf } from '@/games/_shared/accents';
 import { gameManifests } from '@/games/registry';
 import type { GameManifest } from '@/games/types';
-import { Button } from '@/platform/ui/Button';
+import { Button, FOCUS_RING } from '@/platform/ui/Button';
 import { Chip } from '@/platform/ui/Chip';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { Screen } from '@/platform/ui/Screen';
 import { Surface } from '@/platform/ui/Surface';
+import { TopBar } from '@/platform/ui/TopBar';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import Link from 'next/link';
 import { BiQr, BiRightArrowAlt } from 'react-icons/bi';
@@ -71,7 +72,9 @@ const GameCard = ({ game }: { game: GameManifest }) => {
         <Link
             href={`/host/${game.id}`}
             aria-label={`Crear una partida de ${game.name}`}
-            className="group block h-full rounded-3xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500"
+            // A clickable CARD, not a button — but it is still a control, so it focuses with the
+            // system's ring rather than a copy of it.
+            className={ClassnameHelper.join('group block h-full rounded-3xl', FOCUS_RING)}
         >
             <Surface
                 className={ClassnameHelper.join(
@@ -107,15 +110,29 @@ const GameCard = ({ game }: { game: GameManifest }) => {
 
 export default function ArcadeHomePage() {
     return (
-        <Screen width="xl" height="scroll" className="gap-8 pb-16 sm:gap-10">
-            <header className="flex h-12 shrink-0 items-center sm:h-14">
-                <Eyebrow className="tracking-[0.25em] text-purple-300">Quantum Arcade</Eyebrow>
-            </header>
+        // The one page rail and the one `<TopBar>`, exactly as every game screen has them: the
+        // home page used to hand-roll a header of its own inside a NARROWER page (`max-w-5xl`),
+        // so stepping from the catalogue into a game visibly jumped the chrome sideways and
+        // swapped one header for a different one. It is the only `height="scroll"` screen in the
+        // arcade — a catalogue is genuinely long, and is the one thing allowed to page-scroll.
+        <Screen height="scroll" className="gap-8 pb-16 sm:gap-10">
+            {/* No home key: this IS home. */}
+            <TopBar
+                back={null}
+                emoji="🕹️"
+                title="Quantum Arcade"
+                right={<Chip>{gameManifests.length} juegos</Chip>}
+            />
 
+            {/*
+             * The one heading in the arcade that is NOT the screen's identity — the top bar
+             * carries that. This is the product's promise, and the home page is the only screen
+             * with something to promise, so it stays: centred, in the body, as a lede.
+             */}
             <div className="flex flex-col items-center pt-2 text-center sm:pt-6">
-                <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+                <h2 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
                     Juegos de fiesta
-                </h1>
+                </h2>
                 <p className="mt-4 max-w-xl text-base text-gray-300 sm:text-lg">
                     Una pantalla para todos, un móvil para cada uno. Sin instalar nada.
                 </p>
@@ -124,14 +141,13 @@ export default function ArcadeHomePage() {
             <JoinDoor />
 
             <section aria-labelledby="catalogo">
-                <div className="mb-5 flex items-end justify-between gap-4">
-                    <div>
-                        <Eyebrow className="text-purple-300">Soy anfitrión</Eyebrow>
-                        <h2 id="catalogo" className="mt-1 text-xl font-bold text-white sm:text-2xl">
-                            Elige un juego
-                        </h2>
-                    </div>
-                    <Chip>{gameManifests.length} juegos</Chip>
+                {/* The count moved to the top bar (where every other screen puts its one piece of
+                    screen-level chrome), so this header stops repeating it. */}
+                <div className="mb-5">
+                    <Eyebrow className="text-purple-300">Soy anfitrión</Eyebrow>
+                    <h2 id="catalogo" className="mt-1 text-xl font-bold text-white sm:text-2xl">
+                        Elige un juego
+                    </h2>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -2,13 +2,21 @@ import { ChildrenProps } from '@/platform/util/children';
 import { FC } from 'react';
 import { SpyBoardMenu } from './SpyBoardMenu';
 
+/**
+ * The spymaster's phone. The board half of Codenames, so it follows the BOARD's rules rather than
+ * the page rhythm: it owns the viewport and wears a floating dock, exactly like the shared screen
+ * it is a secret copy of. A `<TopBar>` here would spend a row of a phone's height restating a
+ * board the player is already looking at.
+ *
+ * What it shares with every `<Screen>`: `h-dvh` (so the dock never slides under the mobile
+ * address bar), the same `px-5 sm:px-6` gutter, and the same contract that the ONE scrollable
+ * thing is the content — 25 word-cells do not fit a phone, and `min-h-full` + `justify-center` on
+ * the inner track is what centres a short board without stranding the top of a tall one.
+ */
 export const SpyBoardFrame: FC<ChildrenProps> = ({ children }) => {
     return (
-        // Own scroll container (the document body is overflow-hidden): centers the board
-        // on tall/desktop screens and scrolls vertically on mobile where 25 word-cells
-        // exceed the viewport. The menu stays pinned above the scrolling content.
-        <div className="relative h-screen overflow-y-auto">
-            <div className="mx-auto flex min-h-full max-w-lg flex-col justify-center px-4 pb-32 pt-8">
+        <div className="relative h-dvh overflow-y-auto">
+            <div className="mx-auto flex min-h-full max-w-lg flex-col justify-center px-5 pb-32 pt-8 sm:px-6">
                 {children}
             </div>
 

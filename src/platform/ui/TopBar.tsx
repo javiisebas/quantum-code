@@ -27,8 +27,11 @@ export function TopBar({
     /** Game glyph, shown beside the title. */
     emoji?: string;
     title?: ReactNode;
-    /** Where the left affordance goes. */
-    back?: string;
+    /**
+     * Where the left affordance goes — or `null` for the ONE screen that is already there. The
+     * home page rendering a house key that self-links is chrome with nothing to do.
+     */
+    back?: string | null;
     backLabel?: string;
     /** `home` = house icon (leaving a game), `back` = arrow (stepping back in a flow). */
     variant?: 'home' | 'back';
@@ -45,9 +48,11 @@ export function TopBar({
             )}
         >
             <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-                <IconButton as={Link} href={back} aria-label={backLabel} size="md">
-                    <Icon size={20} />
-                </IconButton>
+                {back !== null && (
+                    <IconButton as={Link} href={back} aria-label={backLabel} size="md">
+                        <Icon size={20} />
+                    </IconButton>
+                )}
                 {(emoji || title) && (
                     <div className="flex min-w-0 items-center gap-2">
                         {emoji && (

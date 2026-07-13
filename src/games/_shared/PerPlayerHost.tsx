@@ -12,7 +12,7 @@ import { HowToPlayButton } from '@/platform/ui/HowToPlay';
 import { LobbyPanel } from '@/platform/ui/LobbyPanel';
 import { Loading } from '@/platform/ui/Loading';
 import { RoomError } from '@/platform/ui/RoomError';
-import { Screen } from '@/platform/ui/Screen';
+import { Screen, ScreenBody } from '@/platform/ui/Screen';
 import { Surface } from '@/platform/ui/Surface';
 import { TopBar } from '@/platform/ui/TopBar';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -178,17 +178,18 @@ export function PerPlayerHost<T>({ game, build }: PerPlayerHostProps<T>) {
     const inc = () => setCount((c) => Math.min(maxPlayers, c + 1));
 
     return (
-        // The page is full-width so the CHROME spans it (a top bar squeezed into a 448px column
+        // The page is the one rail so the CHROME spans it (a top bar squeezed into a 448px column
         // in the middle of a TV, with the game's name truncated, is not chrome — it's debris).
-        // The card is what's capped.
-        <Screen width="full" height="fit">
+        // The card is what's capped, and it is the same `card` column every other one-card screen
+        // in the arcade uses.
+        <Screen>
             <TopBar
                 emoji={manifest.emoji}
                 title={manifest.name}
                 right={<HowToPlayButton manifest={manifest} />}
             />
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 py-4">
-                <Surface className="flex w-full max-w-md flex-col items-center gap-6 p-6 text-center sm:p-8">
+            <ScreenBody>
+                <Surface className="flex w-full flex-col items-center gap-6 p-6 text-center sm:p-8">
                     <div className="flex flex-col items-center gap-1">
                         <Eyebrow as="h2">¿Cuántos jugáis?</Eyebrow>
                         <p className="text-sm text-gray-400">
@@ -229,7 +230,7 @@ export function PerPlayerHost<T>({ game, build }: PerPlayerHostProps<T>) {
                         Abrir sala
                     </Button>
                 </Surface>
-            </div>
+            </ScreenBody>
         </Screen>
     );
 }

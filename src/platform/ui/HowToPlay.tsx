@@ -50,19 +50,34 @@ export function HowToPlayModal({ manifest }: { manifest: GameManifest }) {
     );
 }
 
-/** The `¿Cómo se juega?` affordance every game screen puts in its top bar. */
+/**
+ * The `¿Cómo se juega?` affordance every game screen puts in its top bar.
+ *
+ * It is a BUTTON — `secondary`, like every other alternative action in the arcade — and its label
+ * is never hidden. It used to be a `ghost`/`sm` control whose text disappeared below `sm:`, which
+ * left a phone showing a bare `?` glyph: a control that reads as a text link on a laptop and as
+ * decoration on a phone. Rules are the one thing a new player actually needs, so the affordance
+ * says what it is at every width, and the `TopBar` title truncates around it (that is what a title
+ * is for — an action does not shrink to make room for a name people can already see).
+ */
 export function HowToPlayButton({ manifest }: { manifest: GameManifest }) {
     const { openModal } = useModal();
     return (
         <Button
-            variant="ghost"
-            size="sm"
+            variant="secondary"
+            size="md"
             startContent={<BiHelpCircle size={18} />}
             onPress={() => openModal(<HowToPlayModal manifest={manifest} />)}
+            aria-label="¿Cómo se juega?"
         >
-            {/* The label is the affordance on a shared screen; on a phone the icon carries it. */}
+            {/*
+             * The label SHORTENS on a phone; it never disappears. At 375px the full question ate
+             * ~170px of a 375px bar and truncated the game's own name down to "La Bo…" — so the
+             * bar was spending its width telling you what the button does instead of what you are
+             * looking at. "Reglas" is the same button, said shorter.
+             */}
+            <span className="sm:hidden">Reglas</span>
             <span className="hidden sm:inline">¿Cómo se juega?</span>
-            <span className="sr-only sm:hidden">¿Cómo se juega?</span>
         </Button>
     );
 }

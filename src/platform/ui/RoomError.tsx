@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/platform/ui/Button';
+import { Screen, ScreenBody } from '@/platform/ui/Screen';
 import { Surface } from '@/platform/ui/Surface';
 import Link from 'next/link';
 import { ReactNode } from 'react';
@@ -14,6 +15,10 @@ import { BiHome, BiRefresh } from 'react-icons/bi';
  * It always offers a way forward (retry, or home): a dead end with no exit is the one thing a
  * party game can't afford, because the person staring at it is standing in a room full of
  * people waiting to play.
+ *
+ * Same `<Screen>` and same `card` column as every other one-card screen — but deliberately NO
+ * `<TopBar>`: this screen's whole content IS its exits, and a home key in the corner competing
+ * with the "Volver al inicio" button two inches below it is one exit too many.
  */
 export function RoomError({
     title = 'Vaya…',
@@ -28,38 +33,44 @@ export function RoomError({
     children?: ReactNode;
 }) {
     return (
-        <div className="flex h-dvh items-center justify-center px-5">
-            <Surface className="flex w-full max-w-sm flex-col items-center gap-5 p-8 text-center">
-                <span className="text-5xl" aria-hidden="true">
-                    🤷
-                </span>
-                <div className="flex flex-col gap-2">
-                    <h1 className="text-xl font-bold text-white">{title}</h1>
-                    <p className="text-sm leading-relaxed text-gray-400">{message}</p>
-                </div>
-                {children}
-                <div className="flex w-full flex-col gap-2">
-                    {onRetry && (
+        <Screen>
+            <ScreenBody>
+                <Surface className="flex w-full flex-col items-center gap-5 p-8 text-center">
+                    <span className="text-5xl" aria-hidden="true">
+                        🤷
+                    </span>
+                    <div className="flex flex-col gap-2">
+                        <h1 className="text-xl font-bold text-white">{title}</h1>
+                        <p className="text-sm leading-relaxed text-gray-400">{message}</p>
+                    </div>
+                    {children}
+                    <div className="flex w-full flex-col gap-2">
+                        {onRetry && (
+                            <Button
+                                variant="primary"
+                                fullWidth
+                                startContent={<BiRefresh size={20} />}
+                                onPress={onRetry}
+                            >
+                                Reintentar
+                            </Button>
+                        )}
+                        {/* Retrying is the primary when it is on offer, and going home is its
+                            alternative. With no retry, going home is the only action left on the
+                            screen — so it becomes the primary. A screen never offers nothing but
+                            alternatives. */}
                         <Button
-                            variant="primary"
+                            variant={onRetry ? 'secondary' : 'primary'}
                             fullWidth
-                            startContent={<BiRefresh size={20} />}
-                            onPress={onRetry}
+                            as={Link}
+                            href="/"
+                            startContent={<BiHome size={20} />}
                         >
-                            Reintentar
+                            Volver al inicio
                         </Button>
-                    )}
-                    <Button
-                        variant="secondary"
-                        fullWidth
-                        as={Link}
-                        href="/"
-                        startContent={<BiHome size={20} />}
-                    >
-                        Volver al inicio
-                    </Button>
-                </div>
-            </Surface>
-        </div>
+                    </div>
+                </Surface>
+            </ScreenBody>
+        </Screen>
     );
 }

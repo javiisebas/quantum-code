@@ -7,7 +7,7 @@ import { Chip } from '@/platform/ui/Chip';
 import { CodeInput } from '@/platform/ui/CodeInput';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { QrScannerOverlay } from '@/platform/ui/QrScannerOverlay';
-import { Screen } from '@/platform/ui/Screen';
+import { Screen, ScreenBody } from '@/platform/ui/Screen';
 import { Surface } from '@/platform/ui/Surface';
 import { TopBar } from '@/platform/ui/TopBar';
 import { ClassnameHelper } from '@/platform/util/classnames';
@@ -98,26 +98,26 @@ export function JoinScreen({
     } = useJoinFlow(initialCode, initialError);
 
     return (
-        // Full-width page so the chrome spans it; the card is what's capped narrow.
-        <Screen width="full" height="fit">
-            <TopBar variant="back" backLabel="Volver al inicio" />
+        // The one page rail, the one top bar. The wordmark used to be an eyebrow floating in the
+        // BODY of this screen while the bar next to it sat empty — so the player's first screen
+        // was the one screen whose chrome said nothing. It says the same thing the home page's
+        // bar says now, and the body is left with exactly one heading: the promise.
+        <Screen>
+            <TopBar emoji="🕹️" title="Quantum Arcade" variant="back" backLabel="Volver al inicio" />
 
             {/*
              * On a tall phone the whole block is centred. On a SHORT one (≤720px, an SE) the
-             * block rides to the top and the arcade strip is pushed to the bottom edge instead:
-             * that keeps the code field — the entire point of the screen — high enough to stay
-             * above the software keyboard, and spends the leftover height on decoration rather
-             * than on pushing the field under it.
+             * arcade strip claims the bottom edge (`short:mt-auto`), which packs the rest to the
+             * top: that keeps the code field — the entire point of the screen — high enough to
+             * stay above the software keyboard, and spends the leftover height on decoration
+             * rather than on pushing the field under it.
              */}
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 py-4 short:justify-start short:gap-5 short:py-2">
-                <header className="flex flex-col items-center text-center">
-                    <Eyebrow className="tracking-[0.25em] text-purple-300">Quantum Arcade</Eyebrow>
-                    <h1 className="mt-2 text-balance text-2xl font-bold tracking-tight text-white sm:text-3xl short:mt-1.5 short:text-xl">
-                        Estás a seis dígitos de jugar
-                    </h1>
-                </header>
+            <ScreenBody className="gap-6 short:gap-5">
+                <h2 className="text-balance text-center text-2xl font-bold tracking-tight text-white sm:text-3xl short:text-xl">
+                    Estás a seis dígitos de jugar
+                </h2>
 
-                <Surface className="relative w-full max-w-md overflow-hidden p-6 short:p-5 sm:p-8">
+                <Surface className="relative w-full overflow-hidden p-6 short:p-5 sm:p-8">
                     <div
                         aria-hidden="true"
                         className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-gradient-to-br from-purple-500/25 to-transparent opacity-80 blur-2xl"
@@ -205,7 +205,7 @@ export function JoinScreen({
                     </ul>
                     <Chip>{gameManifests.length} juegos de fiesta te esperan</Chip>
                 </footer>
-            </div>
+            </ScreenBody>
 
             {scanning && <QrScannerOverlay onDetect={handleDetect} onClose={closeScanner} />}
         </Screen>

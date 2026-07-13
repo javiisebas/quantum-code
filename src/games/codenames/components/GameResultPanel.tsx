@@ -81,12 +81,12 @@ export const GameResultPanel: FC = () => {
         <AnimatePresence>
             {content && (
                 <motion.div
-                    // A SCRIM, not just a floating card. `Surface` is frosted glass, which is
-                    // legible over the app's dark background but not over 25 saturated red and
-                    // blue cards: the words behind it bled through the verdict and the whole panel
-                    // read as muddy. Dimming the board is also what makes the verdict the thing you
-                    // look at — the board has just had its moment.
-                    className="absolute inset-0 z-30 flex items-center justify-center bg-gray-950/70 p-6 backdrop-blur-sm"
+                    // NO scrim and NO blur behind this. The end of a Codenames game is precisely
+                    // when you want to SEE the board — which colour every word turned out to be is
+                    // the reveal, and dimming it hides the one thing everyone leans in to look at.
+                    // The panel earns its legibility by being OPAQUE itself (below), not by putting
+                    // the board out of focus.
+                    className="absolute inset-0 z-30 flex items-center justify-center p-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -105,7 +105,10 @@ export const GameResultPanel: FC = () => {
                             delay: 0.55,
                         }}
                     >
-                        <Surface className="flex flex-col items-center gap-5 p-8 text-center shadow-2xl">
+                        <Surface
+                            tone="solid"
+                            className="flex flex-col items-center gap-5 p-8 text-center shadow-2xl"
+                        >
                             <span
                                 className={ClassnameHelper.join(
                                     'flex h-20 w-20 items-center justify-center rounded-full ring-1 ring-inset',
@@ -146,8 +149,11 @@ export const GameResultPanel: FC = () => {
                                 >
                                     Revelar cartas
                                 </Button>
+                                {/* Same weight as "Revelar cartas": two alternatives to the primary
+                                    action are two alternatives, and rendering one of them as a
+                                    ghost link made them look like different KINDS of thing. */}
                                 <Button
-                                    variant="ghost"
+                                    variant="secondary"
                                     fullWidth
                                     startContent={<BiHome size={20} />}
                                     onPress={() => router.push('/')}

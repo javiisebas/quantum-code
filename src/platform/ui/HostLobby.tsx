@@ -49,7 +49,9 @@ export function HostLobby({
     children: ReactNode;
 }) {
     return (
-        <Screen width="full" height="fit">
+        // No `<ScreenBody>`: this is one of the two screens that wants the whole page rail and lays
+        // its own grid out in it (the other is the catalogue).
+        <Screen>
             <TopBar
                 emoji={manifest.emoji}
                 title={manifest.name}

@@ -1,20 +1,23 @@
 'use client';
 
 import { getManifest } from '@/games/registry';
+import type { GameManifest } from '@/games/types';
 import { LocalStorageHelper } from '@/platform/persistence/local-storage';
 import { submitInput } from '@/platform/room/live-client';
 import { usePlayerRoom } from '@/platform/room/use-player-room';
 import { useHeartbeat } from '@/platform/room/use-presence';
 import { Button } from '@/platform/ui/Button';
 import { ErrorBoundary } from '@/platform/ui/ErrorBoundary';
+import { HowToPlayButton } from '@/platform/ui/HowToPlay';
 import { JoinScreen } from '@/platform/ui/JoinScreen';
 import { Loading } from '@/platform/ui/Loading';
-import { Screen } from '@/platform/ui/Screen';
+import { Screen, ScreenBody } from '@/platform/ui/Screen';
 import { Surface } from '@/platform/ui/Surface';
 import { TextInput } from '@/platform/ui/TextInput';
 import { TopBar } from '@/platform/ui/TopBar';
 import { FormEvent, ReactNode, useEffect, useState } from 'react';
 import { LiveRoomPayload, ROSTER_ROUND } from './live-session';
+import { LiveManifestProvider } from './PhoneStage';
 
 /**
  * Shared phone shell for LIVE games. Handles everything before the game itself: validate the
@@ -81,20 +84,25 @@ export function LivePlayerShell({ game, code, children }: LivePlayerShellProps) 
     }
 
     if (name.length === 0) {
-        return <NameForm emoji={manifest.emoji} gameName={manifest.name} onSubmit={setName} />;
+        return <NameForm manifest={manifest} onSubmit={setName} />;
     }
 
-    return <ErrorBoundary>{children({ code, seat, name, seatToken })}</ErrorBoundary>;
+    // Every `<PhoneStage>` a live game renders — in any phase, in any of the three games — reads
+    // the manifest from here, so the phone's top bar is identical to the host's and to the four
+    // secret-card games'.
+    return (
+        <LiveManifestProvider manifest={manifest}>
+            <ErrorBoundary>{children({ code, seat, name, seatToken })}</ErrorBoundary>
+        </LiveManifestProvider>
+    );
 }
 
 /** One-time name entry. Persists the name globally so the player only types it once, ever. */
 function NameForm({
-    emoji,
-    gameName,
+    manifest,
     onSubmit,
 }: {
-    emoji: string;
-    gameName: string;
+    manifest: GameManifest;
     onSubmit: (name: string) => void;
 }) {
     const [draft, setDraft] = useState('');
@@ -108,14 +116,17 @@ function NameForm({
     };
 
     return (
-        // Full-width page so the chrome spans it; the card is what's capped narrow.
-        <Screen width="full" height="fit">
-            <TopBar emoji={emoji} title={gameName} />
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center py-4">
-                <Surface
-                    as="section"
-                    className="flex w-full max-w-md flex-col gap-6 p-6 text-center sm:p-8"
-                >
+        // The one page rail so the chrome spans it; the card is what's capped, at the arcade's one
+        // `card` width. The rules button is here for the same reason it is on every other game
+        // screen: this is the first thing a player sees of a game they may never have played.
+        <Screen>
+            <TopBar
+                emoji={manifest.emoji}
+                title={manifest.name}
+                right={<HowToPlayButton manifest={manifest} />}
+            />
+            <ScreenBody>
+                <Surface as="section" className="flex w-full flex-col gap-6 p-6 text-center sm:p-8">
                     <div className="flex flex-col gap-2">
                         <h2 className="text-2xl font-bold text-white">¿Cómo te llamas?</h2>
                         <p className="text-sm text-gray-400">
@@ -141,7 +152,7 @@ function NameForm({
                         </Button>
                     </form>
                 </Surface>
-            </div>
+            </ScreenBody>
         </Screen>
     );
 }

@@ -3,7 +3,7 @@
 import { LocalStorageHelper } from '@/platform/persistence/local-storage';
 import { submitInput } from '@/platform/room/live-client';
 import { useLiveState } from '@/platform/room/use-live-room';
-import { Button } from '@/platform/ui/Button';
+import { Button, FOCUS_RING } from '@/platform/ui/Button';
 import { Chip } from '@/platform/ui/Chip';
 import { ConfettiBurst } from '@/platform/ui/Confetti';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
@@ -227,12 +227,23 @@ function VotePhone({
                     const locked = votedId !== null;
                     return (
                         <li key={answer.id}>
+                            {/*
+                             * A raw <button>: this is a SELECTABLE option, not an action — it has a
+                             * chosen state (the accent tint) that no button variant expresses, and
+                             * it is shaped like the list rows it sits among (`rounded-2xl`, the
+                             * app's row radius), not like a CTA. It takes the system's focus ring so
+                             * it still belongs; it keeps its own dimming, because `disabled` here
+                             * means "already voted" / "your own answer" — a state to READ, not an
+                             * action that's off. The primitive's grey disabled fill would erase the
+                             * tint that tells the player which one they picked.
+                             */}
                             <button
                                 type="button"
                                 disabled={isOwn || locked}
                                 onClick={() => castVote(answer.id)}
                                 className={ClassnameHelper.join(
-                                    'w-full rounded-2xl px-4 py-4 text-left text-lg font-semibold text-white ring-1 ring-inset transition',
+                                    'w-full rounded-2xl px-4 py-4 text-left text-lg font-semibold text-white ring-1 ring-inset transition disabled:cursor-default',
+                                    FOCUS_RING,
                                     isChosen ? acc.highlight : 'bg-white/5 ring-white/10',
                                     isOwn && 'opacity-40',
                                     !locked && !isOwn && 'active:scale-[0.99] hover:bg-white/10',

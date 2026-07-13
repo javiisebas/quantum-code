@@ -2,6 +2,7 @@
 
 import { useGame } from '@/games/codenames/GameContext';
 import { GameStatusEnum } from '@/games/codenames/enums/game-status.enum';
+import { FOCUS_RING_LIGHT } from '@/platform/ui/Button';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import { getCardColor } from '@/games/codenames/get-card-color';
 import { FC } from 'react';
@@ -29,14 +30,20 @@ export const GameBoardCard: FC<CardProps> = ({ index }) => {
     };
 
     return (
+        // A raw <button>: no variant can express a two-faced card that flips in 3D, and the word
+        // grid IS the board rather than a control on it. What it does take from the system is the
+        // focus ring (`FOCUS_RING_LIGHT` — white, because this button sits on colour). It keeps its
+        // own "disabled" look: here `disabled` means the card is already FLIPPED, a state the face
+        // itself shows, not an action that is unavailable — the primitive's muted grey fill would
+        // paint over the very colour the player just revealed.
         <button
             type="button"
             onClick={handleClick}
             disabled={!isInteractive}
             aria-label={revealed ? `${word} (revelada)` : word}
             className={ClassnameHelper.join(
-                'perspective block appearance-none border-0 bg-transparent p-0 rounded-lg',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
+                'perspective block appearance-none rounded-lg border-0 bg-transparent p-0',
+                FOCUS_RING_LIGHT,
                 isInteractive && 'cursor-pointer',
             )}
         >

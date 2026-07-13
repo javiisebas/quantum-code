@@ -2,7 +2,7 @@
 
 import type { GameManifest } from '@/games/types';
 import { Chip } from '@/platform/ui/Chip';
-import { Screen } from '@/platform/ui/Screen';
+import { Screen, ScreenBody } from '@/platform/ui/Screen';
 import { TopBar } from '@/platform/ui/TopBar';
 import { ReactNode } from 'react';
 
@@ -36,10 +36,10 @@ export function LiveBoard({
     children: ReactNode;
 }) {
     return (
-        // Full-width page, capped STAGE — the same split the lobby uses. Capping the page instead
-        // would shrink the top bar to the stage's width, so the header would visibly jump inward
-        // the moment the host pressed "Empezar". Chrome stays put; only the content is measured.
-        <Screen width="full" height="fit">
+        // The one page rail, a capped STAGE — the same split the lobby uses. Capping the page
+        // instead would shrink the top bar to the stage's width, so the header would visibly jump
+        // inward the moment the host pressed "Empezar". Chrome stays put; only content is measured.
+        <Screen>
             <TopBar
                 emoji={manifest.emoji}
                 title={manifest.name}
@@ -53,14 +53,12 @@ export function LiveBoard({
             />
 
             {/*
-             * The cap lives on the STAGE, not on the page, and the stage is also the scroll box:
-             * a stage that wants to pin a CTA under a long list (the podium, a 12-answer vote)
-             * needs a bounded height to claim `flex-1 min-h-0` against, and it only gets one if
-             * the box it sits in is the one that scrolls.
+             * The cap lives on the STAGE (`width="stage"`), not on the page, and the stage is also
+             * the scroll box: a stage that wants to pin a CTA under a long list (the podium, a
+             * 12-answer vote) needs a bounded height to claim `flex-1 min-h-0` against, and it
+             * only gets one if the box it sits in is the one that scrolls.
              */}
-            <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col items-center overflow-y-auto py-4 short:py-2 [justify-content:safe_center]">
-                {children}
-            </div>
+            <ScreenBody width="stage">{children}</ScreenBody>
         </Screen>
     );
 }

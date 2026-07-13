@@ -3,7 +3,7 @@
 import type { GameManifest } from '@/games/types';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { HowToPlayButton } from '@/platform/ui/HowToPlay';
-import { Screen } from '@/platform/ui/Screen';
+import { Screen, ScreenBody } from '@/platform/ui/Screen';
 import { TopBar } from '@/platform/ui/TopBar';
 import { ReactNode } from 'react';
 
@@ -40,10 +40,11 @@ export function SecretCardScreen({
     reference?: ReactNode;
 }) {
     return (
-        // Full-width page so the CHROME spans it (a top bar squeezed into a 448px column in the
+        // The one page rail so the CHROME spans it (a top bar squeezed into a 448px column in the
         // middle of a laptop, with the game's name truncated, is not chrome — it's debris). The
-        // content column is what's capped, and it stays phone-width because that is what it is.
-        <Screen width="full">
+        // content column is what's capped, and it is the arcade's one `card` width, because a
+        // secret card is exactly that.
+        <Screen>
             <TopBar
                 emoji={manifest.emoji}
                 title={manifest.name}
@@ -51,17 +52,15 @@ export function SecretCardScreen({
             />
 
             {/* A card plus its reference material (16 word tiles, a dozen location chips) outgrows
-                a short phone, so the scroll lives HERE — inside the single viewport `Screen`
-                guarantees — and the top bar never leaves. `min-h-full` + `justify-center` on the
-                inner track is what centres a short card without clipping the top of a tall one;
-                `justify-center` on the scroll container itself would cut the overflow off. */}
-            <div className="min-h-0 flex-1 overflow-y-auto">
-                <div className="mx-auto flex min-h-full w-full max-w-md flex-col items-center justify-center py-4 short:py-2">
-                    <Eyebrow className="mb-3 short:mb-2">Jugador {seat}</Eyebrow>
-                    {children}
-                    {reference && <div className="mt-7 w-full short:mt-5">{reference}</div>}
-                </div>
-            </div>
+                a short phone, so it scrolls INSIDE `<ScreenBody>` — the one scroll box on the page,
+                inside the single viewport `Screen` guarantees — and the top bar never leaves. The
+                body's `safe center` is what centres a short card without stranding the top of a
+                tall one out of reach. */}
+            <ScreenBody>
+                <Eyebrow className="mb-3 short:mb-2">Jugador {seat}</Eyebrow>
+                {children}
+                {reference && <div className="mt-7 w-full short:mt-5">{reference}</div>}
+            </ScreenBody>
         </Screen>
     );
 }
