@@ -6,12 +6,23 @@ delete process.env.UPSTASH_REDIS_REST_TOKEN;
 delete process.env.UPSTASH_REDIS_KV_REST_API_URL;
 delete process.env.UPSTASH_REDIS_KV_REST_API_TOKEN;
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { buildSpyfall } from '@/games/spyfall/domain';
 import { claimSeat, readRoom, reserveCode, writeRoomIfAbsent } from '@/platform/room/room-store';
 import { HOST_TOKEN_HEADER, SEAT_TOKEN_HEADER } from '@/platform/room/tokens';
 import { DELETE, GET, POST } from './route';
 import { POST as CLAIM_SEAT } from './seat/route';
+
+/**
+ * The routes schedule their lifecycle webhooks with Next's `after()`, which THROWS when called
+ * outside a request scope — and calling a handler directly, as these tests do, has no such scope.
+ * Stubbing it to a no-op is what lets us exercise the paths that emit an event (a create, a
+ * delete) at all; the webhook seam itself is not what is under test here.
+ */
+vi.mock('next/server', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('next/server')>()),
+    after: () => {},
+}));
 
 /**
  * HTTP-boundary security tests for the generic room endpoint — the layer an attacker actually
@@ -23,11 +34,13 @@ import { POST as CLAIM_SEAT } from './seat/route';
  *      `created:false` "resume" leak — knowing the code is enough to defeat the seal otherwise);
  *   2. a per-seat GET returns only the caller seat's projected slice, and only with that seat's
  *      token;
- *   3. one code names one room across the arcade — resuming a code another game owns is refused.
+ *   3. one code names one room across the arcade — resuming a code another game owns is refused;
+ *   4. DELETE is host-authoritative — it was the lone unauthenticated mutation, and it both wipes
+ *      the room and frees its code;
+ *   5. a seat can only be claimed in a room that exists.
  *
- * Rooms are seeded through the STORE directly (not via POST create) so the create-only webhook
- * `after()` callback never runs outside a request scope; every POST exercised here is a resume or
- * a rejected reservation, neither of which schedules post-response work.
+ * Rooms are seeded through the STORE directly rather than via POST, so each test starts from an
+ * exactly-known room without depending on the create path it isn't testing.
  */
 
 const ctx = (game: string) => ({ params: Promise.resolve({ game }) });
