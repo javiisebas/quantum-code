@@ -1,7 +1,12 @@
 # El anfitrión también quiere jugar (4 móviles, ninguna tele)
 
-> Estado: **diseñado, no implementado.** Este documento existe para que la decisión no haya que
-> rederivarla. Verificado contra el código real, no supuesto.
+> Estado: **parcialmente implementado** (rama `feat/host-also-plays`). Hecho: el punto 1
+> (`manifest.needsSharedScreen` + etiqueta en el catálogo) y el grupo 3 («Yo también juego» en
+> Spyfall, Impostor, Hombres Lobo y El Camaleón — el host reclama asiento real y su dispositivo
+> proyecta SU carta en local, con la sala a un toque en la TopBar). Pendiente: grupo 1 (separar
+> motor y vista en La Bomba/Chispas) y la decisión de producto del grupo 2 (por ahora Sintonía y
+> Código Secreto se declaran «Necesita pantalla», que es la salida honesta que este doc admite).
+> Verificado contra el código real, no supuesto.
 
 ## El escenario que hoy no existe
 

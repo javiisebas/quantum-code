@@ -26,6 +26,7 @@ export function SecretCardScreen({
     seat,
     children,
     reference,
+    actions,
 }: {
     manifest: GameManifest;
     /** This phone's 1-based seat — how a player says "me" out loud during the round. */
@@ -38,6 +39,12 @@ export function SecretCardScreen({
      * it lives outside the card.
      */
     reference?: ReactNode;
+    /**
+     * Extra top-bar actions BEFORE the rules button. A guest's phone has none; the host playing
+     * from their own phone («Yo también juego») keeps the way back to the room — QR, roster,
+     * new round — here, because chrome is where a screen's controls live.
+     */
+    actions?: ReactNode;
 }) {
     return (
         // The one page rail so the CHROME spans it (a top bar squeezed into a 448px column in the
@@ -48,7 +55,12 @@ export function SecretCardScreen({
             <TopBar
                 emoji={manifest.emoji}
                 title={manifest.name}
-                right={<HowToPlayButton manifest={manifest} />}
+                right={
+                    <>
+                        {actions}
+                        <HowToPlayButton manifest={manifest} />
+                    </>
+                }
             />
 
             {/* A card plus its reference material (16 word tiles, a dozen location chips) outgrows

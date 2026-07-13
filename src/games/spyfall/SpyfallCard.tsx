@@ -6,13 +6,15 @@ import { Chip } from '@/platform/ui/Chip';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
 import { BiSolidUserX } from 'react-icons/bi';
 import { SPYFALL_LOCATION_NAMES, type SpyfallSeatView } from './domain';
 import { spyfallManifest } from './manifest';
 
 interface SpyfallCardProps {
     view: SpyfallSeatView;
+    /** Extra top-bar actions — the host playing from their own phone keeps its controls here. */
+    actions?: ReactNode;
 }
 
 /** The same on every phone: the spy's only lead, and everyone else's checklist. */
@@ -30,7 +32,7 @@ const LocationList = () => (
 );
 
 /** This phone's secret Spyfall card: either "you are the spy" or location + role. */
-export const SpyfallCard: FC<SpyfallCardProps> = ({ view }) => {
+export const SpyfallCard: FC<SpyfallCardProps> = ({ view, actions }) => {
     // More phones joined than seats dealt — this player has no assignment this round.
     if (view.kind === 'full') {
         return <RoundFullCard />;
@@ -39,7 +41,12 @@ export const SpyfallCard: FC<SpyfallCardProps> = ({ view }) => {
     const isSpy = view.kind === 'spy';
 
     return (
-        <SecretCardScreen manifest={spyfallManifest} seat={view.seat} reference={<LocationList />}>
+        <SecretCardScreen
+            manifest={spyfallManifest}
+            seat={view.seat}
+            reference={<LocationList />}
+            actions={actions}
+        >
             <Surface
                 tone={isSpy ? 'plain' : 'panel'}
                 className={ClassnameHelper.join(

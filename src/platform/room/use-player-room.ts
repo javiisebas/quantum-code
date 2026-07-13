@@ -28,10 +28,15 @@ export interface PlayerRoom<T> {
     seatToken: string | null;
 }
 
-const seatStorageKey = (game: string, code: number) => `quantum:seat:${game}:${code}`;
+/**
+ * Where THIS device's claim for `(game, code)` lives. Exported because the host device can hold
+ * a claim too («Yo también juego»): by sharing the exact key, a host who claims a seat and a
+ * phone that claims one are indistinguishable to the rest of the machinery.
+ */
+export const seatStorageKey = (game: string, code: number) => `quantum:seat:${game}:${code}`;
 
 /** A stored value is a usable claim only when it carries both a seat and a token. */
-const isSeatClaim = (value: unknown): value is SeatClaim =>
+export const isSeatClaim = (value: unknown): value is SeatClaim =>
     typeof value === 'object' &&
     value !== null &&
     typeof (value as SeatClaim).seat === 'number' &&

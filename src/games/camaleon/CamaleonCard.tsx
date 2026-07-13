@@ -4,13 +4,15 @@ import { SecretCardScreen } from '@/games/_shared/SecretCardScreen';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
 import { BiSolidMask } from 'react-icons/bi';
 import type { CamaleonSeatView } from './domain';
 import { camaleonManifest } from './manifest';
 
 interface CamaleonCardProps {
     view: CamaleonSeatView;
+    /** Extra top-bar actions — the host playing from their own phone keeps its controls here. */
+    actions?: ReactNode;
 }
 
 /**
@@ -50,7 +52,7 @@ const WordBoard: FC<{ theme: string; words: string[]; highlight: number | null }
 );
 
 /** This phone's secret Camaleón card: either "you are the Chameleon" or the secret word. */
-export const CamaleonCard: FC<CamaleonCardProps> = ({ view }) => {
+export const CamaleonCard: FC<CamaleonCardProps> = ({ view, actions }) => {
     // The view is already projected for this seat: the Chameleon or an ordinary player.
     // Camaleón shares one board (no per-seat array), so there is no "partida completa" guard.
     const isChameleon = view.kind === 'chameleon';
@@ -59,6 +61,7 @@ export const CamaleonCard: FC<CamaleonCardProps> = ({ view }) => {
         <SecretCardScreen
             manifest={camaleonManifest}
             seat={view.seat}
+            actions={actions}
             reference={
                 <WordBoard
                     theme={view.theme}
