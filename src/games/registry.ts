@@ -1,6 +1,7 @@
 import { camaleonManifest } from './camaleon/manifest';
 import { chispasManifest } from './chispas/manifest';
 import { codenamesManifest } from './codenames/manifest';
+import { sintoniaManifest } from './sintonia/manifest';
 import { spyfallManifest } from './spyfall/manifest';
 import { undercoverManifest } from './undercover/manifest';
 import { werewolfManifest } from './werewolf/manifest';
@@ -19,6 +20,7 @@ export const gameManifests: GameManifest[] = [
     codenamesManifest,
     chispasManifest,
     camaleonManifest,
+    sintoniaManifest,
     spyfallManifest,
     undercoverManifest,
     werewolfManifest,

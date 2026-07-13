@@ -25,6 +25,10 @@ const gameLoaders: Record<string, GameLoader> = {
         Host: dynamic(() => import('./camaleon/Host').then((m) => m.CamaleonHost)),
         Player: dynamic(() => import('./camaleon/Player').then((m) => m.CamaleonPlayer)),
     },
+    sintonia: {
+        Host: dynamic(() => import('./sintonia/Host').then((m) => m.SintoniaHost)),
+        Player: dynamic(() => import('./sintonia/Player').then((m) => m.SintoniaPlayer)),
+    },
     spyfall: {
         Host: dynamic(() => import('./spyfall/Host').then((m) => m.SpyfallHost)),
         Player: dynamic(() => import('./spyfall/Player').then((m) => m.SpyfallPlayer)),

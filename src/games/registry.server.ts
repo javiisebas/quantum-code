@@ -1,6 +1,7 @@
 import { CAMALEON_ID, camaleonManifest, validateCamaleonPayload } from './camaleon/manifest';
 import { CHISPAS_ID, chispasManifest, validateChispasPayload } from './chispas/manifest';
 import { CODENAMES_ID, codenamesManifest, validateCodenamesPayload } from './codenames/manifest';
+import { SINTONIA_ID, sintoniaManifest, validateSintoniaPayload } from './sintonia/manifest';
 import { SPYFALL_ID, spyfallManifest, validateSpyfallPayload } from './spyfall/manifest';
 import { UNDERCOVER_ID, undercoverManifest, validateUndercoverPayload } from './undercover/manifest';
 import { WEREWOLF_ID, werewolfManifest, validateWerewolfPayload } from './werewolf/manifest';
@@ -28,6 +29,11 @@ const serverGames: Record<string, GameServerModule> = {
         manifest: camaleonManifest,
         namespace: CAMALEON_ID,
         validatePayload: validateCamaleonPayload,
+    },
+    [SINTONIA_ID]: {
+        manifest: sintoniaManifest,
+        namespace: SINTONIA_ID,
+        validatePayload: validateSintoniaPayload,
     },
     [SPYFALL_ID]: {
         manifest: spyfallManifest,
