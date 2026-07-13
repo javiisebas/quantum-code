@@ -55,8 +55,17 @@ export function LiveLobby({ game, minPlayers, maxPlayers, children }: LiveLobbyP
     const [hostToken, setHostToken] = useState<string | null>(null);
     const [startedPlayers, setStartedPlayers] = useState<LivePlayer[]>([]);
 
+    // The roster poll must not start until the host token is KNOWN-GOOD. On a fresh room that is
+    // immediate; on a resume it is only true once `resumeRoom` has settled and we've adopted any
+    // re-minted token. Polling before then would 401 with the stale token and trip the
+    // `onUnauthorized` backstop — which would open a DIFFERENT fresh room and orphan the code the
+    // host is already showing. This gate is what keeps the resume path and that backstop from
+    // racing each other.
+    const [pollReady, setPollReady] = useState(false);
+
     const startNewRoom = useCallback(async () => {
         setPhase('creating');
+        setPollReady(false);
         try {
             // The SERVER allocates the code: only it can see every game's reservations, and a
             // code now has to name exactly one room across the whole arcade.
@@ -69,6 +78,8 @@ export function LiveLobby({ game, minPlayers, maxPlayers, children }: LiveLobbyP
             setCode(fresh);
             setHostToken(token);
             setPhase('lobby');
+            // Freshly minted token — safe to poll at once.
+            setPollReady(true);
         } catch {
             setPhase('error');
         }
@@ -86,6 +97,8 @@ export function LiveLobby({ game, minPlayers, maxPlayers, children }: LiveLobbyP
         }>(storageKey(game));
         // Resume only with a stored host token (a pre-token entry can't act as host → fresh room).
         if (persisted?.code && persisted.hostToken) {
+            // Show the code/QR immediately (a reloading host wants to see it at once), but hold the
+            // roster poll until the token is confirmed — see `pollReady`.
             setCode(persisted.code);
             setHostToken(persisted.hostToken);
             setPhase('lobby');
@@ -94,16 +107,21 @@ export function LiveLobby({ game, minPlayers, maxPlayers, children }: LiveLobbyP
                 .then(({ hostToken: minted }) => {
                     // A token comes back ONLY when this call actually re-created the room, i.e.
                     // the old one had expired. The server minted a fresh host capability with it,
-                    // so the token we persisted is now worthless: keeping it locks the host out of
-                    // its own room — every roster poll 401s and the lobby never fills, forever.
-                    if (!minted) return;
-                    setHostToken(minted);
-                    LocalStorageHelper.setLocalStorageItem(storageKey(game), {
-                        code: persisted.code,
-                        hostToken: minted,
-                    });
+                    // so the token we persisted is now worthless: adopt the new one, or every
+                    // roster poll would 401 and the lobby would never fill.
+                    if (minted) {
+                        setHostToken(minted);
+                        LocalStorageHelper.setLocalStorageItem(storageKey(game), {
+                            code: persisted.code,
+                            hostToken: minted,
+                        });
+                    }
                 })
-                .catch(() => {});
+                // Whether the room survived (kept our token) or was re-created (adopted the new
+                // one), the token in state is now the right one, so it is safe to start polling.
+                // Even on a network failure we release the gate: the `onUnauthorized` backstop then
+                // covers a genuinely-dead token, which is the only case left it can fire for.
+                .finally(() => setPollReady(true));
         } else {
             void startNewRoom();
         }
@@ -114,12 +132,12 @@ export function LiveLobby({ game, minPlayers, maxPlayers, children }: LiveLobbyP
         game,
         code,
         round: ROSTER_ROUND,
-        active: phase === 'lobby',
+        active: phase === 'lobby' && pollReady,
         hostToken,
-        // The room rejected our host capability — the persisted one is dead (its room lapsed and
-        // was re-created under a new token). There is nothing to salvage and nobody has joined
-        // this lobby yet, so open a fresh room rather than leave the host staring at a roster
-        // that can never fill.
+        // Backstop only: with `pollReady` gating the start, the token is known-good by the time we
+        // poll, so this can fire only if a capability dies UNDER us mid-lobby. Nobody has joined
+        // yet, so opening a fresh room is the right recovery — better than a roster that can never
+        // fill.
         onUnauthorized: () => void startNewRoom(),
     });
     const players = useMemo(() => rosterFromInputs(rosterInputs), [rosterInputs]);

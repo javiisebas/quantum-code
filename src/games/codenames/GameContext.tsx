@@ -85,8 +85,12 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
     // at all unless they went hunting in the dock.
     const createNewGame = useCallback(async () => {
         try {
-            const { code, value: board } = await openRoom<Board>(CODENAMES_ID, generateBoard());
-            dispatch({ type: 'NEW_GAME', code });
+            const {
+                code,
+                value: board,
+                hostToken,
+            } = await openRoom<Board>(CODENAMES_ID, generateBoard());
+            dispatch({ type: 'NEW_GAME', code, hostToken });
             dispatch({ type: 'BOARD_LOADED', roles: board.roles, words: board.words });
         } catch {
             dispatch({ type: 'LOAD_ERROR', message: LOAD_ERROR_MESSAGE });
@@ -111,11 +115,16 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
             } else if (persisted.status === GameStatusEnum.PLAYING && persisted.roles?.length) {
                 // Re-ensure the published board AND its code reservation still exist (both have a
                 // 7-day TTL) so spies can rejoin a resumed game. Create-if-absent → a no-op when
-                // it's all still there.
+                // it's all still there; if it HAD lapsed, the server minted a fresh host token, so
+                // adopt it or the board could no longer release its own room.
                 resumeRoom<Board>(CODENAMES_ID, persisted.code, {
                     roles: persisted.roles,
                     words: persisted.words,
-                }).catch(() => {});
+                })
+                    .then(({ hostToken }) => {
+                        if (hostToken) dispatch({ type: 'ADOPT_HOST_TOKEN', hostToken });
+                    })
+                    .catch(() => {});
             }
         } else {
             createNewGame();
@@ -133,6 +142,7 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
             words: state.words,
             roles: state.roles,
             revealedRoles: state.revealedRoles,
+            hostToken: state.hostToken,
         };
         LocalStorageHelper.setLocalStorageItem(GAME_STORAGE_KEY, slice);
     }, [
@@ -144,20 +154,21 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
         state.words,
         state.roles,
         state.revealedRoles,
+        state.hostToken,
     ]);
 
     // Release the board from Redis once a game reaches a terminal state, so spies can
     // no longer peek at a finished board. Runs at most once per code.
     const releasedCodeRef = useRef<number | null>(null);
     useEffect(() => {
-        if (!state.hydrated || !state.code) return;
+        if (!state.hydrated || !state.code || !state.hostToken) return;
         if (isTerminal(state.status) && releasedCodeRef.current !== state.code) {
             releasedCodeRef.current = state.code;
-            deleteRoom(CODENAMES_ID, state.code).catch(() => {
+            deleteRoom(CODENAMES_ID, state.code, state.hostToken).catch(() => {
                 /* best-effort cleanup; the 7-day TTL is the backstop */
             });
         }
-    }, [state.hydrated, state.status, state.code]);
+    }, [state.hydrated, state.status, state.code, state.hostToken]);
 
     // Auto-dismiss the winning confetti so it never runs forever.
     useEffect(() => {
@@ -192,10 +203,10 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
     }, [loadBoard, createNewGame]);
 
     const resetGame = useCallback(() => {
-        const { code, status } = stateRef.current;
-        // Release the previous board from Redis before starting a new game.
-        if (code && status === GameStatusEnum.PLAYING) {
-            deleteRoom(CODENAMES_ID, code).catch(() => {});
+        const { code, status, hostToken } = stateRef.current;
+        // Release the previous board from Redis before starting a new game (host-authoritative).
+        if (code && hostToken && status === GameStatusEnum.PLAYING) {
+            deleteRoom(CODENAMES_ID, code, hostToken).catch(() => {});
         }
         createNewGame();
     }, [createNewGame]);

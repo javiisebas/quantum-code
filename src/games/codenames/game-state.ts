@@ -25,6 +25,12 @@ export interface PersistedGame {
     words: string[];
     roles: RoleEnum[];
     revealedRoles: boolean[];
+    /**
+     * The host capability for this room. Persisted so that after a reload the board can still
+     * RELEASE its own room from Redis (which is now host-authoritative) when the game ends or a
+     * new one starts — otherwise a finished board would linger, readable by code, until its TTL.
+     */
+    hostToken?: string;
 }
 
 /** Full in-memory game state: the persisted slice plus transient UI flags. */
@@ -57,7 +63,8 @@ export const initialGameState: GameState = {
 
 export type GameAction =
     | { type: 'HYDRATE'; game: PersistedGame; needsBoard: boolean }
-    | { type: 'NEW_GAME'; code: number }
+    | { type: 'NEW_GAME'; code: number; hostToken: string | null }
+    | { type: 'ADOPT_HOST_TOKEN'; hostToken: string }
     | { type: 'BOARD_LOADED'; roles: RoleEnum[]; words: string[] }
     | { type: 'LOAD_ERROR'; message: string }
     | { type: 'RETRY' }
@@ -90,6 +97,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
             return {
                 ...state,
                 code: action.code,
+                hostToken: action.hostToken ?? undefined,
                 words: [],
                 roles: [],
                 revealedRoles: createRevealedState(),
@@ -101,6 +109,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
                 showConfetti: false,
                 hydrated: true,
             };
+
+        // The room lapsed past its TTL and a resume re-created it under a fresh host token.
+        case 'ADOPT_HOST_TOKEN':
+            return { ...state, hostToken: action.hostToken };
 
         case 'BOARD_LOADED':
             return {

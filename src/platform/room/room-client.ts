@@ -7,7 +7,7 @@
  * get-then-create race.
  */
 
-import { SEAT_TOKEN_HEADER, type RoomCreation, type SeatClaim } from './tokens';
+import { HOST_TOKEN_HEADER, SEAT_TOKEN_HEADER, type RoomCreation, type SeatClaim } from './tokens';
 
 const roomUrl = (game: string, code: number): string =>
     `/api/room/${encodeURIComponent(game)}?code=${code}`;
@@ -89,10 +89,15 @@ export const resolveJoinCode = async (
 };
 
 /** DELETE the room for a code. Treats a 404 (already gone) as success. */
-export const deleteRoom = async (game: string, code: number): Promise<void> => {
-    const response = await fetch(roomUrl(game, code), { method: 'DELETE' });
+export const deleteRoom = async (game: string, code: number, hostToken: string): Promise<void> => {
+    const response = await fetch(roomUrl(game, code), {
+        method: 'DELETE',
+        headers: { [HOST_TOKEN_HEADER]: hostToken },
+    });
 
-    if (response.status === 404) {
+    // 404 (already gone) and 401 (our token is stale — the room it named is gone too) are both
+    // "there is nothing of ours left to delete", which for a fire-and-forget cleanup is success.
+    if (response.status === 404 || response.status === 401) {
         return;
     }
 

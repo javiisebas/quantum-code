@@ -49,12 +49,14 @@ interface PersistedRound<T> {
     code: number;
     count: number;
     payload: T;
+    /** The host capability — required to release this room ("Nueva ronda") server-side. */
+    hostToken?: string;
 }
 
 type Phase<T> =
     | { kind: 'config' }
     | { kind: 'creating' }
-    | { kind: 'live'; code: number; payload: T }
+    | { kind: 'live'; code: number; payload: T; hostToken: string | null }
     | { kind: 'error' };
 
 const storageKey = (game: string) => `quantum:host:${game}`;
@@ -81,10 +83,30 @@ export function PerPlayerHost<T>({ game, build }: PerPlayerHostProps<T>) {
         );
         if (persisted?.code) {
             setCount(persisted.count);
-            setPhase({ kind: 'live', code: persisted.code, payload: persisted.payload });
+            setPhase({
+                kind: 'live',
+                code: persisted.code,
+                payload: persisted.payload,
+                hostToken: persisted.hostToken ?? null,
+            });
             // Re-ensure the room (and its code reservation) still exist — both may have lapsed
-            // past their TTL — so late joiners can still connect to the resumed code.
-            resumeRoom(game, persisted.code, persisted.payload).catch(() => {});
+            // past their TTL — so late joiners can still connect to the resumed code. If it had to
+            // be re-created, the server minted a fresh host token; adopt it, or "Nueva ronda" would
+            // no longer be able to release this room.
+            resumeRoom<T>(game, persisted.code, persisted.payload)
+                .then(({ hostToken: minted }) => {
+                    if (!minted) return;
+                    setPhase((p) =>
+                        p.kind === 'live' && p.code === persisted.code
+                            ? { ...p, hostToken: minted }
+                            : p,
+                    );
+                    LocalStorageHelper.setLocalStorageItem<PersistedRound<T>>(storageKey(game), {
+                        ...persisted,
+                        hostToken: minted,
+                    });
+                })
+                .catch(() => {});
         }
     }, [game]);
 
@@ -94,13 +116,18 @@ export function PerPlayerHost<T>({ game, build }: PerPlayerHostProps<T>) {
             try {
                 // The SERVER mints the code, so it is unique across the whole arcade and a
                 // player can reach this room by typing six digits and nothing else.
-                const { code, value: payload } = await openRoom<T>(game, buildRef.current(players));
+                const {
+                    code,
+                    value: payload,
+                    hostToken,
+                } = await openRoom<T>(game, buildRef.current(players));
                 LocalStorageHelper.setLocalStorageItem<PersistedRound<T>>(storageKey(game), {
                     code,
                     count: players,
                     payload,
+                    hostToken: hostToken ?? undefined,
                 });
-                setPhase({ kind: 'live', code, payload });
+                setPhase({ kind: 'live', code, payload, hostToken });
             } catch {
                 setPhase({ kind: 'error' });
             }
@@ -110,8 +137,11 @@ export function PerPlayerHost<T>({ game, build }: PerPlayerHostProps<T>) {
 
     const newRound = useCallback(() => {
         // Release the old room (and its code) before dealing a fresh one: the new deal must not
-        // be readable at the old code, and the code goes back to the pool.
-        if (phase.kind === 'live') deleteRoom(game, phase.code).catch(() => {});
+        // be readable at the old code, and the code goes back to the pool. Host-authoritative, so
+        // it carries the host token; a missing/stale one just leaves the old room to its TTL.
+        if (phase.kind === 'live' && phase.hostToken) {
+            deleteRoom(game, phase.code, phase.hostToken).catch(() => {});
+        }
         void startRound(count);
     }, [phase, game, count, startRound]);
 

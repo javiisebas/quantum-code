@@ -1,6 +1,6 @@
 import { getServerGame } from '@/games/registry.server';
 import { parseCode } from '@/platform/room';
-import { claimSeat } from '@/platform/room/room-store';
+import { claimSeat, readRoom } from '@/platform/room/room-store';
 import { NextResponse } from 'next/server';
 
 /**
@@ -40,6 +40,15 @@ export async function POST(request: Request, { params }: RouteContext) {
     }
 
     try {
+        // Only claim in a room that EXISTS. Claiming mints and stores a token, so an unguarded
+        // claim let anyone spray writes into Redis under arbitrary 6-digit codes (a cost/space
+        // DoS) for rooms that never existed. A legitimate phone always has a live code — it got it
+        // from a host who already created the room — so this rejects only junk, at the price of one
+        // extra read.
+        if ((await readRoom(mod.namespace, code)) === null) {
+            return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+        }
+
         // Return the full claim ({ seat, token }): the token is how THIS device later proves
         // it owns the seat (submitting its input, reading its private slice). No token is
         // required to claim — claiming is exactly how a device first obtains one.

@@ -7,10 +7,11 @@ import {
     readRoom,
     releaseCode,
     reserveCode,
+    verifyHost,
     verifySeat,
     writeRoomIfAbsent,
 } from '@/platform/room/room-store';
-import { SEAT_TOKEN_HEADER } from '@/platform/room/tokens';
+import { HOST_TOKEN_HEADER, SEAT_TOKEN_HEADER } from '@/platform/room/tokens';
 import { NextResponse, after } from 'next/server';
 
 /**
@@ -127,17 +128,25 @@ export async function POST(request: Request, { params }: RouteContext) {
         // Atomic create-if-absent. Return the AUTHORITATIVE payload (whoever won the
         // race), so the host and every joined phone converge on the same room, plus the
         // minted host token (null unless THIS call created the room — see RoomCreation).
-        const { value, created, hostToken } = await writeRoomIfAbsent(
-            mod.namespace,
-            roomCode,
-            payload,
-        );
+        const {
+            value: stored,
+            created,
+            hostToken,
+        } = await writeRoomIfAbsent(mod.namespace, roomCode, payload);
         // Fire the webhook exactly once, only when this call actually created the room,
         // and as post-response work so a slow/failing hook never blocks the response
         // (and isn't dropped when the serverless function freezes on return).
         if (created) {
             after(() => emitRoomEvent({ type: 'room.created', game, code: roomCode }));
         }
+        // A per-seat-secret game's full deal (every seat's role/word/target) must NEVER leave the
+        // server unprojected — that is the whole point of `projectForSeat` + seat tokens, which the
+        // GET path enforces. On CREATE the value is just this caller's own submission echoed back,
+        // but a `created:false` result means the room already existed and THIS caller did not create
+        // it, so returning the STORED payload would hand whoever knows the code every seat's secret
+        // via a POST "resume" — bypassing the seal entirely. Withhold it in that case: the real host
+        // keeps its own persisted copy (and ignores this field on resume), so no flow needs it back.
+        const value = created || !mod.projectForSeat ? stored : null;
         return NextResponse.json({ code: roomCode, value, hostToken });
     } catch (error: unknown) {
         console.error(`Failed to save ${game} room:`, error);
@@ -152,6 +161,15 @@ export async function DELETE(request: Request, { params }: RouteContext) {
 
     const code = parseCode(new URL(request.url).searchParams.get('code'));
     if (code === null) return invalidCode();
+
+    // DELETE is host-authoritative: it wipes the room (payload + every seat's token) and frees the
+    // code back to the pool. Without this check any device that knew the code could destroy an
+    // in-progress game and then squat its freed code for a different game — it was the lone
+    // unauthenticated mutation, while every sibling route (state/input/private) is token-gated.
+    const hostToken = request.headers.get(HOST_TOKEN_HEADER);
+    if (!hostToken || !(await verifyHost(mod.namespace, code, hostToken))) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     try {
         const success = await deleteRoom(mod.namespace, code);
