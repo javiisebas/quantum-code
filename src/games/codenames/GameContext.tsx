@@ -1,7 +1,6 @@
 'use client';
 
-import { generateCode } from '@/platform/room';
-import { createRoom, deleteRoom } from '@/platform/room/room-client';
+import { deleteRoom, openRoom, resumeRoom } from '@/platform/room/room-client';
 import { ShareModal } from '@/platform/ui/ShareModal';
 import {
     Board,
@@ -14,7 +13,16 @@ import {
 import { CODENAMES_ID, codenamesManifest } from '@/games/codenames/manifest';
 import { GameStatusEnum } from '@/games/codenames/enums/game-status.enum';
 import { LocalStorageHelper } from '@/platform/persistence/local-storage';
-import { createContext, FC, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
+import {
+    createContext,
+    FC,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useReducer,
+    useRef,
+} from 'react';
 import {
     GAME_STORAGE_KEY,
     GameState,
@@ -48,7 +56,8 @@ interface GameContextType {
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
-const LOAD_ERROR_MESSAGE = 'No se pudieron cargar las cartas. Revisa tu conexión e inténtalo de nuevo.';
+const LOAD_ERROR_MESSAGE =
+    'No se pudieron cargar las cartas. Revisa tu conexión e inténtalo de nuevo.';
 
 export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
     const [state, dispatch] = useReducer(gameReducer, initialGameState);
@@ -59,37 +68,33 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
     const stateRef = useRef<GameState>(state);
     stateRef.current = state;
 
-    // Fetch (or atomically create) the board for a code and publish it to Redis. We
-    // send a freshly generated candidate; the server returns the authoritative board
-    // (roles + words), so the play device and the spies always match.
-    const loadBoard = useCallback(
-        async (code: number, options?: { share?: boolean }) => {
+    // Re-publish the board for a code we ALREADY hold (a resumed game). Sends a fresh candidate
+    // board; the server returns the authoritative one (create-if-absent), so the play device and
+    // the spies always match even if the room lapsed past its TTL.
+    const loadBoard = useCallback(async (code: number) => {
+        try {
+            const { value: board } = await resumeRoom<Board>(CODENAMES_ID, code, generateBoard());
+            dispatch({ type: 'BOARD_LOADED', roles: board.roles, words: board.words });
+        } catch {
+            dispatch({ type: 'LOAD_ERROR', message: LOAD_ERROR_MESSAGE });
+        }
+    }, []);
+
+    // Start a brand-new game. The SERVER mints the code — it is the only side that can see every
+    // game's reservations, and a code now has to name exactly one room across the whole arcade.
+    const createNewGame = useCallback(
+        async (options?: { share?: boolean }) => {
             try {
-                const { value: board } = await createRoom<Board>(CODENAMES_ID, code, generateBoard());
+                const { code, value: board } = await openRoom<Board>(CODENAMES_ID, generateBoard());
+                dispatch({ type: 'NEW_GAME', code });
                 dispatch({ type: 'BOARD_LOADED', roles: board.roles, words: board.words });
                 if (options?.share)
-                    openModal(
-                        <ShareModal
-                            code={code}
-                            game={CODENAMES_ID}
-                            gameName={codenamesManifest.name}
-                        />,
-                    );
+                    openModal(<ShareModal code={code} gameName={codenamesManifest.name} />);
             } catch {
                 dispatch({ type: 'LOAD_ERROR', message: LOAD_ERROR_MESSAGE });
             }
         },
         [openModal],
-    );
-
-    // Start a brand-new game: fresh code, then create/publish its board.
-    const createNewGame = useCallback(
-        async (options?: { share?: boolean }) => {
-            const code = generateCode();
-            dispatch({ type: 'NEW_GAME', code });
-            await loadBoard(code, options);
-        },
-        [loadBoard],
     );
 
     // Bootstrap once: resume a persisted game, or start a new one. Guarded so React
@@ -108,9 +113,10 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
             if (needsBoard) {
                 loadBoard(persisted.code);
             } else if (persisted.status === GameStatusEnum.PLAYING && persisted.roles?.length) {
-                // Re-ensure the published board still exists (7-day TTL) so spies can
-                // rejoin a resumed game. Atomic SET NX → no-op when it's still there.
-                createRoom<Board>(CODENAMES_ID, persisted.code, {
+                // Re-ensure the published board AND its code reservation still exist (both have a
+                // 7-day TTL) so spies can rejoin a resumed game. Create-if-absent → a no-op when
+                // it's all still there.
+                resumeRoom<Board>(CODENAMES_ID, persisted.code, {
                     roles: persisted.roles,
                     words: persisted.words,
                 }).catch(() => {});
@@ -178,8 +184,16 @@ export const GameProvider: FC<{ children: React.ReactNode }> = ({ children }) =>
 
     const retry = useCallback(() => {
         dispatch({ type: 'RETRY' });
-        loadBoard(stateRef.current.code);
-    }, [loadBoard]);
+        const { code } = stateRef.current;
+        // The code is minted by the SERVER now, so a game whose creation failed has no code at
+        // all. Re-publishing "code 0" would 400 and land straight back on this error — an
+        // unescapable retry loop. With no code, the only sane retry is to open a new room.
+        if (code) {
+            void loadBoard(code);
+        } else {
+            void createNewGame();
+        }
+    }, [loadBoard, createNewGame]);
 
     const resetGame = useCallback(() => {
         const { code, status } = stateRef.current;

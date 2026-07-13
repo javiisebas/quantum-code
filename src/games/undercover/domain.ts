@@ -98,8 +98,7 @@ export const buildUndercover = (count: number): UndercoverRoom => {
  * NO `undercoverSeats`, so no phone can tell who the impostors are.
  */
 export type UndercoverSeatView =
-    | { kind: 'word'; seat: number; word: string }
-    | { kind: 'full'; seat: number };
+    { kind: 'word'; seat: number; word: string } | { kind: 'full'; seat: number };
 
 /**
  * Project an Undercover room down to what `seat` (1-based) may see. Pure and server-side:

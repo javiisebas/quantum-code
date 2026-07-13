@@ -1,18 +1,14 @@
 'use client';
 
-import { JoinForm } from '@/games/_shared/JoinForm';
 import { fetchRoom } from '@/platform/room/room-client';
-import { Spinner } from '@heroui/react';
+import { JoinScreen } from '@/platform/ui/JoinScreen';
+import { Loading } from '@/platform/ui/Loading';
 import { useEffect, useState } from 'react';
 import { SpyBoard } from './components/SpyBoard';
 import type { Board } from './domain';
 import { CODENAMES_ID } from './manifest';
-import { codenamesManifest } from './manifest';
 
-type PlayerState =
-    | { status: 'loading' }
-    | { status: 'empty' }
-    | { status: 'ready'; board: Board };
+type PlayerState = { status: 'loading' } | { status: 'empty' } | { status: 'ready'; board: Board };
 
 /**
  * Codenames player (phone) screen. Given a join code it fetches the shared board and
@@ -49,16 +45,13 @@ export function CodenamesPlayer({ code }: { code: number | null }) {
     }, [code]);
 
     if (state.status === 'loading') {
-        return (
-            <div className="flex h-screen w-full items-center justify-center">
-                <Spinner color="secondary" label="Cargando el mapa secreto…" />
-            </div>
-        );
+        return <Loading label="Cargando el mapa secreto…" />;
     }
 
     if (state.status === 'ready') {
         return <SpyBoard roles={state.board.roles} words={state.board.words} />;
     }
 
-    return <JoinForm game={CODENAMES_ID} gameName={codenamesManifest.name} />;
+    // No code, or a code that resolves to nothing — the one join screen, which explains itself.
+    return <JoinScreen initialError={code === null ? null : 'unknown'} />;
 }

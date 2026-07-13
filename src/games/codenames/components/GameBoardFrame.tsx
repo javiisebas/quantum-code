@@ -1,12 +1,10 @@
 'use client';
 
-import { Button } from '@/platform/ui/Button';
 import { useGame } from '@/games/codenames/GameContext';
-import { ClassnameHelper } from '@/platform/util/classnames';
+import { Loading } from '@/platform/ui/Loading';
+import { RoomError } from '@/platform/ui/RoomError';
 import { ChildrenProps } from '@/platform/util/children';
-import { Spinner } from '@heroui/react';
 import { FC } from 'react';
-import { BiErrorCircle } from 'react-icons/bi';
 import { GameBoardLost } from './GameBoardLost';
 import { GameBoardScore } from './GameBoardScore';
 import { GameBoardWon } from './GameBoardWon';
@@ -15,38 +13,19 @@ import { GameResultPanel } from './GameResultPanel';
 export const GameBoardFrame: FC<ChildrenProps> = ({ children }) => {
     const { loading, error, retry } = useGame();
 
-    // Role loading failed (e.g. the API/Redis is down) — never leave the board stuck
-    // on a spinner; show a recoverable error with a retry action.
+    // Role loading failed (e.g. the API/Redis is down) — never leave the board stuck on a
+    // spinner. The shared room-error state offers the retry *and* a way out, so a board that
+    // can't load is no longer a dead end.
     if (error) {
-        return (
-            <div className="flex h-screen w-screen flex-col items-center justify-center gap-5 px-6 text-center">
-                <BiErrorCircle className="text-rose-400" size={48} aria-hidden="true" />
-                <div className="flex flex-col gap-1">
-                    <h2 className="text-xl font-semibold text-white">Algo ha ido mal</h2>
-                    <p className="max-w-sm text-sm text-gray-300">{error}</p>
-                </div>
-                <Button variant="primary" onPress={retry}>
-                    Reintentar
-                </Button>
-            </div>
-        );
+        return <RoomError title="Algo ha ido mal" message={error} onRetry={retry} />;
     }
 
     if (loading) {
-        return (
-            <div className="flex h-screen w-screen flex-col items-center justify-center gap-4">
-                <Spinner size="lg" color="secondary" />
-                <p className="text-sm text-gray-400">Preparando la partida…</p>
-            </div>
-        );
+        return <Loading label="Preparando la partida…" />;
     }
 
     return (
-        <div
-            className={ClassnameHelper.join(
-                'h-screen w-screen relative flex items-center justify-center isolate',
-            )}
-        >
+        <div className="relative isolate flex h-screen w-screen items-center justify-center">
             <GameBoardLost />
             <GameBoardWon />
             <GameBoardScore />

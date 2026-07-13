@@ -1,26 +1,15 @@
-'use client';
-
-import { JoinPanel } from '@/games/_shared/JoinPanel';
-import { Surface } from '@/platform/ui/Surface';
+import { JoinScreen } from '@/platform/ui/JoinScreen';
+import type { Metadata } from 'next';
 
 /**
- * Generic join screen for players who did not scan a QR: pick the game the host
- * chose, type the 6-digit code (or scan the QR), and land on that game's player view.
- * Scanning the host QR from the camera skips this entirely and goes straight to
- * `/join/<game>?code=…`. Arriving here with no code simply shows a blank form.
+ * `/join` — the player's dedicated entry point. It exists as its own page (rather than a card
+ * on the home screen) because joining is a distinct, single-purpose job done in a hurry, on a
+ * phone, by someone who is not browsing: they want the code field, nothing else, above the fold.
  */
+export const metadata: Metadata = {
+    title: 'Únete a la partida',
+};
+
 export default function JoinPage() {
-    return (
-        <main className="flex min-h-screen items-center justify-center px-6 py-12">
-            <Surface as="section" className="w-full max-w-md p-8">
-                <h1 className="text-2xl font-bold text-white">Unirse a una partida</h1>
-                <p className="mt-2 text-sm text-gray-400">
-                    Elige el juego e introduce el código que ve el anfitrión.
-                </p>
-                <div className="mt-6">
-                    <JoinPanel autoFocus />
-                </div>
-            </Surface>
-        </main>
-    );
+    return <JoinScreen />;
 }

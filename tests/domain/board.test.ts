@@ -18,12 +18,7 @@ import type { RoleEnum } from '@/games/codenames/enums/role.enum';
  * All valid role values, used to assert that generated roles are well-formed
  * and to count occurrences per role.
  */
-const ALL_ROLES: RoleEnum[] = [
-    TeamEnum.BLUE,
-    TeamEnum.RED,
-    NoTeamEnum.NEUTRAL,
-    NoTeamEnum.BLACK,
-];
+const ALL_ROLES: RoleEnum[] = [TeamEnum.BLUE, TeamEnum.RED, NoTeamEnum.NEUTRAL, NoTeamEnum.BLACK];
 
 /**
  * Count how many times each role value appears in a board.
@@ -81,11 +76,7 @@ describe('board constants', () => {
 
     it('ROLE_COUNTS matches the frozen spec and sums to BOARD_SIZE', () => {
         expect(ROLE_COUNTS).toEqual({ neutral: 11, blue: 6, red: 7, black: 1 });
-        const sum =
-            ROLE_COUNTS.neutral +
-            ROLE_COUNTS.blue +
-            ROLE_COUNTS.red +
-            ROLE_COUNTS.black;
+        const sum = ROLE_COUNTS.neutral + ROLE_COUNTS.blue + ROLE_COUNTS.red + ROLE_COUNTS.black;
         expect(sum).toBe(BOARD_SIZE);
     });
 

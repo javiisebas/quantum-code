@@ -7,7 +7,11 @@ import { SINTONIA_ID, sintoniaManifest, validateSintoniaPayload } from './sinton
 import { projectSpyfall } from './spyfall/domain';
 import { SPYFALL_ID, spyfallManifest, validateSpyfallPayload } from './spyfall/manifest';
 import { projectUndercover } from './undercover/domain';
-import { UNDERCOVER_ID, undercoverManifest, validateUndercoverPayload } from './undercover/manifest';
+import {
+    UNDERCOVER_ID,
+    undercoverManifest,
+    validateUndercoverPayload,
+} from './undercover/manifest';
 import { projectWerewolf } from './werewolf/domain';
 import { WEREWOLF_ID, werewolfManifest, validateWerewolfPayload } from './werewolf/manifest';
 import type { GameServerModule } from './types';

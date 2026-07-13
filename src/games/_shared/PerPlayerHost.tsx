@@ -1,46 +1,48 @@
 'use client';
 
 import { accentOf } from '@/games/_shared/accents';
+import { getManifest } from '@/games/registry';
 import { LocalStorageHelper } from '@/platform/persistence/local-storage';
-import { generateCode } from '@/platform/room';
-import { createRoom, deleteRoom } from '@/platform/room/room-client';
+import { deleteRoom, openRoom, resumeRoom } from '@/platform/room/room-client';
 import { useLiveCount } from '@/platform/room/use-presence';
 import { Button, IconButton } from '@/platform/ui/Button';
-import { Chip } from '@/platform/ui/Chip';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
-import { RoomShare } from '@/platform/ui/RoomShare';
-import { Spinner } from '@heroui/react';
-import Link from 'next/link';
+import { HostLobby } from '@/platform/ui/HostLobby';
+import { HowToPlayButton } from '@/platform/ui/HowToPlay';
+import { LobbyPanel } from '@/platform/ui/LobbyPanel';
+import { Loading } from '@/platform/ui/Loading';
+import { RoomError } from '@/platform/ui/RoomError';
+import { Screen } from '@/platform/ui/Screen';
+import { Surface } from '@/platform/ui/Surface';
+import { TopBar } from '@/platform/ui/TopBar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BiGroup, BiHome, BiMinus, BiPlus, BiRefresh } from 'react-icons/bi';
+import { BiMinus, BiPlus, BiRefresh } from 'react-icons/bi';
 
 /**
- * Shared host ("shared screen") lobby for per-player-secret games (Spyfall,
- * Undercover, Werewolf…). It owns the whole host lifecycle so a game only has to
- * describe HOW to build its payload for N players:
+ * Shared host ("shared screen") lobby for per-player-secret games (Spyfall, Undercover,
+ * Werewolf, El Camaleón). It owns the whole host lifecycle so a game only has to describe HOW
+ * to build its payload for N players:
  *
- *   1. config phase → pick the number of players, press "Empezar";
- *   2. live phase    → show the join code + QR (the lobby the phones join), with
- *      "Nueva ronda" to re-deal and "Inicio" to leave.
+ *   1. config phase → how many are playing? (the deal is built for exactly that many seats);
+ *   2. live phase   → the shared <HostLobby>: the way in on the left, who has connected and
+ *      "Nueva ronda" on the right.
  *
- * The room `{ code, payload, count }` is persisted so a host reload resumes the same
- * round. Every per-player game reuses this, which is what keeps their host screens
- * visually identical. The share surface (QR + code + copy/share) is delegated to the
- * shared <RoomShare>, so per-player games get the same copy/native-share shortcuts as
- * codenames for free.
+ * The live phase is the SAME `<HostLobby>` the live games use, so all eight games in the arcade
+ * wait in a lobby that looks and behaves identically — that shared chrome is the whole point of
+ * this file existing.
+ *
+ * The room `{ code, payload, count }` is persisted so a host reload resumes the same round.
+ *
+ * KNOWN FLOW LIMITATION (deliberate, not an oversight): the deal is built at room-creation time,
+ * so the room — and therefore the join code — does not exist until the host has picked the
+ * player count. Guests cannot join while the host is counting heads. Fixing that properly means
+ * dealing AFTER the roster fills (a host-authoritative payload rewrite plus polling phones),
+ * which is a change to the sealed-secret path and belongs in its own pass.
  */
 interface PerPlayerHostProps<T> {
     game: string;
-    gameName: string;
-    emoji: string;
-    /** Accent token (`manifest.accent`) so the lobby CTAs match the game's colour. */
-    accent: string;
-    minPlayers: number;
-    maxPlayers: number;
     /** Build the shared payload for `count` players (one secret per seat). */
     build: (count: number) => T;
-    /** Optional per-game hint shown under the actions (e.g. a rules reminder). */
-    hint?: string;
 }
 
 interface PersistedRound<T> {
@@ -57,17 +59,12 @@ type Phase<T> =
 
 const storageKey = (game: string) => `quantum:host:${game}`;
 
-export function PerPlayerHost<T>({
-    game,
-    gameName,
-    emoji,
-    accent,
-    minPlayers,
-    maxPlayers,
-    build,
-    hint,
-}: PerPlayerHostProps<T>) {
-    const acc = accentOf(accent);
+export function PerPlayerHost<T>({ game, build }: PerPlayerHostProps<T>) {
+    const manifest = getManifest(game);
+    const minPlayers = manifest?.minPlayers ?? 3;
+    const maxPlayers = manifest?.maxPlayers ?? 12;
+    const acc = accentOf(manifest?.accent ?? 'purple');
+
     const [count, setCount] = useState(minPlayers);
     const [phase, setPhase] = useState<Phase<T>>({ kind: 'config' });
 
@@ -85,20 +82,19 @@ export function PerPlayerHost<T>({
         if (persisted?.code) {
             setCount(persisted.count);
             setPhase({ kind: 'live', code: persisted.code, payload: persisted.payload });
-            // Re-ensure the room still exists in the store (it may have expired past its
-            // TTL) so late joiners can connect to the resumed code. SET NX is a no-op
-            // when it's still there.
-            createRoom(game, persisted.code, persisted.payload).catch(() => {});
+            // Re-ensure the room (and its code reservation) still exist — both may have lapsed
+            // past their TTL — so late joiners can still connect to the resumed code.
+            resumeRoom(game, persisted.code, persisted.payload).catch(() => {});
         }
     }, [game]);
 
     const startRound = useCallback(
         async (players: number) => {
             setPhase({ kind: 'creating' });
-            const code = generateCode();
-            const candidate = buildRef.current(players);
             try {
-                const { value: payload } = await createRoom<T>(game, code, candidate);
+                // The SERVER mints the code, so it is unique across the whole arcade and a
+                // player can reach this room by typing six digits and nothing else.
+                const { code, value: payload } = await openRoom<T>(game, buildRef.current(players));
                 LocalStorageHelper.setLocalStorageItem<PersistedRound<T>>(storageKey(game), {
                     code,
                     count: players,
@@ -113,127 +109,127 @@ export function PerPlayerHost<T>({
     );
 
     const newRound = useCallback(() => {
+        // Release the old room (and its code) before dealing a fresh one: the new deal must not
+        // be readable at the old code, and the code goes back to the pool.
         if (phase.kind === 'live') deleteRoom(game, phase.code).catch(() => {});
         void startRound(count);
     }, [phase, game, count, startRound]);
 
-    // Live presence: number of phones currently connected to this room. Polls only
-    // while a room is live (null code → the hook is a no-op).
+    // Live presence: how many phones are currently connected to this room. Polls only while a
+    // room is live (a null code makes the hook a no-op).
     const connected = useLiveCount({
         game,
         code: phase.kind === 'live' ? phase.code : null,
     });
 
+    if (!manifest) {
+        return <RoomError message="Este juego no existe." />;
+    }
+
     if (phase.kind === 'creating') {
-        return (
-            <div className="flex h-screen items-center justify-center">
-                <Spinner color="secondary" label="Repartiendo secretos…" />
-            </div>
-        );
+        return <Loading label="Repartiendo secretos…" />;
     }
 
     if (phase.kind === 'error') {
         return (
-            <div className="flex h-screen flex-col items-center justify-center gap-4 px-6 text-center">
-                <p className="text-lg text-gray-200">No se pudo crear la partida.</p>
-                <Button variant="secondary" onPress={() => startRound(count)}>
-                    Reintentar
-                </Button>
-            </div>
+            <RoomError message="No se pudo crear la partida." onRetry={() => startRound(count)} />
         );
     }
 
     if (phase.kind === 'live') {
+        // Phones have no names in these games (each one just claims a seat and reads its card),
+        // so the roster shows seats. The ghost slots make "we're still waiting for two phones"
+        // legible at a glance — the same language the live games' lobby speaks.
+        const seats = Array.from(
+            { length: Math.min(connected, count) },
+            (_, i) => `Jugador ${i + 1}`,
+        );
         return (
-            <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 px-6 py-12 text-center">
-                <div>
-                    <span className="text-5xl" aria-hidden="true">
-                        {emoji}
-                    </span>
-                    <h1 className="mt-2 text-2xl font-bold text-white">{gameName}</h1>
-                </div>
-
-                <RoomShare code={phase.code} game={game} gameName={gameName} />
-
-                <div aria-live="polite">
-                    <Chip>
-                        <BiGroup className="text-emerald-300" size={16} />
-                        <span>
-                            {connected}{' '}
-                            {connected === 1 ? 'jugador conectado' : 'jugadores conectados'}
-                        </span>
-                    </Chip>
-                </div>
-
-                <div className="flex flex-wrap justify-center gap-3">
-                    <Button
-                        variant="accent"
-                        accentClass={acc.solidButton}
-                        startContent={<BiRefresh size={20} />}
-                        onPress={newRound}
-                    >
-                        Nueva ronda
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        as={Link}
-                        href="/"
-                        startContent={<BiHome size={20} />}
-                    >
-                        Inicio
-                    </Button>
-                </div>
-
-                {hint && <p className="max-w-xs text-sm text-gray-400">{hint}</p>}
-            </main>
+            <HostLobby manifest={manifest} code={phase.code}>
+                <LobbyPanel
+                    names={seats}
+                    min={count}
+                    max={count}
+                    accentChip={acc.chip}
+                    action={
+                        <Button
+                            variant="accent"
+                            accentClass={acc.solidButton}
+                            fullWidth
+                            startContent={<BiRefresh size={20} />}
+                            onPress={newRound}
+                        >
+                            Nueva ronda
+                        </Button>
+                    }
+                    footer={
+                        <p className="text-center text-xs text-gray-500">
+                            Reparte secretos nuevos con el mismo grupo.
+                        </p>
+                    }
+                />
+            </HostLobby>
         );
     }
 
-    // config phase
+    // Config phase: the deal has to know how many seats it is for, so this comes before the room
+    // (and therefore before the code) exists.
     const dec = () => setCount((c) => Math.max(minPlayers, c - 1));
     const inc = () => setCount((c) => Math.min(maxPlayers, c + 1));
 
     return (
-        <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-8 px-6 py-12 text-center">
-            <div>
-                <span className="text-6xl" aria-hidden="true">
-                    {emoji}
-                </span>
-                <h1 className="mt-3 text-3xl font-bold text-white">{gameName}</h1>
-            </div>
+        // The page is full-width so the CHROME spans it (a top bar squeezed into a 448px column
+        // in the middle of a TV, with the game's name truncated, is not chrome — it's debris).
+        // The card is what's capped.
+        <Screen width="full" height="fit">
+            <TopBar
+                emoji={manifest.emoji}
+                title={manifest.name}
+                right={<HowToPlayButton manifest={manifest} />}
+            />
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 py-4">
+                <Surface className="flex w-full max-w-md flex-col items-center gap-6 p-6 text-center sm:p-8">
+                    <div className="flex flex-col items-center gap-1">
+                        <Eyebrow as="h2">¿Cuántos jugáis?</Eyebrow>
+                        <p className="text-sm text-gray-400">
+                            Repartiremos un secreto para cada uno.
+                        </p>
+                    </div>
 
-            <div className="flex flex-col items-center gap-3">
-                <Eyebrow>Número de jugadores</Eyebrow>
-                <div className="flex items-center gap-6">
-                    <IconButton
-                        aria-label="Menos jugadores"
-                        onPress={dec}
-                        isDisabled={count <= minPlayers}
-                    >
-                        <BiMinus size={22} />
-                    </IconButton>
-                    <span className="w-14 font-mono text-5xl font-bold text-white">{count}</span>
-                    <IconButton
-                        aria-label="Más jugadores"
-                        onPress={inc}
-                        isDisabled={count >= maxPlayers}
-                    >
-                        <BiPlus size={22} />
-                    </IconButton>
-                </div>
-                <span className="text-xs text-gray-500">
-                    entre {minPlayers} y {maxPlayers}
-                </span>
-            </div>
+                    <div className="flex items-center gap-6">
+                        <IconButton
+                            aria-label="Menos jugadores"
+                            onPress={dec}
+                            isDisabled={count <= minPlayers}
+                        >
+                            <BiMinus size={22} />
+                        </IconButton>
+                        <span className="w-16 font-mono text-5xl font-bold tabular-nums text-white">
+                            {count}
+                        </span>
+                        <IconButton
+                            aria-label="Más jugadores"
+                            onPress={inc}
+                            isDisabled={count >= maxPlayers}
+                        >
+                            <BiPlus size={22} />
+                        </IconButton>
+                    </div>
 
-            <Button
-                variant="accent"
-                accentClass={acc.solidButton}
-                className="w-full max-w-xs"
-                onPress={() => startRound(count)}
-            >
-                Empezar partida
-            </Button>
-        </main>
+                    <span className="text-xs text-gray-500">
+                        entre {minPlayers} y {maxPlayers}
+                    </span>
+
+                    <Button
+                        variant="accent"
+                        accentClass={acc.solidButton}
+                        fullWidth
+                        onPress={() => startRound(count)}
+                    >
+                        Abrir sala
+                    </Button>
+                </Surface>
+            </div>
+        </Screen>
     );
 }

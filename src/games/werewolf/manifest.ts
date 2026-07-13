@@ -14,6 +14,13 @@ export const werewolfManifest: GameManifest = {
     players: '4–16',
     duration: '20 min',
     secrecy: 'per-player',
+    howTo: [
+        'Tu móvil te reparte tu rol secreto: aldeano, lobo o un personaje con poder.',
+        'El anfitrión narra la noche en voz alta: todos cerráis los ojos.',
+        'Los lobos eligen víctima y cada rol especial usa su poder al ser llamado.',
+        'De día, debatid quién os resulta sospechoso y votad a quién linchar.',
+        'La aldea gana si desenmascara a todos los lobos; los lobos, si acaban con ella.',
+    ],
 };
 
 const MAX_SEATS = 24;

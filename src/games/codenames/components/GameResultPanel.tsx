@@ -73,51 +73,55 @@ export const GameResultPanel: FC = () => {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.4, delay: 0.3 }}
                 >
+                    {/* The motion wrapper owns the entrance and the width; the chrome is the app's
+                        one `<Surface>` (this panel used to hand-roll a drifted copy of it). */}
                     <motion.div
-                        className="flex w-full max-w-xs flex-col items-center gap-5 rounded-3xl bg-gray-900/95 p-7 text-center shadow-2xl ring-1 ring-white/10 backdrop-blur-md"
+                        className="w-full max-w-xs"
                         initial={{ scale: 0.9, y: 12 }}
                         animate={{ scale: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
                     >
-                        <span
-                            className={`flex h-16 w-16 items-center justify-center rounded-full ${content.badge} ${content.accent}`}
-                        >
-                            {content.icon}
-                        </span>
-                        <div className="flex flex-col gap-1.5">
-                            <h2 className={`text-xl font-bold ${content.accent}`}>
-                                {content.title}
-                            </h2>
-                            <p className="text-sm leading-relaxed text-gray-400">
-                                {content.subtitle}
-                            </p>
-                        </div>
-                        <div className="flex w-full flex-col gap-2.5">
-                            <Button
-                                variant="primary"
-                                fullWidth
-                                startContent={<BiRefresh size={20} />}
-                                onPress={resetGame}
+                        <Surface className="flex flex-col items-center gap-5 p-7 text-center shadow-2xl">
+                            <span
+                                className={`flex h-16 w-16 items-center justify-center rounded-full ${content.badge} ${content.accent}`}
                             >
-                                Nueva partida
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                fullWidth
-                                startContent={<BiShowAlt size={20} />}
-                                onPress={revealAll}
-                            >
-                                Revelar cartas
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                fullWidth
-                                startContent={<BiHome size={20} />}
-                                onPress={() => router.push('/')}
-                            >
-                                Inicio
-                            </Button>
-                        </div>
+                                {content.icon}
+                            </span>
+                            <div className="flex flex-col gap-1.5">
+                                <h2 className={`text-xl font-bold ${content.accent}`}>
+                                    {content.title}
+                                </h2>
+                                <p className="text-sm leading-relaxed text-gray-400">
+                                    {content.subtitle}
+                                </p>
+                            </div>
+                            <div className="flex w-full flex-col gap-2.5">
+                                <Button
+                                    variant="primary"
+                                    fullWidth
+                                    startContent={<BiRefresh size={20} />}
+                                    onPress={resetGame}
+                                >
+                                    Nueva partida
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    fullWidth
+                                    startContent={<BiShowAlt size={20} />}
+                                    onPress={revealAll}
+                                >
+                                    Revelar cartas
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    fullWidth
+                                    startContent={<BiHome size={20} />}
+                                    onPress={() => router.push('/')}
+                                >
+                                    Inicio
+                                </Button>
+                            </div>
+                        </Surface>
                     </motion.div>
                 </motion.div>
             )}

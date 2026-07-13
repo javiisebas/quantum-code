@@ -8,7 +8,7 @@ import { SpyfallCard } from './SpyfallCard';
 /** Spyfall player (phone): claim a seat and reveal this player's secret card. */
 export function SpyfallPlayer({ code }: { code: number | null }) {
     return (
-        <PlayerShell<SpyfallSeatView> game={spyfallManifest.id} gameName={spyfallManifest.name} code={code}>
+        <PlayerShell<SpyfallSeatView> game={spyfallManifest.id} code={code}>
             {(view) => <SpyfallCard view={view} />}
         </PlayerShell>
     );

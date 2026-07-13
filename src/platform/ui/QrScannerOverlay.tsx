@@ -202,7 +202,7 @@ export function QrScannerOverlay({ onDetect, onClose }: QrScannerOverlayProps) {
                 Promise.resolve()
                     .then(async () => {
                         const value = detector
-                            ? (await detector.detect(video))[0]?.rawValue ?? null
+                            ? ((await detector.detect(video))[0]?.rawValue ?? null)
                             : decodeWithJsQR(video);
                         if (value && !cancelled) finishWith(value);
                     })
@@ -241,7 +241,11 @@ export function QrScannerOverlay({ onDetect, onClose }: QrScannerOverlayProps) {
                 const name = (err as { name?: string })?.name;
                 // The user rejected the prompt (or a policy blocked it) → "denied";
                 // no camera / constraint failure → "unsupported".
-                setStatus(name === 'NotAllowedError' || name === 'SecurityError' ? 'denied' : 'unsupported');
+                setStatus(
+                    name === 'NotAllowedError' || name === 'SecurityError'
+                        ? 'denied'
+                        : 'unsupported',
+                );
                 return;
             }
 
@@ -335,7 +339,10 @@ export function QrScannerOverlay({ onDetect, onClose }: QrScannerOverlayProps) {
             {status === 'scanning' && (
                 <>
                     {/* Subtle scrim so the reticle and hint stay legible over any scene. */}
-                    <div className="pointer-events-none absolute inset-0 bg-black/25" aria-hidden="true" />
+                    <div
+                        className="pointer-events-none absolute inset-0 bg-black/25"
+                        aria-hidden="true"
+                    />
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-7 px-6">
                         <div className="relative aspect-square w-full max-w-[280px]">
                             <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/20" />
@@ -390,7 +397,8 @@ export function QrScannerOverlay({ onDetect, onClose }: QrScannerOverlayProps) {
                                 No podemos acceder a la cámara
                             </h2>
                             <p className="text-sm text-gray-400">
-                                Activa el permiso de cámara del navegador o escribe el código a mano.
+                                Activa el permiso de cámara del navegador o escribe el código a
+                                mano.
                             </p>
                         </div>
                         <Button variant="secondary" fullWidth onPress={handleClose}>

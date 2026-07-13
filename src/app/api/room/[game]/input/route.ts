@@ -44,7 +44,12 @@ export async function POST(request: Request, { params }: RouteContext) {
         return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const { code: rawCode, round: rawRound, seat: rawSeat, value } = (body ?? {}) as {
+    const {
+        code: rawCode,
+        round: rawRound,
+        seat: rawSeat,
+        value,
+    } = (body ?? {}) as {
         code?: unknown;
         round?: unknown;
         seat?: unknown;

@@ -5,7 +5,8 @@ export const UNDERCOVER_ID = 'undercover';
 export const undercoverManifest: GameManifest = {
     id: UNDERCOVER_ID,
     name: 'Impostor',
-    tagline: 'Casi todos comparten una palabra secreta… los impostores reciben una parecida. Descúbrelos.',
+    tagline:
+        'Casi todos comparten una palabra secreta… los impostores reciben una parecida. Descúbrelos.',
     emoji: '🎭',
     accent: 'emerald',
     minPlayers: 3,
@@ -13,6 +14,13 @@ export const undercoverManifest: GameManifest = {
     players: '3–12',
     duration: '10 min',
     secrecy: 'per-player',
+    howTo: [
+        'Tu móvil te da una palabra, pero nunca te dice si eres impostor.',
+        'Casi todos compartís la misma; los impostores tienen una parecida.',
+        'Por turnos, describe tu palabra en alto con UNA sola palabra.',
+        'No seas tan obvio que la delates, ni tan vago que parezcas impostor.',
+        'Debatid, votad a quién echar y ganaréis si caen los impostores.',
+    ],
 };
 
 const MAX_SEATS = 20;

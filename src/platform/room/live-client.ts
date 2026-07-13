@@ -12,6 +12,25 @@
 import type { StateDoc } from './live-store';
 import { HOST_TOKEN_HEADER, SEAT_TOKEN_HEADER } from './tokens';
 
+/**
+ * The capability presented was rejected (401/403). Unlike a dropped request this is TERMINAL:
+ * polling again with the same token will fail forever, so callers must distinguish it from the
+ * transient failures they are right to swallow.
+ *
+ * It happens for real: a room outlives its 7-day TTL, the host reloads and re-creates it, and
+ * the server mints a NEW host capability — any token persisted from the old room is now dead.
+ * Left undetected, the host sits in front of a lobby that never fills, with no error and no way
+ * out, while the room it is polling quietly belongs to nobody.
+ */
+export class RoomAuthError extends Error {
+    constructor(message = 'Room capability rejected') {
+        super(message);
+        this.name = 'RoomAuthError';
+    }
+}
+
+const isAuthFailure = (status: number): boolean => status === 401 || status === 403;
+
 /** GET the room's public live state, or null when nothing has been published yet. */
 export const fetchState = async <S>(game: string, code: number): Promise<StateDoc<S> | null> => {
     const res = await fetch(`/api/room/${encodeURIComponent(game)}/state?code=${code}`);
@@ -63,6 +82,7 @@ export const fetchInputs = async <V>(
         `/api/room/${encodeURIComponent(game)}/input?code=${code}&round=${round}`,
         { headers: { [HOST_TOKEN_HEADER]: hostToken } },
     );
+    if (isAuthFailure(res.status)) throw new RoomAuthError('Host token rejected');
     if (!res.ok) throw new Error(`Failed to fetch inputs: ${res.statusText}`);
     const { inputs } = (await res.json()) as { inputs: Record<string, V> };
     // JSON object keys are strings; re-key to numbers for callers.

@@ -26,7 +26,12 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     const { code: rawCode, playerId } = (body ?? {}) as { code?: unknown; playerId?: unknown };
     const code = parseCode(typeof rawCode === 'number' ? String(rawCode) : (rawCode as string));
-    if (code === null || typeof playerId !== 'string' || playerId.length === 0 || playerId.length > 64) {
+    if (
+        code === null ||
+        typeof playerId !== 'string' ||
+        playerId.length === 0 ||
+        playerId.length > 64
+    ) {
         return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 

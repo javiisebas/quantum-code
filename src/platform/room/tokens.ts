@@ -32,11 +32,16 @@ export interface SeatClaim {
 }
 
 /**
- * Result of creating (or resolving) a room: the authoritative payload, plus the host token
- * ONLY when THIS caller actually created the room (`null` when the room already existed, so a
- * late/duplicate POST can never learn or overwrite the real host's token).
+ * Result of creating (or resuming) a room: the code the room lives at, the authoritative
+ * payload, plus the host token ONLY when THIS caller actually created the room (`null` when the
+ * room already existed, so a late/duplicate POST can never learn or overwrite the real host's
+ * token).
+ *
+ * `code` is echoed back because the SERVER mints it: only the store sees every game's
+ * reservations, so only the server can hand out a code that is unique across the whole arcade.
  */
 export interface RoomCreation<T> {
+    code: number;
     value: T;
     hostToken: string | null;
 }

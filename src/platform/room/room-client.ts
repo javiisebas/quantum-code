@@ -35,21 +35,11 @@ export const fetchRoom = async <T>(
     return (await response.json()) as T | null;
 };
 
-/**
- * POST a candidate payload for a code. The server creates it atomically if absent and
- * responds with the AUTHORITATIVE payload plus the host token — but the token is present
- * ONLY when THIS call created the room (null when it already existed), so only the true
- * host ever holds it. Returns `{ value, hostToken }`.
- */
-export const createRoom = async <T>(
-    game: string,
-    code: number,
-    payload: T,
-): Promise<RoomCreation<T>> => {
+const postRoom = async <T>(game: string, body: object): Promise<RoomCreation<T>> => {
     const response = await fetch(`/api/room/${encodeURIComponent(game)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, payload }),
+        body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -57,6 +47,45 @@ export const createRoom = async <T>(
     }
 
     return (await response.json()) as RoomCreation<T>;
+};
+
+/**
+ * OPEN a room: post the payload and let the SERVER mint the join code. The code has to be
+ * allocated server-side because only the store can see every game's reservations, and the whole
+ * join flow now rests on six digits naming exactly one room across the arcade.
+ *
+ * Returns `{ code, value, hostToken }` — the token proving this caller is the host.
+ */
+export const openRoom = <T>(game: string, payload: T): Promise<RoomCreation<T>> =>
+    postRoom<T>(game, { payload });
+
+/**
+ * RESUME a room at a code the host already holds (it reloaded and read the code back from
+ * localStorage). Re-ensures both the room and its code reservation, since either may have
+ * lapsed past its TTL. The room is created-if-absent, so `hostToken` comes back null when the
+ * room was still there — the caller keeps the token it already persisted.
+ */
+export const resumeRoom = <T>(game: string, code: number, payload: T): Promise<RoomCreation<T>> =>
+    postRoom<T>(game, { code, payload });
+
+/**
+ * Resolve a join code to the game that owns it, or null when no live room has that code.
+ * This is what lets a player type six digits and land in the right game without picking it.
+ */
+export const resolveJoinCode = async (
+    code: number | string,
+): Promise<{ game: string; name: string; emoji: string } | null> => {
+    const response = await fetch(`/api/join/${encodeURIComponent(String(code))}`);
+
+    if (response.status === 404 || response.status === 400) {
+        return null;
+    }
+
+    if (!response.ok) {
+        throw new Error(`Failed to resolve code: ${response.statusText}`);
+    }
+
+    return (await response.json()) as { game: string; name: string; emoji: string };
 };
 
 /** DELETE the room for a code. Treats a 404 (already gone) as success. */

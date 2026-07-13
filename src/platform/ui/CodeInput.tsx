@@ -65,18 +65,24 @@ export function CodeInput({
                 autoFocus={autoFocus}
                 className="absolute inset-0 z-10 h-full w-full cursor-text rounded-xl opacity-0"
             />
-            <div className="flex justify-center gap-2 sm:gap-2.5" aria-hidden="true">
+            {/*
+             * The cells are FLUID, not fixed-width. Six 44px cells plus gaps came to 304px, which
+             * overflowed its own card at 375px (a 279px content box) — the boxes were visibly
+             * clipped on a phone. Each cell now flexes to the space available and takes its
+             * height from its width (`aspect`), capped so it never balloons on a TV.
+             */}
+            <div className="flex w-full gap-1.5 sm:gap-2" aria-hidden="true">
                 {Array.from({ length: LENGTH }).map((_, i) => {
                     const char = value[i];
                     const isActive =
                         focused &&
-                        (i === value.length ||
-                            (value.length === LENGTH && i === LENGTH - 1));
+                        (i === value.length || (value.length === LENGTH && i === LENGTH - 1));
                     return (
                         <div
                             key={i}
                             className={ClassnameHelper.join(
-                                'flex h-14 w-11 items-center justify-center rounded-xl text-2xl font-bold text-white ring-1 ring-inset transition-all sm:h-16 sm:w-12',
+                                'flex aspect-[3/4] max-h-16 min-w-0 flex-1 items-center justify-center rounded-xl text-2xl font-bold tabular-nums text-white ring-1 ring-inset transition-all',
+                                // A filled cell reads as "done"; the caret cell as "you are here".
                                 char ? 'bg-white/10 ring-white/20' : 'bg-white/5 ring-white/10',
                                 isActive && 'ring-2 ring-purple-500',
                             )}

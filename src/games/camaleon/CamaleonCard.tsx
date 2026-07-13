@@ -1,37 +1,52 @@
 'use client';
 
+import { SecretCardScreen } from '@/games/_shared/SecretCardScreen';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import { FC } from 'react';
 import { BiSolidMask } from 'react-icons/bi';
 import type { CamaleonSeatView } from './domain';
+import { camaleonManifest } from './manifest';
 
 interface CamaleonCardProps {
     view: CamaleonSeatView;
 }
 
 /**
- * The 4×4 board shown on every phone. `highlight` marks the secret word's cell (lime
- * tile) for ordinary players so they can locate it; the Chameleon is passed `null`, so
+ * The theme and its 4×4 board — identical on every phone. `highlight` marks the secret word's
+ * cell (lime tile) for ordinary players so they can locate it; the Chameleon is passed `null`, so
  * their board gives nothing away — they must deduce the word from what everyone says.
  */
-const WordGrid: FC<{ words: string[]; highlight: number | null }> = ({ words, highlight }) => (
-    <div className="mt-4 grid w-full grid-cols-4 gap-2">
-        {words.map((word, i) => (
-            <div
-                key={`${i}-${word}`}
-                className={ClassnameHelper.join(
-                    'flex min-h-12 items-center justify-center break-words rounded-xl px-1.5 py-2 text-center text-xs font-medium leading-tight ring-1 ring-inset',
-                    i === highlight
-                        ? 'bg-lime-500/20 font-bold text-lime-200 ring-lime-400/50'
-                        : 'bg-white/5 text-gray-300 ring-white/10',
-                )}
-            >
-                {word}
-            </div>
-        ))}
-    </div>
+const WordBoard: FC<{ theme: string; words: string[]; highlight: number | null }> = ({
+    theme,
+    words,
+    highlight,
+}) => (
+    <>
+        <Eyebrow as="p" className="mb-1 text-center">
+            Tema
+        </Eyebrow>
+        <p className="text-center text-lg font-bold text-white">{theme}</p>
+
+        <div className="mt-4 grid grid-cols-4 gap-2">
+            {words.map((word, i) => (
+                <Surface
+                    key={`${i}-${word}`}
+                    tone={i === highlight ? 'plain' : 'inset'}
+                    radius="xl"
+                    className={ClassnameHelper.join(
+                        'flex min-h-12 items-center justify-center break-words px-1.5 py-2 text-center text-xs font-medium leading-tight',
+                        i === highlight
+                            ? 'bg-lime-500/20 font-bold text-lime-200 ring-lime-400/50'
+                            : 'text-gray-300',
+                    )}
+                >
+                    {word}
+                </Surface>
+            ))}
+        </div>
+    </>
 );
 
 /** This phone's secret Camaleón card: either "you are the Chameleon" or the secret word. */
@@ -41,13 +56,21 @@ export const CamaleonCard: FC<CamaleonCardProps> = ({ view }) => {
     const isChameleon = view.kind === 'chameleon';
 
     return (
-        <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
-            <Eyebrow className="mb-3">Jugador {view.seat}</Eyebrow>
-
+        <SecretCardScreen
+            manifest={camaleonManifest}
+            seat={view.seat}
+            reference={
+                <WordBoard
+                    theme={view.theme}
+                    words={view.grid}
+                    highlight={isChameleon ? null : view.secretIndex}
+                />
+            }
+        >
             <Surface
                 tone={isChameleon ? 'plain' : 'panel'}
                 className={ClassnameHelper.join(
-                    'flex w-full max-w-sm flex-col items-center p-8 text-center',
+                    'flex w-full flex-col items-center p-6 text-center sm:p-8',
                     isChameleon && 'bg-lime-950/60 ring-lime-500/40',
                 )}
             >
@@ -74,17 +97,6 @@ export const CamaleonCard: FC<CamaleonCardProps> = ({ view }) => {
                     </>
                 )}
             </Surface>
-
-            <section className="mt-8 flex w-full max-w-sm flex-col items-center">
-                <Eyebrow as="p" className="mb-1 block text-center">
-                    Tema
-                </Eyebrow>
-                <p className="text-lg font-bold text-white">{view.theme}</p>
-                <WordGrid
-                    words={view.grid}
-                    highlight={isChameleon ? null : view.secretIndex}
-                />
-            </section>
-        </main>
+        </SecretCardScreen>
     );
 };

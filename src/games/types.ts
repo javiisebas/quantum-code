@@ -33,6 +33,16 @@ export interface GameManifest {
     duration: string;
     /** Secret-distribution model (drives the join/seat flow). */
     secrecy: GameSecrecy;
+    /**
+     * How to play, as ordered steps — the content of the shared "¿Cómo se juega?" modal every
+     * game now has. Rules used to be a single `hint` string dumped at the bottom of the lobby
+     * (below the CTA, competing with it and pushing the screen past the fold), and only
+     * Codenames had a real explanation — buried in its own bespoke dock. Structuring them here
+     * lets one component render all eight identically, and keeps the lobby itself clean.
+     *
+     * Keep each step one short sentence, second person, imperative. 3–5 steps.
+     */
+    howTo: string[];
 }
 
 /**

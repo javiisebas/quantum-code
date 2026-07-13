@@ -1,18 +1,24 @@
-import { JoinPanel } from '@/games/_shared/JoinPanel';
 import { accentOf } from '@/games/_shared/accents';
 import { gameManifests } from '@/games/registry';
 import type { GameManifest } from '@/games/types';
+import { Button } from '@/platform/ui/Button';
 import { Chip } from '@/platform/ui/Chip';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
+import { Screen } from '@/platform/ui/Screen';
 import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import Link from 'next/link';
+import { BiRightArrowAlt } from 'react-icons/bi';
 
 /**
- * One catalogue card = one game the host can launch onto the shared screen. Built
- * from the shared `Surface` panel so it reads as part of the same system as every
- * other card, tinted only by the game's own accent (ring on hover + a restrained
- * corner glow) so each game keeps its colour identity.
+ * The arcade home. It is now ONE thing — the catalogue — and nothing else.
+ *
+ * It used to be three stacked sections: a marketing hero, a "Soy jugador" card holding a picker
+ * of every game plus a code field, and then the catalogue. So the person who came to *host* had
+ * to scroll past a form they'd never use, and the person who came to *join* had to scroll to a
+ * form and then answer a question (which game?) that they could get wrong — and that the server
+ * can now answer on its own. Joining is a different job for a different person in a different
+ * hurry: it got its own page (`/join`), reachable from a single line in the header.
  */
 const GameCard = ({ game }: { game: GameManifest }) => {
     const accent = accentOf(game.accent);
@@ -24,7 +30,7 @@ const GameCard = ({ game }: { game: GameManifest }) => {
         >
             <Surface
                 className={ClassnameHelper.join(
-                    'relative flex h-full flex-col overflow-hidden p-6 transition duration-300',
+                    'relative flex h-full flex-col overflow-hidden p-5 transition duration-300',
                     'hover:-translate-y-1 hover:bg-gray-900/90',
                     accent.ringHover,
                 )}
@@ -36,12 +42,14 @@ const GameCard = ({ game }: { game: GameManifest }) => {
                         accent.glow,
                     )}
                 />
-                <span className="text-5xl" aria-hidden="true">
+                <span className="text-4xl" aria-hidden="true">
                     {game.emoji}
                 </span>
-                <h3 className="mt-5 text-xl font-bold text-white">{game.name}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-400">{game.tagline}</p>
-                <div className="mt-6 flex flex-wrap gap-2">
+                <h3 className="mt-4 text-lg font-bold text-white">{game.name}</h3>
+                <p className="mt-1.5 flex-1 text-sm leading-relaxed text-gray-400">
+                    {game.tagline}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
                     <Chip tone="bare" className={accent.chip}>
                         {game.players} jugadores
                     </Chip>
@@ -54,50 +62,39 @@ const GameCard = ({ game }: { game: GameManifest }) => {
 
 export default function ArcadeHomePage() {
     return (
-        <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-16 px-6 py-16 sm:gap-20 lg:px-8">
-            <header className="flex flex-col items-center text-center">
-                <Eyebrow className="text-purple-300 tracking-[0.3em]">Quantum Arcade</Eyebrow>
-                <h1 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-6xl">
-                    Juegos de fiesta
-                </h1>
-                <p className="mt-5 max-w-xl text-lg text-gray-300">
-                    Una pantalla para todos, un móvil para cada uno. Elige un juego, comparte el
-                    código y a jugar.
-                </p>
+        <Screen width="xl" height="scroll" className="gap-8 pb-16 sm:gap-10">
+            <header className="flex h-12 shrink-0 items-center justify-between gap-4 sm:h-14">
+                <Eyebrow className="tracking-[0.25em] text-purple-300">Quantum Arcade</Eyebrow>
+                {/* The player's door. One line, always in reach, never in the way. */}
+                <Button
+                    as={Link}
+                    href="/join"
+                    variant="secondary"
+                    size="sm"
+                    endContent={<BiRightArrowAlt size={18} />}
+                >
+                    Tengo un código
+                </Button>
             </header>
 
-            <section aria-labelledby="join-heading" className="flex justify-center">
-                <Surface className="w-full max-w-md p-6 sm:p-8">
-                    <Eyebrow>Soy jugador</Eyebrow>
-                    <h2 id="join-heading" className="mt-2 text-2xl font-bold text-white">
-                        ¿Tienes un código?
-                    </h2>
-                    <p className="mt-2 text-sm text-gray-400">
-                        Únete a la partida que ya está en la pantalla.
-                    </p>
-                    <JoinPanel className="mt-6" />
-                </Surface>
-            </section>
+            <div className="flex flex-col items-center pt-4 text-center sm:pt-8">
+                <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+                    Juegos de fiesta
+                </h1>
+                <p className="mt-4 max-w-xl text-base text-gray-300 sm:text-lg">
+                    Una pantalla para todos, un móvil para cada uno. Elige un juego y comparte el
+                    código.
+                </p>
+            </div>
 
-            <section aria-labelledby="host-heading">
-                <div className="text-center">
-                    <Eyebrow>Soy anfitrión</Eyebrow>
-                    <h2
-                        id="host-heading"
-                        className="mt-2 text-3xl font-bold tracking-tight text-white"
-                    >
-                        Crea una partida
-                    </h2>
-                    <p className="mx-auto mt-3 max-w-md text-base text-gray-400">
-                        Elige un juego para la pantalla compartida.
-                    </p>
-                </div>
-                <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {gameManifests.map((game) => (
-                        <GameCard key={game.id} game={game} />
-                    ))}
-                </div>
+            <section
+                aria-label="Juegos"
+                className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            >
+                {gameManifests.map((game) => (
+                    <GameCard key={game.id} game={game} />
+                ))}
             </section>
-        </main>
+        </Screen>
     );
 }

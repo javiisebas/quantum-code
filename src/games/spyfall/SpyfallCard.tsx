@@ -1,5 +1,7 @@
 'use client';
 
+import { RoundFullCard } from '@/games/_shared/RoundFullCard';
+import { SecretCardScreen } from '@/games/_shared/SecretCardScreen';
 import { Chip } from '@/platform/ui/Chip';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { Surface } from '@/platform/ui/Surface';
@@ -7,14 +9,16 @@ import { ClassnameHelper } from '@/platform/util/classnames';
 import { FC } from 'react';
 import { BiSolidUserX } from 'react-icons/bi';
 import { SPYFALL_LOCATION_NAMES, type SpyfallSeatView } from './domain';
+import { spyfallManifest } from './manifest';
 
 interface SpyfallCardProps {
     view: SpyfallSeatView;
 }
 
+/** The same on every phone: the spy's only lead, and everyone else's checklist. */
 const LocationList = () => (
-    <div className="mt-6 w-full">
-        <Eyebrow as="p" className="mb-2 block text-center">
+    <>
+        <Eyebrow as="p" className="mb-2 text-center">
             Lugares posibles
         </Eyebrow>
         <div className="flex flex-wrap justify-center gap-1.5">
@@ -22,36 +26,24 @@ const LocationList = () => (
                 <Chip key={name}>{name}</Chip>
             ))}
         </div>
-    </div>
+    </>
 );
 
 /** This phone's secret Spyfall card: either "you are the spy" or location + role. */
 export const SpyfallCard: FC<SpyfallCardProps> = ({ view }) => {
     // More phones joined than seats dealt — this player has no assignment this round.
     if (view.kind === 'full') {
-        return (
-            <main className="flex min-h-screen items-center justify-center px-6 text-center">
-                <Surface className="max-w-sm p-8">
-                    <p className="text-lg text-gray-200">La partida ya está completa.</p>
-                    <p className="mt-2 text-sm text-gray-400">
-                        Pide al anfitrión una <span className="font-semibold">nueva ronda</span> con
-                        más jugadores.
-                    </p>
-                </Surface>
-            </main>
-        );
+        return <RoundFullCard />;
     }
 
     const isSpy = view.kind === 'spy';
 
     return (
-        <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
-            <Eyebrow className="mb-3">Jugador {view.seat}</Eyebrow>
-
+        <SecretCardScreen manifest={spyfallManifest} seat={view.seat} reference={<LocationList />}>
             <Surface
                 tone={isSpy ? 'plain' : 'panel'}
                 className={ClassnameHelper.join(
-                    'flex w-full max-w-sm flex-col items-center p-8 text-center',
+                    'flex w-full flex-col items-center p-6 text-center sm:p-8',
                     isSpy && 'bg-rose-950/60 ring-rose-500/40',
                 )}
             >
@@ -68,20 +60,14 @@ export const SpyfallCard: FC<SpyfallCardProps> = ({ view }) => {
                 ) : (
                     <>
                         <Eyebrow>El lugar es</Eyebrow>
-                        <h1 className="mt-1 text-3xl font-extrabold text-white">
-                            {view.location}
-                        </h1>
+                        <h1 className="mt-1 text-3xl font-extrabold text-white">{view.location}</h1>
                         <Surface tone="inset" radius="2xl" className="mt-5 px-5 py-3">
                             <Eyebrow>Tu rol</Eyebrow>
-                            <p className="text-xl font-bold text-rose-200">
-                                {view.role}
-                            </p>
+                            <p className="text-xl font-bold text-rose-200">{view.role}</p>
                         </Surface>
                     </>
                 )}
             </Surface>
-
-            <LocationList />
-        </main>
+        </SecretCardScreen>
     );
 };

@@ -5,7 +5,8 @@ export const SPYFALL_ID = 'spyfall';
 export const spyfallManifest: GameManifest = {
     id: SPYFALL_ID,
     name: '¿Dónde está el espía?',
-    tagline: 'Todos conocen el lugar… menos el espía. Descúbrelo antes de que adivine dónde estáis.',
+    tagline:
+        'Todos conocen el lugar… menos el espía. Descúbrelo antes de que adivine dónde estáis.',
     emoji: '🕵️‍♂️',
     accent: 'rose',
     minPlayers: 3,
@@ -13,6 +14,13 @@ export const spyfallManifest: GameManifest = {
     players: '3–12',
     duration: '10 min',
     secrecy: 'per-player',
+    howTo: [
+        'Tu móvil te dice el lugar donde estáis y tu rol allí… salvo si eres el espía.',
+        'Por turnos, haceos preguntas sobre el lugar sin llegar a nombrarlo.',
+        'Responde para demostrar que sabes dónde estás, sin ponérselo fácil al espía.',
+        'Cuando sospechéis, acusad: si desenmascaráis al espía, ganáis.',
+        'El espía gana si aguanta sin que le pillen o si adivina el lugar.',
+    ],
 };
 
 const MAX_SEATS = 20;

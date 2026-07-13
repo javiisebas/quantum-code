@@ -23,20 +23,35 @@ export interface SpyfallRoom {
 
 /** Location pool (Spanish). Each has themed roles handed out to non-spy players. */
 export const SPYFALL_LOCATIONS: SpyfallLocation[] = [
-    { name: 'Playa', roles: ['Socorrista', 'Surfista', 'Vendedor de helados', 'Turista', 'Pescador'] },
+    {
+        name: 'Playa',
+        roles: ['Socorrista', 'Surfista', 'Vendedor de helados', 'Turista', 'Pescador'],
+    },
     { name: 'Hospital', roles: ['Cirujano', 'Enfermera', 'Paciente', 'Celador', 'Anestesista'] },
     { name: 'Avión', roles: ['Piloto', 'Azafata', 'Polizón', 'Turista', 'Mecánico'] },
     { name: 'Colegio', roles: ['Profesor', 'Alumno', 'Director', 'Conserje', 'Cocinero'] },
     { name: 'Restaurante', roles: ['Chef', 'Camarero', 'Cliente', 'Crítico', 'Lavaplatos'] },
     { name: 'Casino', roles: ['Crupier', 'Apostador', 'Seguridad', 'Camarera', 'Tramposo'] },
-    { name: 'Estación espacial', roles: ['Comandante', 'Ingeniero', 'Médico', 'Astronauta', 'Alienígena'] },
+    {
+        name: 'Estación espacial',
+        roles: ['Comandante', 'Ingeniero', 'Médico', 'Astronauta', 'Alienígena'],
+    },
     { name: 'Banco', roles: ['Cajero', 'Cliente', 'Guardia', 'Director', 'Atracador'] },
-    { name: 'Cine', roles: ['Acomodador', 'Proyeccionista', 'Espectador', 'Taquillero', 'Crítico'] },
-    { name: 'Estadio', roles: ['Futbolista', 'Árbitro', 'Aficionado', 'Entrenador', 'Comentarista'] },
+    {
+        name: 'Cine',
+        roles: ['Acomodador', 'Proyeccionista', 'Espectador', 'Taquillero', 'Crítico'],
+    },
+    {
+        name: 'Estadio',
+        roles: ['Futbolista', 'Árbitro', 'Aficionado', 'Entrenador', 'Comentarista'],
+    },
     { name: 'Circo', roles: ['Payaso', 'Trapecista', 'Domador', 'Mago', 'Público'] },
     { name: 'Submarino', roles: ['Capitán', 'Sonarista', 'Cocinero', 'Torpedista', 'Grumete'] },
     { name: 'Hotel', roles: ['Recepcionista', 'Botones', 'Huésped', 'Camarera', 'Gerente'] },
-    { name: 'Universidad', roles: ['Catedrático', 'Estudiante', 'Bibliotecaria', 'Decano', 'Bedel'] },
+    {
+        name: 'Universidad',
+        roles: ['Catedrático', 'Estudiante', 'Bibliotecaria', 'Decano', 'Bedel'],
+    },
     { name: 'Barco pirata', roles: ['Capitán', 'Contramaestre', 'Grumete', 'Vigía', 'Prisionero'] },
 ];
 

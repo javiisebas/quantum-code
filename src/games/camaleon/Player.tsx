@@ -8,11 +8,7 @@ import { camaleonManifest } from './manifest';
 /** El Camaleón player (phone): claim a seat and reveal this player's secret card. */
 export function CamaleonPlayer({ code }: { code: number | null }) {
     return (
-        <PlayerShell<CamaleonSeatView>
-            game={camaleonManifest.id}
-            gameName={camaleonManifest.name}
-            code={code}
-        >
+        <PlayerShell<CamaleonSeatView> game={camaleonManifest.id} code={code}>
             {(view) => <CamaleonCard view={view} />}
         </PlayerShell>
     );

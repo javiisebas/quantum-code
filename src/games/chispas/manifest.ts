@@ -14,6 +14,13 @@ export const chispasManifest: GameManifest = {
     players: '3–10',
     duration: '15 min',
     secrecy: 'per-player',
+    howTo: [
+        'Cada ronda, la pantalla principal muestra un reto para todos.',
+        'Escribe en tu móvil la respuesta más graciosa que se te ocurra.',
+        'Cuando estén todas, votad la mejor desde el móvil: la tuya no cuenta.',
+        'Cada voto que recibas te suma 100 puntos.',
+        'Tras tres rondas, gana quien más risas haya arrancado.',
+    ],
 };
 
 /**

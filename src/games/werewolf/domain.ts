@@ -41,7 +41,8 @@ export const WEREWOLF_ROLES: Record<WerewolfRole, WerewolfRoleInfo> = {
     bruja: {
         label: 'Bruja',
         emoji: '🧪',
-        description: 'Tienes una poción para salvar a la víctima y otra para envenenar, una vez cada una.',
+        description:
+            'Tienes una poción para salvar a la víctima y otra para envenenar, una vez cada una.',
         team: 'aldea',
     },
     cazador: {
@@ -53,7 +54,8 @@ export const WEREWOLF_ROLES: Record<WerewolfRole, WerewolfRoleInfo> = {
     cupido: {
         label: 'Cupido',
         emoji: '💘',
-        description: 'La primera noche enamoras a dos jugadores: si uno muere, el otro muere de pena.',
+        description:
+            'La primera noche enamoras a dos jugadores: si uno muere, el otro muere de pena.',
         team: 'aldea',
     },
 };
@@ -105,8 +107,7 @@ export const buildWerewolf = (count: number): WerewolfRoom => {
  * WEREWOLF_ROLES for the label/description — no other seat's role is ever present.
  */
 export type WerewolfSeatView =
-    | { kind: 'role'; seat: number; role: WerewolfRole }
-    | { kind: 'full'; seat: number };
+    { kind: 'role'; seat: number; role: WerewolfRole } | { kind: 'full'; seat: number };
 
 /**
  * Project a Hombres Lobo room down to what `seat` (1-based) may see. Pure and server-side:

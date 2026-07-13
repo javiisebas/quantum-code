@@ -173,5 +173,9 @@ export const applyRoundScores = (
 /** Cumulative scoreboard for the roster, highest first. */
 export const scoreboard = (players: LivePlayer[], scores: Record<number, number>): Score[] =>
     players
-        .map((player) => ({ seat: player.seat, name: player.name, score: scores[player.seat] ?? 0 }))
+        .map((player) => ({
+            seat: player.seat,
+            name: player.name,
+            score: scores[player.seat] ?? 0,
+        }))
         .sort((a, b) => b.score - a.score || a.seat - b.seat);

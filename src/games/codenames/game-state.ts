@@ -177,5 +177,4 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
 };
 
 /** Whether a game status is terminal (roles can be released from Redis). */
-export const isTerminal = (status: GameStatusEnum): boolean =>
-    status !== GameStatusEnum.PLAYING;
+export const isTerminal = (status: GameStatusEnum): boolean => status !== GameStatusEnum.PLAYING;

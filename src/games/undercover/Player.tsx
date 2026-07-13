@@ -8,11 +8,7 @@ import { UndercoverCard } from './UndercoverCard';
 /** Undercover player (phone): claim a seat and reveal this player's secret word. */
 export function UndercoverPlayer({ code }: { code: number | null }) {
     return (
-        <PlayerShell<UndercoverSeatView>
-            game={undercoverManifest.id}
-            gameName={undercoverManifest.name}
-            code={code}
-        >
+        <PlayerShell<UndercoverSeatView> game={undercoverManifest.id} code={code}>
             {(view) => <UndercoverCard view={view} />}
         </PlayerShell>
     );

@@ -3,6 +3,7 @@
 import { NoTeamEnum } from '@/games/codenames/enums/no-team.enum';
 import { RoleEnum } from '@/games/codenames/enums/role.enum';
 import { TeamEnum } from '@/games/codenames/enums/team.enum';
+import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import { getCardColor } from '@/games/codenames/get-card-color';
 import { motion } from 'framer-motion';
@@ -40,7 +41,14 @@ const ROLE_GLYPH: Record<RoleEnum, ReactNode> = {
 export const SpyBoard: FC<SpyBoardProps> = ({ roles, words }) => {
     return (
         <SpyBoardFrame>
-            <div className="w-full rounded-2xl bg-gray-400/50 p-2 shadow-2xl shadow-gray-200/10 ring-1 ring-inset ring-gray-900/10 sm:p-3">
+            <Surface
+                tone="plain"
+                radius="2xl"
+                className="w-full bg-gray-400/50 p-2 shadow-2xl shadow-gray-200/10 ring-gray-900/10 sm:p-3"
+            >
+                {/* The board's dark mat, inside the light tray. Deliberately NOT a `<Surface>`:
+                    its ring would draw a second edge a few pixels inside the tray's own, which is
+                    exactly the double-border look the tray is meant to give once. */}
                 <div className="rounded-xl bg-gray-900 p-2 sm:p-3">
                     <div
                         className="grid grid-cols-5 gap-1.5 sm:gap-2"
@@ -76,7 +84,7 @@ export const SpyBoard: FC<SpyBoardProps> = ({ roles, words }) => {
                         ))}
                     </div>
                 </div>
-            </div>
+            </Surface>
         </SpyBoardFrame>
     );
 };

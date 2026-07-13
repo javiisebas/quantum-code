@@ -15,6 +15,13 @@ export const codenamesManifest: GameManifest = {
     players: '4+',
     duration: '15 min',
     secrecy: 'shared',
+    howTo: [
+        'Un dispositivo hace de tablero compartido y muestra 25 palabras.',
+        'Los espías ven en su móvil el mapa secreto con el color de cada palabra.',
+        'Por turnos, cada equipo da pistas y toca palabras del tablero para revelar su color.',
+        'Si aciertas una carta de tu color sigues; si fallas, pasa el turno al rival.',
+        'Gana el equipo que revela todas sus cartas; tocar al asesino es perder al instante.',
+    ],
 };
 
 // --- Payload validation for the generic room API (`/api/room/codenames`) ---

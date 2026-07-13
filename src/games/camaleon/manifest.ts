@@ -13,6 +13,13 @@ export const camaleonManifest: GameManifest = {
     players: '3–12',
     duration: '8 min',
     secrecy: 'per-player',
+    howTo: [
+        'Todos veis en el móvil el mismo tema y su tablero de 16 palabras.',
+        'Tu móvil marca la palabra secreta… salvo si eres el camaleón.',
+        'Por turnos, di en alto una palabra relacionada para demostrar que la conoces.',
+        'Debatid y votad a quién creéis que es el camaleón.',
+        'Ganáis si lo pilláis; él gana si se libra o adivina la palabra secreta.',
+    ],
 };
 
 const MAX_SEATS = 20;

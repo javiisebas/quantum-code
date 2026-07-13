@@ -192,10 +192,7 @@ export const initGame = (totalRounds: number, seats: number[]): BombaGame => {
 };
 
 /** Strike standings for the roster, FEWEST strikes first, ties broken by seat ascending. */
-export const scoreboard = (
-    players: LivePlayer[],
-    strikes: Record<number, number>,
-): BombaScore[] =>
+export const scoreboard = (players: LivePlayer[], strikes: Record<number, number>): BombaScore[] =>
     players
         .map((player) => ({
             seat: player.seat,

@@ -1,50 +1,51 @@
-import { getManifest } from '@/games/registry';
 import { parseCode } from '@/platform/room';
 
 /**
- * Resolve where a raw string should send a player. The input is typically a scanned
- * QR payload, but the same logic accepts a pasted join link or a bare code.
+ * Pull a join code out of whatever a player throws at us — a scanned QR payload, a pasted
+ * join link, or six digits typed by hand.
  *
- * Two shapes are recognised:
- *  1. A canonical join URL — `…/join/<game>?code=NNNNNN`. Both the `<game>` path
- *     segment (must be a real manifest) and the `code` query (must pass `parseCode`)
- *     are validated; if either fails we fall through to the loose path below.
- *  2. Anything else containing a 6-digit code — a bare code, or a link we can't parse
- *     as a URL. We prefer an explicit `code=NNNNNN`, else the last 6-digit run, and
- *     pair it with `fallbackGame` (the game the player already chose / is looking at).
+ * It returns only the CODE, never a game: the code is now an arcade-wide identity that the
+ * server resolves to its game (`GET /api/join/<code>`). That is what removed the game picker
+ * from the join flow — nothing on the client has to know, or guess, which game a code belongs
+ * to. It also means an OLD QR still works: `/join/<game>?code=NNNNNN` links shared before this
+ * change carry the same code, and the code is all we read.
  *
- * Returns null when no valid game + code can be resolved. Framework-agnostic on
- * purpose (only the `URL` global) so it is safe to unit-test and import anywhere.
+ * Recognised shapes, in order of trust:
+ *   1. `…/j/NNNNNN`                 — the canonical short join link the QR now encodes.
+ *   2. `…?code=NNNNNN`              — any link carrying an explicit code query (incl. legacy
+ *                                     `/join/<game>?code=…`).
+ *   3. anything else with 6 digits  — a bare typed/pasted code, or a link we can't parse.
+ *
+ * The `code=` query is preferred over a loose digit scan so a URL whose origin happens to
+ * contain a 6-digit run can't poison the result. Framework-agnostic (only the `URL` global) so
+ * it is safe to unit-test and import anywhere.
  */
-export function parseJoinTarget(
-    text: string,
-    fallbackGame?: string,
-): { game: string; code: number } | null {
+export function parseJoinCode(text: string): number | null {
     const raw = text.trim();
 
-    // 1. A canonical join URL: /join/<game>?code=<code>.
+    // 1. The canonical short link: /j/<code>.
     try {
         const url = new URL(raw);
-        const segment = url.pathname.match(/^\/join\/([^/]+)\/?$/)?.[1];
-        if (segment) {
-            const code = parseCode(url.searchParams.get('code'));
-            if (getManifest(segment) && code !== null) {
-                return { game: segment, code };
-            }
+        const fromPath = parseCode(url.pathname.match(/^\/j\/([^/]+)\/?$/)?.[1]);
+        if (fromPath !== null) {
+            return fromPath;
+        }
+
+        // 2. Any link with an explicit ?code= (covers the legacy /join/<game>?code=… QRs).
+        const fromQuery = parseCode(url.searchParams.get('code'));
+        if (fromQuery !== null) {
+            return fromQuery;
         }
     } catch {
-        // Not a URL — fall through to loose code extraction.
+        // Not a URL — fall through to the loose scan.
     }
 
-    // 2. Loose: pull a 6-digit code and pair it with the fallback game.
+    // 3. Loose: an explicit `code=` in a non-URL string, else the last 6-digit run.
     const explicit = raw.match(/code=(\d{6})/i);
-    const runs = raw.match(/\d{6}/g);
-    const digits = explicit ? explicit[1] : runs ? runs[runs.length - 1] : null;
-    const code = parseCode(digits);
-
-    if (code !== null && fallbackGame && getManifest(fallbackGame)) {
-        return { game: fallbackGame, code };
+    if (explicit) {
+        return parseCode(explicit[1]);
     }
 
-    return null;
+    const runs = raw.match(/\d{6}/g);
+    return parseCode(runs ? runs[runs.length - 1] : null);
 }

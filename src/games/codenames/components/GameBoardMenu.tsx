@@ -1,10 +1,10 @@
 'use client';
 
 import { useGame } from '@/games/codenames/GameContext';
-import { ModalHowToPlayContent } from '@/games/codenames/components/ModalHowToPlayContent';
-import { CODENAMES_ID, codenamesManifest } from '@/games/codenames/manifest';
+import { codenamesManifest } from '@/games/codenames/manifest';
 import { ConfirmModal } from '@/platform/ui/ConfirmModal';
 import { BarDivider, FLOATING_BAR, BarButton } from '@/platform/ui/FloatingBar';
+import { HowToPlayModal } from '@/platform/ui/HowToPlay';
 import { useModal } from '@/platform/ui/modal-context';
 import { ShareModal } from '@/platform/ui/ShareModal';
 import { useRouter } from 'next/navigation';
@@ -41,16 +41,15 @@ export const GameBoardMenu: FC = () => {
             id: 'share',
             icon: <BiQr size={22} />,
             label: 'Compartir partida',
-            onPress: () =>
-                openModal(
-                    <ShareModal code={code} game={CODENAMES_ID} gameName={codenamesManifest.name} />,
-                ),
+            onPress: () => openModal(<ShareModal code={code} gameName={codenamesManifest.name} />),
         },
         {
             id: 'how-to-play',
             icon: <BiHelpCircle size={22} />,
             label: 'Cómo se juega',
-            onPress: () => openModal(<ModalHowToPlayContent />),
+            // The same rules modal the other seven games show, fed from the manifest — this dock
+            // used to open a bespoke one only Codenames had.
+            onPress: () => openModal(<HowToPlayModal manifest={codenamesManifest} />),
         },
         {
             id: 'reveal',

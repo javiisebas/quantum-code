@@ -47,7 +47,6 @@ const gameLoaders: Record<string, GameLoader> = {
     },
 };
 
-
 /** Resolve a game's lazy Host/Player screens by id, or null when unknown. */
 export const getGameLoader = (id: string): GameLoader | null => gameLoaders[id] ?? null;
 

@@ -35,9 +35,7 @@ describe('buildUndercover', () => {
 
                 // The non-undercover seats all share the same civilian word.
                 const undercoverSet = new Set(room.undercoverSeats);
-                const civilianWords = room.wordBySeat.filter(
-                    (_, i) => !undercoverSet.has(i + 1),
-                );
+                const civilianWords = room.wordBySeat.filter((_, i) => !undercoverSet.has(i + 1));
                 const civilianWord = civilianWords[0];
                 for (const word of civilianWords) {
                     expect(word).toBe(civilianWord);

@@ -9,9 +9,13 @@ delete process.env.UPSTASH_REDIS_KV_REST_API_URL;
 delete process.env.UPSTASH_REDIS_KV_REST_API_TOKEN;
 
 import {
+    allocateCode,
     claimSeat,
     deleteRoom,
     readRoom,
+    releaseCode,
+    reserveCode,
+    resolveCode,
     verifyHost,
     verifySeat,
     writeRoomIfAbsent,
@@ -108,6 +112,60 @@ describe('room-store (in-memory backend)', () => {
         it('unknown rooms verify nothing', async () => {
             expect(await verifyHost('t-none', 100010, 'x')).toBe(false);
             expect(await verifySeat('t-none', 100010, 1, 'x')).toBe(false);
+        });
+    });
+
+    /**
+     * The arcade-wide code index. Rooms are still stored per game (`bomba:611274`), but a CODE is
+     * reserved across every game, so six digits name exactly one room. That guarantee is what lets
+     * a player type a code and be routed to the right game — it is the reason the join flow has no
+     * game picker, so it is worth pinning down hard.
+     */
+    describe('code index', () => {
+        it('reserveCode takes a free code, and re-reserving it for the same game is idempotent', async () => {
+            expect(await reserveCode(200001, 'bomba')).toBe('bomba');
+            // A host resuming its own room must be able to re-reserve without being told no.
+            expect(await reserveCode(200001, 'bomba')).toBe('bomba');
+            expect(await resolveCode(200001)).toBe('bomba');
+        });
+
+        it('reserveCode reports the INCUMBENT when another game already holds the code', async () => {
+            await reserveCode(200002, 'spyfall');
+            // The caller must be able to tell "already mine" from "someone else's" — handing the
+            // same code to two games would break the one-code-one-room guarantee outright.
+            expect(await reserveCode(200002, 'werewolf')).toBe('spyfall');
+            expect(await resolveCode(200002)).toBe('spyfall');
+        });
+
+        it('resolveCode returns null for a code no room holds', async () => {
+            expect(await resolveCode(200003)).toBeNull();
+        });
+
+        it('releaseCode frees the code, but only for the game that owns it', async () => {
+            await reserveCode(200004, 'chispas');
+            // Another game cannot release someone else's reservation.
+            await releaseCode(200004, 'bomba');
+            expect(await resolveCode(200004)).toBe('chispas');
+            // The owner can.
+            await releaseCode(200004, 'chispas');
+            expect(await resolveCode(200004)).toBeNull();
+            // And once freed, the code is reusable by anyone.
+            expect(await reserveCode(200004, 'bomba')).toBe('bomba');
+        });
+
+        it('allocateCode mints a reserved, in-range, unique code per call', async () => {
+            const codes = await Promise.all([
+                allocateCode('bomba'),
+                allocateCode('bomba'),
+                allocateCode('spyfall'),
+            ]);
+            expect(new Set(codes).size).toBe(3);
+            for (const code of codes) {
+                expect(code).toBeGreaterThanOrEqual(100000);
+                expect(code).toBeLessThanOrEqual(999999);
+            }
+            expect(await resolveCode(codes[0])).toBe('bomba');
+            expect(await resolveCode(codes[2])).toBe('spyfall');
         });
     });
 });

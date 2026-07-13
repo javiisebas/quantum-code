@@ -1,7 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { fetchInputs, fetchPrivate, fetchState, publishPrivate, publishState } from './live-client';
+import { useEffect, useRef, useState } from 'react';
+import {
+    fetchInputs,
+    fetchPrivate,
+    fetchState,
+    publishPrivate,
+    publishState,
+    RoomAuthError,
+} from './live-client';
 
 /**
  * Client hooks for live, phase-based games — the moving half of the game loop:
@@ -81,6 +88,7 @@ export function useLiveInputs<V>({
     active,
     hostToken,
     intervalMs = INPUTS_POLL_MS,
+    onUnauthorized,
 }: {
     game: string;
     code: number | null;
@@ -88,8 +96,18 @@ export function useLiveInputs<V>({
     active: boolean;
     hostToken: string | null;
     intervalMs?: number;
+    /**
+     * Called once if the server REJECTS this host token (see `RoomAuthError`). Every other
+     * failure is treated as transient and swallowed, but this one is terminal — without a way
+     * to hear about it, a host whose capability died sits watching an empty roster forever.
+     */
+    onUnauthorized?: () => void;
 }): Record<number, V> {
     const [inputs, setInputs] = useState<Record<number, V>>({});
+
+    // Kept in a ref so passing an inline handler doesn't restart the poll loop on every render.
+    const onUnauthorizedRef = useRef(onUnauthorized);
+    onUnauthorizedRef.current = onUnauthorized;
 
     useEffect(() => {
         // Reset immediately so a round/code change never serves the previous bucket's data
@@ -98,12 +116,20 @@ export function useLiveInputs<V>({
         if (code === null || !active || !hostToken) return;
 
         let cancelled = false;
+        let stopped = false;
         const poll = async () => {
+            if (stopped) return;
             try {
                 const next = await fetchInputs<V>(game, code, round, hostToken);
                 if (!cancelled) setInputs(next);
-            } catch {
-                /* transient — keep last known inputs */
+            } catch (error: unknown) {
+                if (error instanceof RoomAuthError) {
+                    // Terminal: this token will never be accepted for this room. Stop hammering
+                    // the endpoint and hand the decision up (the lobby opens a fresh room).
+                    stopped = true;
+                    if (!cancelled) onUnauthorizedRef.current?.();
+                }
+                /* anything else is transient — keep the last known inputs */
             }
         };
 

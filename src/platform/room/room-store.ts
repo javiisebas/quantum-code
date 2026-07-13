@@ -24,6 +24,7 @@ import { Redis } from '@upstash/redis';
  * `deleteRoom`, `claimSeat`, plus the `verifyHost` / `verifySeat` capability checks.
  */
 
+import { generateCode } from './code';
 import type { SeatClaim } from './tokens';
 
 const TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days.
@@ -39,6 +40,15 @@ const CREDENTIAL_ENV_PAIRS: readonly [string, string][] = [
 
 /** Redis key for a room's shared payload. */
 const roomKey = (namespace: string, code: number): string => `${namespace}:${code}`;
+/**
+ * Redis key for the ARCADE-WIDE code index: `code:<code>` → the game that owns it.
+ *
+ * This is what makes a join code a platform identity rather than a per-game one. Rooms are
+ * still stored per game (`bomba:611274`), but a code is now RESERVED across every game, so
+ * one code can only ever mean one room — which is what lets a player type six digits and be
+ * routed to the right game without picking it from a list.
+ */
+const codeKey = (code: number): string => `code:${code}`;
 /** Redis key for a room's monotonically increasing seat counter. */
 const seatKey = (namespace: string, code: number): string => `${namespace}:${code}:seat`;
 /** Redis key for a room's per-seat token hash (`{ [seat]: token }`). */
@@ -88,6 +98,17 @@ interface RoomStore {
         value: T,
     ): Promise<{ value: T; created: boolean; hostToken: string | null }>;
     delete(namespace: string, code: number): Promise<boolean>;
+    /**
+     * Atomically reserve `code` for `game` in the arcade-wide code index, and return the game
+     * that owns the code AFTERWARDS — `game` itself when the reservation was free (or already
+     * ours), or the incumbent's id when another game holds it. One atomic SET NX, so two hosts
+     * racing on the same code can never both believe they won it.
+     */
+    reserveCode(code: number, game: string): Promise<string>;
+    /** The game that owns `code`, or null when no room in the arcade holds it. */
+    resolveCode(code: number): Promise<string | null>;
+    /** Release `code` from the index — but only if `game` still owns it. */
+    releaseCode(code: number, game: string): Promise<void>;
     /**
      * Atomically claim the next seat in a room, returning a 1-based seat number plus the
      * secret token that proves ownership of it. Used by games where every player gets a
@@ -162,6 +183,47 @@ const createRedisStore = (url: string, token: string): RoomStore => {
             }
         },
 
+        async reserveCode(code: number, game: string) {
+            try {
+                const key = codeKey(code);
+                // Atomic SET NX EX: "OK" when we took a free code, null when someone holds it.
+                const result = await client.set(key, game, { nx: true, ex: TTL_SECONDS });
+                if (result === 'OK') {
+                    return game;
+                }
+                // Someone holds it — report WHO, so the caller can tell "my own room, resumed"
+                // apart from "another game's room, pick a different code". A holder that
+                // vanished between the SET and the GET (expired) means the code is free again,
+                // which for our purposes is the same as having won it.
+                const owner = await client.get<string>(key);
+                return owner ?? game;
+            } catch (error: unknown) {
+                throw wrapError('reserving a code for', error);
+            }
+        },
+
+        async resolveCode(code: number) {
+            try {
+                return (await client.get<string>(codeKey(code))) ?? null;
+            } catch (error: unknown) {
+                throw wrapError('resolving a code for', error);
+            }
+        },
+
+        async releaseCode(code: number, game: string) {
+            try {
+                const key = codeKey(code);
+                // Only drop OUR reservation. The read-then-delete window is harmless: a code is
+                // released solely by the host that owns it, and re-reserving it is idempotent.
+                const owner = await client.get<string>(key);
+                if (owner === game) {
+                    await client.del(key);
+                }
+            } catch (error: unknown) {
+                throw wrapError('releasing a code for', error);
+            }
+        },
+
         async claimSeat(namespace: string, code: number) {
             try {
                 const counter = seatKey(namespace, code);
@@ -219,6 +281,7 @@ const globalForStore = globalThis as unknown as {
     __roomSeatStore?: Map<string, number>;
     __roomSeatTokens?: Map<string, Map<number, string>>;
     __roomHostTokens?: Map<string, string>;
+    __roomCodeIndex?: Map<string, MemoryEntry>;
 };
 
 const createMemoryStore = (): RoomStore => {
@@ -226,18 +289,22 @@ const createMemoryStore = (): RoomStore => {
     const seats = (globalForStore.__roomSeatStore ??= new Map<string, number>());
     const seatTokens = (globalForStore.__roomSeatTokens ??= new Map<string, Map<number, string>>());
     const hostTokens = (globalForStore.__roomHostTokens ??= new Map<string, string>());
+    const codeIndex = (globalForStore.__roomCodeIndex ??= new Map<string, MemoryEntry>());
 
-    const readLive = <T>(key: string): T | null => {
-        const entry = map.get(key);
+    // TTL-aware read: an entry past its expiry is indistinguishable from an absent one, and is
+    // evicted on the way out (there is no background sweeper in the memory backend).
+    const readLiveFrom = <T>(source: Map<string, MemoryEntry>, key: string): T | null => {
+        const entry = source.get(key);
         if (!entry) {
             return null;
         }
         if (entry.expiresAt <= Date.now()) {
-            map.delete(key);
+            source.delete(key);
             return null;
         }
         return entry.value as T;
     };
+    const readLive = <T>(key: string): T | null => readLiveFrom<T>(map, key);
 
     return {
         async read<T>(namespace: string, code: number) {
@@ -261,6 +328,27 @@ const createMemoryStore = (): RoomStore => {
             seatTokens.delete(seatTokensKey(namespace, code));
             hostTokens.delete(metaKey(namespace, code));
             return map.delete(roomKey(namespace, code));
+        },
+
+        async reserveCode(code: number, game: string) {
+            const key = codeKey(code);
+            const owner = readLiveFrom<string>(codeIndex, key);
+            if (owner !== null) {
+                return owner;
+            }
+            codeIndex.set(key, { value: game, expiresAt: Date.now() + TTL_SECONDS * 1000 });
+            return game;
+        },
+
+        async resolveCode(code: number) {
+            return readLiveFrom<string>(codeIndex, codeKey(code));
+        },
+
+        async releaseCode(code: number, game: string) {
+            const key = codeKey(code);
+            if (readLiveFrom<string>(codeIndex, key) === game) {
+                codeIndex.delete(key);
+            }
         },
 
         async claimSeat(namespace: string, code: number) {
@@ -346,6 +434,44 @@ export const writeRoomIfAbsent = <T>(
 /** Delete a room (payload + seat counter + seat tokens + host meta). Returns whether a payload was removed. */
 export const deleteRoom = (namespace: string, code: number): Promise<boolean> =>
     getStore().delete(namespace, code);
+
+/**
+ * Reserve `code` for `game` arcade-wide. Returns the owning game afterwards: `game` when the
+ * reservation succeeded (or was already ours — resuming a room re-reserves idempotently), or
+ * another game's id when it is taken.
+ */
+export const reserveCode = (code: number, game: string): Promise<string> =>
+    getStore().reserveCode(code, game);
+
+/** The game that owns `code`, or null when the code matches no room in the arcade. */
+export const resolveCode = (code: number): Promise<string | null> => getStore().resolveCode(code);
+
+/** Release `code` back to the pool (no-op unless `game` still owns it). */
+export const releaseCode = (code: number, game: string): Promise<void> =>
+    getStore().releaseCode(code, game);
+
+/** How many fresh codes we try before giving up. Each attempt is a 1-in-900k collision. */
+const ALLOCATION_ATTEMPTS = 8;
+
+/**
+ * Mint a join code that is unique across the WHOLE arcade, and reserve it for `game`.
+ *
+ * Codes are allocated here, on the server, rather than guessed by the browser: only the store
+ * can see every game's reservations, so only the store can guarantee that six digits identify
+ * exactly one room. That guarantee is what lets a player type a code and be routed to the right
+ * game — no game picker. Throws only if every attempt collides, which at ~1-in-900k per attempt
+ * means the code space is effectively exhausted.
+ */
+export const allocateCode = async (game: string): Promise<number> => {
+    for (let attempt = 0; attempt < ALLOCATION_ATTEMPTS; attempt += 1) {
+        const code = generateCode();
+        const owner = await reserveCode(code, game);
+        if (owner === game) {
+            return code;
+        }
+    }
+    throw new Error('Could not allocate a free join code');
+};
 
 /** Claim the next 1-based seat in a room (atomic), with the token that proves ownership. */
 export const claimSeat = (namespace: string, code: number): Promise<SeatClaim> =>

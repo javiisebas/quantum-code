@@ -1,17 +1,16 @@
 'use client';
 
+import { getManifest } from '@/games/registry';
 import { LocalStorageHelper } from '@/platform/persistence/local-storage';
-import { generateCode } from '@/platform/room';
-import { createRoom } from '@/platform/room/room-client';
+import { openRoom, resumeRoom } from '@/platform/room/room-client';
 import { useLiveInputs } from '@/platform/room/use-live-room';
 import { Button } from '@/platform/ui/Button';
-import { Chip } from '@/platform/ui/Chip';
-import { Eyebrow } from '@/platform/ui/Eyebrow';
-import { RoomShare } from '@/platform/ui/RoomShare';
-import { Spinner } from '@heroui/react';
-import Link from 'next/link';
+import { HostLobby } from '@/platform/ui/HostLobby';
+import { LobbyPanel } from '@/platform/ui/LobbyPanel';
+import { Loading } from '@/platform/ui/Loading';
+import { RoomError } from '@/platform/ui/RoomError';
 import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BiGroup, BiHome, BiPlay } from 'react-icons/bi';
+import { BiPlay } from 'react-icons/bi';
 import { accentOf } from '../accents';
 import {
     LIVE_ROOM_PAYLOAD,
@@ -22,28 +21,24 @@ import {
 } from './live-session';
 
 /**
- * Shared host lobby for LIVE, phase-based games (Chispas, Sintonía…). It owns the part
- * every live game shares — create the room, show the join QR/code, and gather the roster
- * of named players in real time — then hands control to the game once the host presses
- * "Empezar":
+ * Shared host lobby for LIVE, phase-based games (La Bomba, Chispas, Sintonía). It owns the part
+ * every live game shares — open the room, show the way in, and gather the roster of named
+ * players in real time — then hands control to the game once the host presses "Empezar":
  *
- *   creating → lobby (QR + live roster + start gate) → started (renders `children`)
+ *   creating → lobby (shared <HostLobby>) → started (renders `children`)
  *
- * Unlike `PerPlayerHost` there is no up-front player-count step: players join dynamically
- * and appear by name as their phones register in the roster (input round 0). The chosen
- * code is persisted so a host reload resumes the same lobby (mid-game host state is the
- * game's own concern). A game only supplies how to render itself once started.
+ * All the chrome — layout, QR + code, how-to-play, home — now comes from the platform's
+ * `<HostLobby>`, which the per-player games use too, so every game in the arcade waits in a
+ * lobby that looks and behaves identically. What is left here is only what is genuinely
+ * live-specific: the roster channel and the start gate.
+ *
+ * The code is minted by the SERVER (`openRoom`) and persisted with the host token, so a host
+ * reload resumes the same lobby (`resumeRoom`).
  */
 interface LiveLobbyProps {
     game: string;
-    gameName: string;
-    emoji: string;
-    /** Accent token (`manifest.accent`) so the lobby CTA matches the game's colour. */
-    accent: string;
     minPlayers: number;
     maxPlayers: number;
-    /** Optional one-line rules reminder shown under the roster. */
-    hint?: string;
     /** Rendered once the host starts, with the room code, host token and roster snapshot. */
     children: (session: { code: number; players: LivePlayer[]; hostToken: string }) => ReactNode;
 }
@@ -52,17 +47,9 @@ type Phase = 'creating' | 'lobby' | 'started' | 'error';
 
 const storageKey = (game: string) => `quantum:live-host:${game}`;
 
-export function LiveLobby({
-    game,
-    gameName,
-    emoji,
-    accent,
-    minPlayers,
-    maxPlayers,
-    hint,
-    children,
-}: LiveLobbyProps) {
-    const acc = accentOf(accent);
+export function LiveLobby({ game, minPlayers, maxPlayers, children }: LiveLobbyProps) {
+    const manifest = getManifest(game);
+    const acc = accentOf(manifest?.accent ?? 'purple');
     const [phase, setPhase] = useState<Phase>('creating');
     const [code, setCode] = useState<number | null>(null);
     const [hostToken, setHostToken] = useState<string | null>(null);
@@ -70,11 +57,15 @@ export function LiveLobby({
 
     const startNewRoom = useCallback(async () => {
         setPhase('creating');
-        const fresh = generateCode();
         try {
-            const { hostToken: token } = await createRoom(game, fresh, LIVE_ROOM_PAYLOAD);
+            // The SERVER allocates the code: only it can see every game's reservations, and a
+            // code now has to name exactly one room across the whole arcade.
+            const { code: fresh, hostToken: token } = await openRoom(game, LIVE_ROOM_PAYLOAD);
             // Persist the host capability with the code so a reload resumes as the host.
-            LocalStorageHelper.setLocalStorageItem(storageKey(game), { code: fresh, hostToken: token });
+            LocalStorageHelper.setLocalStorageItem(storageKey(game), {
+                code: fresh,
+                hostToken: token,
+            });
             setCode(fresh);
             setHostToken(token);
             setPhase('lobby');
@@ -98,21 +89,38 @@ export function LiveLobby({
             setCode(persisted.code);
             setHostToken(persisted.hostToken);
             setPhase('lobby');
-            // Re-ensure the room exists (TTL may have lapsed); SET NX is a no-op otherwise, and
-            // the re-create returns no token (created:false) — we keep the persisted one.
-            createRoom(game, persisted.code, LIVE_ROOM_PAYLOAD).catch(() => {});
+            // Re-ensure the room AND its code reservation — either may have lapsed past its TTL.
+            resumeRoom(game, persisted.code, LIVE_ROOM_PAYLOAD)
+                .then(({ hostToken: minted }) => {
+                    // A token comes back ONLY when this call actually re-created the room, i.e.
+                    // the old one had expired. The server minted a fresh host capability with it,
+                    // so the token we persisted is now worthless: keeping it locks the host out of
+                    // its own room — every roster poll 401s and the lobby never fills, forever.
+                    if (!minted) return;
+                    setHostToken(minted);
+                    LocalStorageHelper.setLocalStorageItem(storageKey(game), {
+                        code: persisted.code,
+                        hostToken: minted,
+                    });
+                })
+                .catch(() => {});
         } else {
             void startNewRoom();
         }
     }, [game, startNewRoom]);
 
-    // Live roster: phones register `{ name }` under seat as they join.
+    // Live roster: phones register `{ name }` under their seat as they join.
     const rosterInputs = useLiveInputs<RosterEntry>({
         game,
         code,
         round: ROSTER_ROUND,
         active: phase === 'lobby',
         hostToken,
+        // The room rejected our host capability — the persisted one is dead (its room lapsed and
+        // was re-created under a new token). There is nothing to salvage and nobody has joined
+        // this lobby yet, so open a fresh room rather than leave the host staring at a roster
+        // that can never fill.
+        onUnauthorized: () => void startNewRoom(),
     });
     const players = useMemo(() => rosterFromInputs(rosterInputs), [rosterInputs]);
 
@@ -121,22 +129,9 @@ export function LiveLobby({
         setPhase('started');
     }, [players]);
 
-    if (phase === 'creating') {
+    if (phase === 'error' || !manifest) {
         return (
-            <div className="flex h-screen items-center justify-center">
-                <Spinner color="secondary" label="Creando la sala…" />
-            </div>
-        );
-    }
-
-    if (phase === 'error') {
-        return (
-            <div className="flex h-screen flex-col items-center justify-center gap-4 px-6 text-center">
-                <p className="text-lg text-gray-200">No se pudo crear la sala.</p>
-                <Button variant="secondary" onPress={() => void startNewRoom()}>
-                    Reintentar
-                </Button>
-            </div>
+            <RoomError message="No se pudo crear la sala." onRetry={() => void startNewRoom()} />
         );
     }
 
@@ -144,79 +139,38 @@ export function LiveLobby({
         return <>{children({ code, players: startedPlayers, hostToken })}</>;
     }
 
-    // lobby
-    const enough = players.length >= minPlayers;
-    const full = players.length >= maxPlayers;
+    if (phase === 'creating' || code === null) {
+        return <Loading label="Creando la sala…" />;
+    }
+
+    // Lobby. The minimum-players requirement lives IN the button rather than in a caption under
+    // it: a disabled control should say what it is waiting for, instead of making the host read
+    // a separate line to find out why it's grey.
+    const missing = minPlayers - players.length;
+    const ready = missing <= 0;
 
     return (
-        <main className="mx-auto flex min-h-screen max-w-md flex-col items-center gap-6 px-6 py-10 text-center">
-            <div>
-                <span className="text-5xl" aria-hidden="true">
-                    {emoji}
-                </span>
-                <h1 className="mt-2 text-2xl font-bold text-white">{gameName}</h1>
-            </div>
-
-            {code !== null && <RoomShare code={code} game={game} gameName={gameName} qrSize={180} />}
-
-            <section className="w-full" aria-live="polite">
-                <div className="mb-2 flex items-center justify-center gap-2">
-                    <Chip>
-                        <BiGroup className={acc.text} size={16} />
-                        <span>
-                            {players.length}{' '}
-                            {players.length === 1 ? 'jugador' : 'jugadores'}
-                        </span>
-                    </Chip>
-                </div>
-                {players.length === 0 ? (
-                    <p className="text-sm text-gray-400">
-                        Esperando a que se unan los jugadores…
-                    </p>
-                ) : (
-                    <ul className="flex flex-wrap justify-center gap-2">
-                        {players.map((player) => (
-                            <li key={player.seat}>
-                                <Chip className={acc.chip}>{player.name}</Chip>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-                {full && (
-                    <p className="mt-2 text-xs text-amber-300">
-                        Sala llena ({maxPlayers}). Los que se unan ahora esperarán a la próxima
-                        partida.
-                    </p>
-                )}
-            </section>
-
-            <div className="flex w-full flex-col items-center gap-3">
-                <Button
-                    variant="accent"
-                    accentClass={acc.solidButton}
-                    className="w-full max-w-xs"
-                    startContent={<BiPlay size={22} />}
-                    onPress={start}
-                    isDisabled={!enough}
-                >
-                    Empezar
-                </Button>
-                {!enough && (
-                    <span className="text-xs text-gray-500">
-                        Mínimo {minPlayers} jugadores para empezar
-                    </span>
-                )}
-                <Button
-                    variant="ghost"
-                    as={Link}
-                    href="/"
-                    startContent={<BiHome size={18} />}
-                >
-                    Inicio
-                </Button>
-            </div>
-
-            {hint && <p className="max-w-xs text-sm text-gray-400">{hint}</p>}
-        </main>
+        <HostLobby manifest={manifest} code={code}>
+            <LobbyPanel
+                names={players.map((player) => player.name)}
+                min={minPlayers}
+                max={maxPlayers}
+                accentChip={acc.chip}
+                action={
+                    <Button
+                        variant="accent"
+                        accentClass={acc.solidButton}
+                        fullWidth
+                        startContent={ready ? <BiPlay size={22} /> : undefined}
+                        onPress={start}
+                        isDisabled={!ready}
+                    >
+                        {ready
+                            ? 'Empezar partida'
+                            : `Faltan ${missing} ${missing === 1 ? 'jugador' : 'jugadores'}`}
+                    </Button>
+                }
+            />
+        </HostLobby>
     );
 }

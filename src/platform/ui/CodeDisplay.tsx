@@ -21,11 +21,14 @@ export function CodeDisplay({
     const grouped = `${digits.slice(0, 3)} ${digits.slice(3)}`;
     return (
         <div className={ClassnameHelper.join('flex flex-col items-center gap-1', className)}>
-            {label && <Eyebrow>{label}</Eyebrow>}
+            {label && <Eyebrow className="whitespace-nowrap">{label}</Eyebrow>}
             <span
                 className={ClassnameHelper.join(
                     'font-mono font-bold tabular-nums tracking-[0.15em] text-white',
-                    size === 'lg' ? 'text-5xl' : 'text-4xl',
+                    // The `short:` step down is owned HERE, by the component that owns this
+                    // typography. A caller reaching in with `[&>span]` (as one did) also hits the
+                    // eyebrow — which is a span too — and blows the label up to 30px.
+                    size === 'lg' ? 'text-5xl short:text-3xl' : 'text-4xl',
                 )}
             >
                 {grouped}

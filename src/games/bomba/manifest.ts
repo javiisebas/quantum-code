@@ -14,6 +14,13 @@ export const bombaManifest: GameManifest = {
     players: '3–12',
     duration: '10 min',
     secrecy: 'per-player',
+    howTo: [
+        'La pantalla principal muestra una categoría y quién tiene la bomba.',
+        'Cuando te toque, di en alto algo de la categoría y pulsa «¡Pasar!» en tu móvil.',
+        'La mecha es secreta: nadie sabe cuándo va a explotar.',
+        'A quien le explote la bomba se lleva un bombazo.',
+        'Tras varias rondas, gana quien menos bombazos acumule.',
+    ],
 };
 
 /**

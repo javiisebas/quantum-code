@@ -1,7 +1,15 @@
 import { getServerGame } from '@/games/registry.server';
 import { emitRoomEvent } from '@/platform/events/webhooks';
 import { parseCode } from '@/platform/room';
-import { deleteRoom, readRoom, verifySeat, writeRoomIfAbsent } from '@/platform/room/room-store';
+import {
+    allocateCode,
+    deleteRoom,
+    readRoom,
+    releaseCode,
+    reserveCode,
+    verifySeat,
+    writeRoomIfAbsent,
+} from '@/platform/room/room-store';
 import { SEAT_TOKEN_HEADER } from '@/platform/room/tokens';
 import { NextResponse, after } from 'next/server';
 
@@ -81,30 +89,56 @@ export async function POST(request: Request, { params }: RouteContext) {
     }
 
     const { code: rawCode, payload } = (body ?? {}) as { code?: unknown; payload?: unknown };
-    const codeStr =
-        typeof rawCode === 'number'
-            ? String(rawCode)
-            : typeof rawCode === 'string'
-              ? rawCode
-              : null;
-    const code = parseCode(codeStr);
 
-    if (code === null || !mod.validatePayload(payload)) {
+    if (!mod.validatePayload(payload)) {
         return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
+    // Two shapes, one endpoint:
+    //   { payload }        → OPEN a room: the server mints a code that is free across the whole
+    //                        arcade (only it can see every game's reservations).
+    //   { code, payload }  → RESUME a room: the host reloaded and re-presents its persisted
+    //                        code, so the room (and its code reservation) are re-ensured.
+    const resuming = rawCode !== undefined && rawCode !== null;
+    const code = resuming
+        ? parseCode(typeof rawCode === 'number' ? String(rawCode) : String(rawCode))
+        : null;
+
+    if (resuming && code === null) {
+        return invalidCode();
+    }
+
     try {
+        let roomCode: number;
+
+        if (code === null) {
+            roomCode = await allocateCode(game);
+        } else {
+            // Re-reserving our own code is idempotent; a code held by ANOTHER game means these
+            // six digits already name a different room, and handing it out twice would break the
+            // one-code-one-room guarantee the whole join flow now rests on.
+            const owner = await reserveCode(code, game);
+            if (owner !== game) {
+                return NextResponse.json({ error: 'Code already in use' }, { status: 409 });
+            }
+            roomCode = code;
+        }
+
         // Atomic create-if-absent. Return the AUTHORITATIVE payload (whoever won the
         // race), so the host and every joined phone converge on the same room, plus the
         // minted host token (null unless THIS call created the room — see RoomCreation).
-        const { value, created, hostToken } = await writeRoomIfAbsent(mod.namespace, code, payload);
+        const { value, created, hostToken } = await writeRoomIfAbsent(
+            mod.namespace,
+            roomCode,
+            payload,
+        );
         // Fire the webhook exactly once, only when this call actually created the room,
         // and as post-response work so a slow/failing hook never blocks the response
         // (and isn't dropped when the serverless function freezes on return).
         if (created) {
-            after(() => emitRoomEvent({ type: 'room.created', game, code }));
+            after(() => emitRoomEvent({ type: 'room.created', game, code: roomCode }));
         }
-        return NextResponse.json({ value, hostToken });
+        return NextResponse.json({ code: roomCode, value, hostToken });
     } catch (error: unknown) {
         console.error(`Failed to save ${game} room:`, error);
         return NextResponse.json({ error: 'Failed to save room' }, { status: 500 });
@@ -121,6 +155,10 @@ export async function DELETE(request: Request, { params }: RouteContext) {
 
     try {
         const success = await deleteRoom(mod.namespace, code);
+        // Hand the code back to the pool whether or not a payload was there to remove: the
+        // reservation outlives the room otherwise, and a released room's code should be
+        // reusable immediately rather than squatting the index until its TTL lapses.
+        await releaseCode(code, game);
         if (!success) {
             return NextResponse.json(
                 { error: 'Room not found or could not be deleted' },

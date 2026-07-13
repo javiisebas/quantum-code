@@ -1,9 +1,12 @@
 'use client';
 
+import { RoundFullCard } from '@/games/_shared/RoundFullCard';
+import { SecretCardScreen } from '@/games/_shared/SecretCardScreen';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { Surface } from '@/platform/ui/Surface';
 import { FC } from 'react';
 import type { UndercoverSeatView } from './domain';
+import { undercoverManifest } from './manifest';
 
 interface UndercoverCardProps {
     view: UndercoverSeatView;
@@ -16,24 +19,12 @@ interface UndercoverCardProps {
 export const UndercoverCard: FC<UndercoverCardProps> = ({ view }) => {
     // More phones joined than seats dealt — this player has no assignment this round.
     if (view.kind === 'full') {
-        return (
-            <main className="flex min-h-screen items-center justify-center px-6 text-center">
-                <Surface className="max-w-sm p-8">
-                    <p className="text-lg text-gray-200">La partida ya está completa.</p>
-                    <p className="mt-2 text-sm text-gray-400">
-                        Pide al anfitrión una <span className="font-semibold">nueva ronda</span> con
-                        más jugadores.
-                    </p>
-                </Surface>
-            </main>
-        );
+        return <RoundFullCard />;
     }
 
     return (
-        <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
-            <Eyebrow className="mb-3">Jugador {view.seat}</Eyebrow>
-
-            <Surface className="flex w-full max-w-sm flex-col items-center p-8 text-center">
+        <SecretCardScreen manifest={undercoverManifest} seat={view.seat}>
+            <Surface className="flex w-full flex-col items-center p-6 text-center sm:p-8">
                 <Eyebrow>Tu palabra</Eyebrow>
                 <h1 className="mt-1 text-3xl font-extrabold text-emerald-300">{view.word}</h1>
                 <p className="mt-4 text-sm text-gray-300">
@@ -41,6 +32,6 @@ export const UndercoverCard: FC<UndercoverCardProps> = ({ view }) => {
                     delatarte.
                 </p>
             </Surface>
-        </main>
+        </SecretCardScreen>
     );
 };

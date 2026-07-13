@@ -72,9 +72,21 @@ interface LiveBackend {
     readState<S>(namespace: string, code: number): Promise<StateDoc<S> | null>;
     writeState<S>(namespace: string, code: number, doc: StateDoc<S>): Promise<void>;
     clearState(namespace: string, code: number): Promise<void>;
-    putInput<V>(namespace: string, code: number, round: number, seat: number, value: V): Promise<void>;
+    putInput<V>(
+        namespace: string,
+        code: number,
+        round: number,
+        seat: number,
+        value: V,
+    ): Promise<void>;
     readInputs<V>(namespace: string, code: number, round: number): Promise<Record<number, V>>;
-    putPrivate<V>(namespace: string, code: number, round: number, seat: number, value: V): Promise<void>;
+    putPrivate<V>(
+        namespace: string,
+        code: number,
+        round: number,
+        seat: number,
+        value: V,
+    ): Promise<void>;
     readPrivate<V>(namespace: string, code: number, round: number, seat: number): Promise<V | null>;
 }
 
@@ -109,7 +121,9 @@ const createRedisBackend = (url: string, token: string): LiveBackend => {
         },
 
         async readInputs<V>(namespace: string, code: number, round: number) {
-            const raw = await client.hgetall<Record<string, unknown>>(inputsKey(namespace, code, round));
+            const raw = await client.hgetall<Record<string, unknown>>(
+                inputsKey(namespace, code, round),
+            );
             const out: Record<number, V> = {};
             if (!raw) return out;
             for (const [seatStr, stored] of Object.entries(raw)) {
@@ -121,7 +135,13 @@ const createRedisBackend = (url: string, token: string): LiveBackend => {
             return out;
         },
 
-        async putPrivate<V>(namespace: string, code: number, round: number, seat: number, value: V) {
+        async putPrivate<V>(
+            namespace: string,
+            code: number,
+            round: number,
+            seat: number,
+            value: V,
+        ) {
             const key = privateKey(namespace, code, round);
             // Same envelope discipline as inputs, so a robust parse is unambiguous on read.
             await client.hset(key, { [String(seat)]: JSON.stringify({ v: value }) });
@@ -129,7 +149,10 @@ const createRedisBackend = (url: string, token: string): LiveBackend => {
         },
 
         async readPrivate<V>(namespace: string, code: number, round: number, seat: number) {
-            const stored = await client.hget<string>(privateKey(namespace, code, round), String(seat));
+            const stored = await client.hget<string>(
+                privateKey(namespace, code, round),
+                String(seat),
+            );
             const env = parseStored<{ v: V }>(stored);
             return env && 'v' in env ? env.v : null;
         },
@@ -197,7 +220,13 @@ const createMemoryBackend = (): LiveBackend => {
             for (const [seat, value] of entry.fields) out[seat] = value as V;
             return out;
         },
-        async putPrivate<V>(namespace: string, code: number, round: number, seat: number, value: V) {
+        async putPrivate<V>(
+            namespace: string,
+            code: number,
+            round: number,
+            seat: number,
+            value: V,
+        ) {
             livePrivate(privateKey(namespace, code, round)).fields.set(seat, value);
         },
         async readPrivate<V>(namespace: string, code: number, round: number, seat: number) {

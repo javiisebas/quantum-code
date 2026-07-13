@@ -3,15 +3,16 @@
 import { usePublishedState, useLiveInputs } from '@/platform/room/use-live-room';
 import { Button } from '@/platform/ui/Button';
 import { Chip } from '@/platform/ui/Chip';
+import { ConfettiBurst } from '@/platform/ui/Confetti';
 import { Eyebrow } from '@/platform/ui/Eyebrow';
+import { Podium, PodiumEntry, ScoreChips } from '@/platform/ui/Podium';
 import { Surface } from '@/platform/ui/Surface';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import Confetti from 'react-confetti';
-import { BiCheck, BiHome, BiSolidStar } from 'react-icons/bi';
+import { BiCheck, BiSolidStar } from 'react-icons/bi';
 import { accentOf } from '../_shared/accents';
+import { LiveBoard } from '../_shared/live/LiveBoard';
 import { LiveLobby } from '../_shared/live/LiveLobby';
 import type { LivePlayer } from '../_shared/live/live-session';
 import {
@@ -25,6 +26,7 @@ import {
     RevealAnswer,
     revealAnswers,
     roundWinners,
+    Score,
     scoreboard,
     TOTAL_ROUNDS,
     tallyVotes,
@@ -34,17 +36,19 @@ import { CHISPAS_ID, chispasManifest } from './manifest';
 
 const acc = accentOf(chispasManifest.accent);
 
+const entry = (score: Score): PodiumEntry => ({
+    id: score.seat,
+    name: score.name,
+    score: score.score,
+});
+
 /** Chispas host: gather players in the shared lobby, then drive the live game. */
 export function ChispasHost() {
     return (
         <LiveLobby
             game={CHISPAS_ID}
-            gameName={chispasManifest.name}
-            emoji={chispasManifest.emoji}
-            accent={chispasManifest.accent}
             minPlayers={chispasManifest.minPlayers}
             maxPlayers={chispasManifest.maxPlayers}
-            hint="Cada uno responde en su móvil y luego votáis al más gracioso."
         >
             {({ code, players, hostToken }) => (
                 <ChispasGame code={code} players={players} hostToken={hostToken} />
@@ -155,7 +159,14 @@ function ChispasGame({
     const next = () =>
         setGame((g) =>
             g.round < TOTAL_ROUNDS
-                ? { ...g, round: g.round + 1, phase: 'answer', answers: [], reveal: [], winnerSeats: [] }
+                ? {
+                      ...g,
+                      round: g.round + 1,
+                      phase: 'answer',
+                      answers: [],
+                      reveal: [],
+                      winnerSeats: [],
+                  }
                 : { ...g, phase: 'final' },
         );
 
@@ -164,81 +175,59 @@ function ChispasGame({
         setGame(initGame());
     };
 
-    return (
-        <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-5 py-8">
-            <HostHeader round={game.round} phase={game.phase} />
+    const scores = scoreboard(players, game.scores);
+    const champion = scores[0];
 
-            <div className="flex flex-1 flex-col justify-center py-6">
-                {game.phase === 'answer' && (
-                    <AnswerStage
-                        prompt={game.prompts[game.round - 1] ?? ''}
-                        answered={answered}
-                        players={players}
-                        onContinue={toVote}
-                    />
-                )}
-                {game.phase === 'vote' && (
-                    <VoteStage
-                        prompt={game.prompts[game.round - 1] ?? ''}
-                        answers={game.answers}
-                        votedCount={voted.length}
-                        total={players.length}
-                        onContinue={toReveal}
-                    />
-                )}
-                {game.phase === 'reveal' && (
-                    <RevealStage
-                        round={game.round}
-                        reveal={game.reveal}
-                        winnerSeats={game.winnerSeats}
-                        scores={scoreboard(players, game.scores)}
-                        isLast={game.round >= TOTAL_ROUNDS}
-                        onNext={next}
-                    />
-                )}
-                {game.phase === 'final' && (
-                    <FinalStage scores={scoreboard(players, game.scores)} onRestart={restart} />
-                )}
-            </div>
-        </main>
+    return (
+        <LiveBoard
+            manifest={chispasManifest}
+            accentChip={acc.chip}
+            round={game.phase === 'final' ? null : game.round}
+            totalRounds={TOTAL_ROUNDS}
+        >
+            {game.phase === 'answer' && (
+                <AnswerStage
+                    prompt={game.prompts[game.round - 1] ?? ''}
+                    answered={answered}
+                    players={players}
+                    onContinue={toVote}
+                />
+            )}
+            {game.phase === 'vote' && (
+                <VoteStage
+                    prompt={game.prompts[game.round - 1] ?? ''}
+                    answers={game.answers}
+                    votedCount={voted.length}
+                    total={players.length}
+                    onContinue={toReveal}
+                />
+            )}
+            {game.phase === 'reveal' && (
+                <RevealStage
+                    round={game.round}
+                    reveal={game.reveal}
+                    winnerSeats={game.winnerSeats}
+                    scores={scores}
+                    isLast={game.round >= TOTAL_ROUNDS}
+                    onNext={next}
+                />
+            )}
+            {game.phase === 'final' && (
+                <Podium
+                    accent={acc}
+                    label="Ganador"
+                    caption={champion && `${champion.score} puntos`}
+                    entries={scores.map(entry)}
+                    onRestart={restart}
+                />
+            )}
+        </LiveBoard>
     );
 }
 
 // ---------------------------------------------------------------------------
 // Shared chrome
 // ---------------------------------------------------------------------------
-
-function HostHeader({ round, phase }: { round: number; phase: ChispasPhase }) {
-    return (
-        <header className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-                <span className="text-2xl" aria-hidden="true">
-                    {chispasManifest.emoji}
-                </span>
-                <span className="text-lg font-bold text-white">{chispasManifest.name}</span>
-            </div>
-            {phase !== 'final' && (
-                <Chip className={acc.chip}>
-                    Ronda {round}/{TOTAL_ROUNDS}
-                </Chip>
-            )}
-        </header>
-    );
-}
-
-/** Full-screen one-shot confetti burst, re-keyed so it fires again each round. */
-function ConfettiBurst() {
-    return (
-        <div className="pointer-events-none fixed inset-0 z-50">
-            <Confetti
-                recycle={false}
-                numberOfPieces={280}
-                gravity={0.25}
-                colors={['#eab308', '#facc15', '#fde047', '#fef08a', '#ffffff']}
-            />
-        </div>
-    );
-}
 
 const PromptCard = ({ prompt, size = 'lg' }: { prompt: string; size?: 'lg' | 'sm' }) => (
     <Surface className={ClassnameHelper.join('w-full p-6 text-center', size === 'lg' && 'py-8')}>
@@ -273,15 +262,15 @@ function AnswerStage({
     const allIn = answered.length === players.length && players.length > 0;
 
     return (
-        <div className="flex flex-col items-center gap-6">
+        <div className="flex w-full flex-col items-center gap-6 short:gap-4">
             <PromptCard prompt={prompt} />
             <p className="text-sm text-gray-400">✍️ Escribid vuestra respuesta en el móvil</p>
 
             <ul className="flex flex-wrap justify-center gap-2">
-                {players.map((p) => {
-                    const done = answeredSeats.has(p.seat);
+                {players.map((player) => {
+                    const done = answeredSeats.has(player.seat);
                     return (
-                        <li key={p.seat}>
+                        <li key={player.seat}>
                             <Chip
                                 className={
                                     done
@@ -290,7 +279,7 @@ function AnswerStage({
                                 }
                             >
                                 {done && <BiCheck size={16} />}
-                                {p.name}
+                                {player.name}
                             </Chip>
                         </li>
                     );
@@ -330,13 +319,17 @@ function VoteStage({
 }) {
     const allIn = votedCount >= total && total > 0;
     return (
-        <div className="flex flex-col items-center gap-5">
-            <PromptCard prompt={prompt} size="sm" />
-            <Eyebrow className={acc.text}>Votad la más graciosa en vuestro móvil</Eyebrow>
+        // The answer list is the one thing here that can outgrow the screen (a full room of 12),
+        // so it is the only thing that scrolls: the prompt and the CTA stay put.
+        <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-5">
+            <div className="flex w-full shrink-0 flex-col items-center gap-5">
+                <PromptCard prompt={prompt} size="sm" />
+                <Eyebrow className={acc.text}>Votad la más graciosa en vuestro móvil</Eyebrow>
+            </div>
 
-            <ul className="flex w-full flex-col gap-3">
-                {answers.map((answer, i) => (
-                    <li key={answer.id}>
+            <ul className="flex min-h-0 w-full flex-1 flex-col gap-3 overflow-y-auto [justify-content:safe_center]">
+                {answers.map((answer, index) => (
+                    <li key={answer.id} className="shrink-0">
                         <Surface tone="inset" radius="2xl" className="flex items-center gap-3 p-4">
                             <span
                                 className={ClassnameHelper.join(
@@ -344,7 +337,7 @@ function VoteStage({
                                     acc.chip,
                                 )}
                             >
-                                {i + 1}
+                                {index + 1}
                             </span>
                             <span className="text-left text-lg font-semibold text-white">
                                 {answer.text}
@@ -354,7 +347,7 @@ function VoteStage({
                 ))}
             </ul>
 
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex shrink-0 flex-col items-center gap-2">
                 <Button
                     variant="accent"
                     accentClass={acc.solidButton}
@@ -382,32 +375,35 @@ function RevealStage({
     round: number;
     reveal: RevealAnswer[];
     winnerSeats: number[];
-    scores: { seat: number; name: string; score: number }[];
+    scores: Score[];
     isLast: boolean;
     onNext: () => void;
 }) {
     const winners = new Set(winnerSeats);
     return (
-        <div className="flex flex-col items-center gap-5">
-            {winnerSeats.length > 0 && <ConfettiBurst key={`reveal-${round}`} />}
-            <Eyebrow className={acc.text}>Resultados</Eyebrow>
+        <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-5">
+            {winnerSeats.length > 0 && (
+                <ConfettiBurst key={`reveal-${round}`} colors={acc.confetti} />
+            )}
+            <Eyebrow className={ClassnameHelper.join('shrink-0', acc.text)}>Resultados</Eyebrow>
 
-            <ul className="flex w-full flex-col gap-3">
-                {reveal.map((answer, i) => {
+            <ul className="flex min-h-0 w-full flex-1 flex-col gap-3 overflow-y-auto [justify-content:safe_center]">
+                {reveal.map((answer, index) => {
                     const won = winners.has(answer.seat);
                     return (
                         <motion.li
                             key={answer.id}
+                            className="shrink-0"
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.12 }}
+                            transition={{ delay: index * 0.12 }}
                         >
                             <Surface
                                 tone={won ? 'plain' : 'inset'}
                                 radius="2xl"
                                 className={ClassnameHelper.join(
                                     'flex items-center gap-3 p-4',
-                                    won && 'bg-yellow-500/15 ring-1 ring-inset ring-yellow-400/40',
+                                    won && acc.highlight,
                                 )}
                             >
                                 <div className="flex flex-1 flex-col text-left">
@@ -424,7 +420,10 @@ function RevealStage({
                                     </span>
                                 </div>
                                 <Chip className={won ? acc.chip : undefined}>
-                                    <BiSolidStar size={14} className={won ? undefined : 'opacity-50'} />
+                                    <BiSolidStar
+                                        size={14}
+                                        className={won ? undefined : 'opacity-50'}
+                                    />
                                     {answer.votes} {answer.votes === 1 ? 'voto' : 'votos'}
                                 </Chip>
                             </Surface>
@@ -433,89 +432,16 @@ function RevealStage({
                 })}
             </ul>
 
-            <MiniScoreboard scores={scores} />
+            <ScoreChips entries={scores.map(entry)} accentChip={acc.chip} />
 
             <Button
                 variant="accent"
                 accentClass={acc.solidButton}
-                className="min-w-56"
+                className="min-w-56 shrink-0"
                 onPress={onNext}
             >
                 {isLast ? 'Ver clasificación final' : 'Siguiente ronda'}
             </Button>
-        </div>
-    );
-}
-
-function FinalStage({
-    scores,
-    onRestart,
-}: {
-    scores: { seat: number; name: string; score: number }[];
-    onRestart: () => void;
-}) {
-    const champion = scores[0];
-    return (
-        <div className="flex flex-col items-center gap-6 text-center">
-            <ConfettiBurst key="final" />
-            <div>
-                <span className="text-6xl" aria-hidden="true">
-                    🏆
-                </span>
-                <Eyebrow className="mt-3">Ganador</Eyebrow>
-                <h1 className="mt-1 text-4xl font-extrabold text-yellow-300">
-                    {champion?.name ?? '—'}
-                </h1>
-                {champion && (
-                    <p className="mt-1 text-sm text-gray-400">{champion.score} puntos</p>
-                )}
-            </div>
-
-            <ol className="flex w-full max-w-sm flex-col gap-2">
-                {scores.map((s, i) => (
-                    <li key={s.seat}>
-                        <Surface
-                            tone={i === 0 ? 'plain' : 'inset'}
-                            radius="2xl"
-                            className={ClassnameHelper.join(
-                                'flex items-center gap-3 p-3',
-                                i === 0 && 'bg-yellow-500/15 ring-1 ring-inset ring-yellow-400/40',
-                            )}
-                        >
-                            <span className="w-6 text-center font-mono text-lg font-bold text-gray-400">
-                                {i + 1}
-                            </span>
-                            <span className="flex-1 text-left font-semibold text-white">{s.name}</span>
-                            <span className={ClassnameHelper.join('font-bold', acc.text)}>
-                                {s.score}
-                            </span>
-                        </Surface>
-                    </li>
-                ))}
-            </ol>
-
-            <div className="flex flex-wrap justify-center gap-3">
-                <Button variant="accent" accentClass={acc.solidButton} onPress={onRestart}>
-                    Jugar otra vez
-                </Button>
-                <Button variant="secondary" as={Link} href="/" startContent={<BiHome size={18} />}>
-                    Inicio
-                </Button>
-            </div>
-        </div>
-    );
-}
-
-function MiniScoreboard({ scores }: { scores: { seat: number; name: string; score: number }[] }) {
-    return (
-        <div className="flex flex-wrap justify-center gap-2">
-            {scores.map((s, i) => (
-                <Chip key={s.seat} className={i === 0 ? acc.chip : undefined}>
-                    <span className="font-semibold">{s.name}</span>
-                    <span className="text-gray-400">·</span>
-                    <span>{s.score}</span>
-                </Chip>
-            ))}
         </div>
     );
 }
