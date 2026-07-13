@@ -45,10 +45,11 @@ import { FC, forwardRef } from 'react';
  *
  * `sm` is not in the type. `sm` is what the drift looked like.
  *
- * ICONS — an icon with no label is only legitimate in two places, both of which name it some other
- * way: `IconButton surface="raised"` for universal glyphs (home, back, +/−, close), and
- * `IconButton surface="bar"` inside a `FLOATING_BAR`, where a tooltip supplies the name. Anywhere
- * else, an action carries its label.
+ * ICONS — an icon with no label is only legitimate in three places, all of which name it some
+ * other way: `IconButton surface="raised"` for universal glyphs (home, back, +/−, close),
+ * `IconButton surface="bar"` inside a `FLOATING_BAR`, where a tooltip supplies the name, and a
+ * `TopBarAction` below `sm`, where every header action collapses to an icon key (`aria-label`ed)
+ * because the header's width belongs to the title. Anywhere else, an action carries its label.
  *
  * Pass only LAYOUT utilities (width, min-width, margins) through `className`; colour and size
  * utilities collide with the recipes below.
@@ -158,11 +159,11 @@ export interface IconButtonProps extends Omit<
     size?: IconButtonSize;
     /**
      * Where the control lives — the ONLY thing that changes its chrome:
-     *  - `raised` (default): a standalone key on a page, so it carries its own surface (a round
-     *    chip with a hairline ring) because nothing around it does.
+     *  - `raised` (default): a standalone key on a page, so it carries its own surface (a chip
+     *    with a hairline ring) because nothing around it does.
      *  - `bar`: a key INSIDE a `FLOATING_BAR`, where the bar is already the surface. It drops its
-     *    own fill and ring and squares off into a dock key. A ringed chip inside a ringed glass bar
-     *    is a surface on a surface — which is exactly the duplication this prop removes.
+     *    own fill and ring. A ringed chip inside a ringed glass bar is a surface on a surface —
+     *    which is exactly the duplication this prop removes.
      */
     surface?: 'raised' | 'bar';
 }
@@ -172,8 +173,11 @@ const ICON_TONE = {
     danger: 'text-gray-300 hover:bg-rose-500/15 hover:text-rose-300',
 } as const;
 
+// `rounded-xl` on BOTH surfaces: the one control radius the labelled buttons already follow.
+// The raised key used to be the app's only CIRCLE, so the header wore a circle on its left and
+// rounded rectangles on its right — two shapes for one row of chrome.
 const ICON_SURFACE = {
-    raised: 'rounded-full bg-white/5 ring-1 ring-inset ring-white/10 transition active:scale-90',
+    raised: 'rounded-xl bg-white/5 ring-1 ring-inset ring-white/10 transition active:scale-90',
     bar: 'rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:scale-90',
 } as const;
 
@@ -187,7 +191,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
         <HeroButton
             ref={ref}
             isIconOnly
-            radius={surface === 'bar' ? 'lg' : 'full'}
+            radius="lg"
             size={size}
             variant="light"
             disableRipple

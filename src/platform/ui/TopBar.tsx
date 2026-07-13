@@ -1,6 +1,6 @@
 'use client';
 
-import { IconButton } from '@/platform/ui/Button';
+import { Button, IconButton } from '@/platform/ui/Button';
 import { ClassnameHelper } from '@/platform/util/classnames';
 import Link from 'next/link';
 import { ReactNode } from 'react';
@@ -15,6 +15,43 @@ import { BiArrowBack, BiHome } from 'react-icons/bi';
  * that already didn't fit. Navigation is chrome, not an action: it belongs in the corner, at a
  * fixed height, on every screen, in the same place.
  */
+/**
+ * An ACTION in the top bar — the one responsive control in the arcade.
+ *
+ * On `sm+` it is a labelled `secondary` button, like every other alternative action. Below `sm`
+ * it collapses to an icon key, the same `rounded-xl` chip as the home key beside the title: a
+ * phone header's width belongs to the game's name, and two labelled buttons used to eat it down
+ * to "¿D…". The label never disappears semantically — it becomes the `aria-label` — and the
+ * whole row reads as what it is: a strip of chrome keys.
+ */
+export function TopBarAction({
+    icon,
+    label,
+    onPress,
+}: {
+    icon: ReactNode;
+    /** The action's name: the visible label on `sm+`, the `aria-label` below it. */
+    label: string;
+    onPress: () => void;
+}) {
+    return (
+        <>
+            <IconButton size="md" aria-label={label} onPress={onPress} className="sm:hidden">
+                {icon}
+            </IconButton>
+            <Button
+                variant="secondary"
+                size="md"
+                startContent={icon}
+                onPress={onPress}
+                className="hidden sm:inline-flex"
+            >
+                {label}
+            </Button>
+        </>
+    );
+}
+
 export function TopBar({
     emoji,
     title,

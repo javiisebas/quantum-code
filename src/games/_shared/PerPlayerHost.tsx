@@ -16,7 +16,7 @@ import { Loading } from '@/platform/ui/Loading';
 import { RoomError } from '@/platform/ui/RoomError';
 import { Screen, ScreenBody } from '@/platform/ui/Screen';
 import { Surface } from '@/platform/ui/Surface';
-import { TopBar } from '@/platform/ui/TopBar';
+import { TopBar, TopBarAction } from '@/platform/ui/TopBar';
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { BiIdCard, BiJoystick, BiMinus, BiPlus, BiQr, BiRefresh } from 'react-icons/bi';
 
@@ -297,14 +297,11 @@ export function PerPlayerHost<T, V>({ game, build, project, card }: PerPlayerHos
                 <>
                     {card(
                         project(phase.payload, hostSeat),
-                        <Button
-                            variant="secondary"
-                            size="md"
-                            startContent={<BiQr size={18} />}
+                        <TopBarAction
+                            icon={<BiQr size={18} />}
+                            label="Sala"
                             onPress={() => setHostView('room')}
-                        >
-                            Sala
-                        </Button>,
+                        />,
                     )}
                 </>
             );
