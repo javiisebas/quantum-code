@@ -234,8 +234,9 @@ export function ScoreChips({
                 const medal = medalOf(index);
                 return (
                     <Chip key={entry.id} className={index === 0 ? accentChip : undefined}>
+                        {/* Not decorative, so not `aria-hidden`: the rank is the whole point of
+                            the glyph, and a medal announces itself ("1st place medal"). */}
                         <span
-                            aria-hidden="true"
                             className={ClassnameHelper.join(
                                 'shrink-0',
                                 !medal && 'font-mono text-[10px] text-gray-500',
@@ -244,7 +245,10 @@ export function ScoreChips({
                             {medal ?? `${index + 1}.`}
                         </span>
                         <span className="font-semibold">{entry.name}</span>
-                        <span className="font-bold tabular-nums">{entry.score}</span>
+                        {/* White + bold is what separates the value from the name here — a `·`
+                            would be a fifth thing to fit in a chip, and 12 of these have to wrap
+                            onto one line of a TV without becoming a paragraph. */}
+                        <span className="font-bold tabular-nums text-white">{entry.score}</span>
                         {entry.unit && <span className="text-[10px] opacity-70">{entry.unit}</span>}
                     </Chip>
                 );

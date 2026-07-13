@@ -4,7 +4,9 @@ import { useGame } from '@/games/codenames/GameContext';
 import { TeamEnum } from '@/games/codenames/domain';
 import { GameStatusEnum } from '@/games/codenames/enums/game-status.enum';
 import { Button } from '@/platform/ui/Button';
+import { Eyebrow } from '@/platform/ui/Eyebrow';
 import { Surface } from '@/platform/ui/Surface';
+import { ClassnameHelper } from '@/platform/util/classnames';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { FC } from 'react';
@@ -12,9 +14,12 @@ import { BiHome, BiRefresh, BiShowAlt, BiSolidSkull, BiTrophy } from 'react-icon
 
 interface ResultContent {
     icon: React.ReactNode;
+    /** The small label above the verdict ("Fin de la partida"). */
+    eyebrow: string;
     title: string;
     subtitle: string;
     accent: string;
+    /** The medallion: tint + ring, the same recipe the arcade's podium crowns a winner with. */
     badge: string;
 }
 
@@ -31,20 +36,22 @@ const getResultContent = (
     if (status === GameStatusEnum.WON) {
         const isBlue = hasTeamWon === TeamEnum.BLUE;
         return {
-            icon: <BiTrophy size={34} />,
+            icon: <BiTrophy size={40} />,
+            eyebrow: 'Fin de la partida',
             title: isBlue ? '¡Gana el equipo Azul!' : '¡Gana el equipo Rojo!',
             subtitle: 'Habéis descubierto todas vuestras cartas.',
             accent: isBlue ? 'text-sky-300' : 'text-rose-300',
-            badge: isBlue ? 'bg-sky-400/15' : 'bg-rose-400/15',
+            badge: isBlue ? 'bg-sky-400/15 ring-sky-400/40' : 'bg-rose-400/15 ring-rose-400/40',
         };
     }
     if (status === GameStatusEnum.LOST) {
         return {
-            icon: <BiSolidSkull size={34} />,
+            icon: <BiSolidSkull size={40} />,
+            eyebrow: 'Fin de la partida',
             title: 'Habéis revelado al asesino',
             subtitle: 'Fin de la partida. Mala suerte, espías.',
             accent: 'text-gray-100',
-            badge: 'bg-white/10',
+            badge: 'bg-white/10 ring-white/20',
         };
     }
     return null;
@@ -56,6 +63,13 @@ const getResultContent = (
  *    dismisses this overlay so you land on the fully-revealed board.
  *  - "Nueva partida" / "Inicio" for what's next.
  * (No standalone "ver tablero": revealing the cards is the useful way to inspect it.)
+ *
+ * This is Codenames' podium, so it is staged like one: the verdict LANDS on a spring, inside the
+ * same accent medallion the live games' `<Podium>`/`<RankCard>` use, under the same `<Eyebrow>`.
+ * Codenames has no scoreboard — a team either found its cards or hit the assassin — so the
+ * hierarchy here is the verdict itself: medallion, then title, then what happens next. It waits
+ * for `GameBoardWon`'s colour wash to sweep the board first (that is the celebration); the panel
+ * is the sentence that follows it, not a card that appears before the party.
  */
 export const GameResultPanel: FC = () => {
     const { gameStatus, hasTeamWon, resetGame, revealAll } = useGame();
@@ -67,28 +81,48 @@ export const GameResultPanel: FC = () => {
         <AnimatePresence>
             {content && (
                 <motion.div
-                    className="absolute inset-0 z-30 flex items-center justify-center p-6"
+                    // A SCRIM, not just a floating card. `Surface` is frosted glass, which is
+                    // legible over the app's dark background but not over 25 saturated red and
+                    // blue cards: the words behind it bled through the verdict and the whole panel
+                    // read as muddy. Dimming the board is also what makes the verdict the thing you
+                    // look at — the board has just had its moment.
+                    className="absolute inset-0 z-30 flex items-center justify-center bg-gray-950/70 p-6 backdrop-blur-sm"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.4, delay: 0.3 }}
+                    transition={{ duration: 0.3, delay: 0.5 }}
                 >
                     {/* The motion wrapper owns the entrance and the width; the chrome is the app's
                         one `<Surface>` (this panel used to hand-roll a drifted copy of it). */}
                     <motion.div
-                        className="w-full max-w-xs"
-                        initial={{ scale: 0.9, y: 12 }}
+                        className="w-full max-w-sm"
+                        initial={{ scale: 0.88, y: 16 }}
                         animate={{ scale: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
+                        transition={{
+                            type: 'spring',
+                            stiffness: 240,
+                            damping: 20,
+                            delay: 0.55,
+                        }}
                     >
-                        <Surface className="flex flex-col items-center gap-5 p-7 text-center shadow-2xl">
+                        <Surface className="flex flex-col items-center gap-5 p-8 text-center shadow-2xl">
                             <span
-                                className={`flex h-16 w-16 items-center justify-center rounded-full ${content.badge} ${content.accent}`}
+                                className={ClassnameHelper.join(
+                                    'flex h-20 w-20 items-center justify-center rounded-full ring-1 ring-inset',
+                                    content.badge,
+                                    content.accent,
+                                )}
                             >
                                 {content.icon}
                             </span>
                             <div className="flex flex-col gap-1.5">
-                                <h2 className={`text-xl font-bold ${content.accent}`}>
+                                <Eyebrow>{content.eyebrow}</Eyebrow>
+                                <h2
+                                    className={ClassnameHelper.join(
+                                        'text-2xl font-extrabold',
+                                        content.accent,
+                                    )}
+                                >
                                     {content.title}
                                 </h2>
                                 <p className="text-sm leading-relaxed text-gray-400">

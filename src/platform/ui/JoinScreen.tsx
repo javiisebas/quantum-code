@@ -40,19 +40,23 @@ const MESSAGES: Record<JoinError, string> = {
  * The moment the code becomes a game. `resolveJoinCode` has always known which game it found;
  * we just never showed it — the player watched a spinner and then arrived somewhere. Naming the
  * game closes the loop on the one thing they couldn't know when they typed the digits.
+ *
+ * The vertical padding is deliberately generous: it lands this state at roughly the height of
+ * the form it replaces, so the card morphs into a confirmation instead of snapping shut under
+ * the player's thumb.
  */
 const ResolvedTarget = ({ target }: { target: JoinTarget }) => (
     <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="flex flex-col items-center gap-4 py-2 text-center"
+        className="flex flex-col items-center gap-4 py-6 text-center short:py-4"
     >
         <motion.span
             initial={{ scale: 0.4 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 320, damping: 18 }}
-            className="text-5xl short:text-4xl"
+            className="text-6xl short:text-5xl"
             aria-hidden="true"
         >
             {target.emoji}

@@ -242,7 +242,12 @@ function ExplosionStage({
             <div className="relative flex h-28 w-28 items-center justify-center short:h-20 short:w-20">
                 <motion.span
                     aria-hidden="true"
-                    className={ClassnameHelper.join('absolute inset-0 rounded-full', acc.highlight)}
+                    // `highlight` carries both the tint and the ring colour, so the shockwave is
+                    // the game's accent without a single new token.
+                    className={ClassnameHelper.join(
+                        'absolute inset-0 rounded-full ring-2',
+                        acc.highlight,
+                    )}
                     initial={{ scale: 0.35, opacity: 0.9 }}
                     animate={{ scale: 2, opacity: 0 }}
                     transition={{ duration: 0.9, ease: 'easeOut' }}
